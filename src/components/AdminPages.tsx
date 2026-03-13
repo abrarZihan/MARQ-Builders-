@@ -5,6 +5,7 @@ import { FG, ConfirmDelete } from "./Shared";
 import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus } from "lucide-react";
 
 export function AdminProfile({ admin, onUpdate }: any) {
+  if (!admin) return null;
   const [old, setOld] = useState("");
   const [nw, setNw] = useState("");
   const [conf, setConf] = useState("");
@@ -20,7 +21,7 @@ export function AdminProfile({ admin, onUpdate }: any) {
     if (old !== admin.password) return setMsg({ t: "e", v: "বর্তমান পাসওয়ার্ড ভুল" });
     if (!nw || nw.length < 4) return setMsg({ t: "e", v: "কমপক্ষে ৪ অক্ষর" });
     if (nw !== conf) return setMsg({ t: "e", v: "নতুন পাসওয়ার্ড মিলছে না" });
-    onUpdate({ ...admin, password: nw, isTemp: false });
+    onUpdate(nw, false);
     setOld(""); setNw(""); setConf("");
     setMsg({ t: "s", v: "পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে" });
   };
@@ -111,7 +112,7 @@ export function AdminProfile({ admin, onUpdate }: any) {
   );
 }
 
-export function AdminManagePage({ admins, onAdd, onRemove, onResetPw, currentAdminId }: any) {
+export function AdminManagePage({ admins, onAdd, onDelete, onResetPw, currentAdminId }: any) {
   const [addModal, setAddModal] = useState(false);
   const [resetTarget, setReset] = useState<any>(null);
   const [delTarget, setDel] = useState<any>(null);
@@ -267,7 +268,7 @@ export function AdminManagePage({ admins, onAdd, onRemove, onResetPw, currentAdm
         {delTarget && (
           <ConfirmDelete 
             message={<><b>{delTarget.name}</b> (@{delTarget.username}) কে remove করবেন?</>} 
-            onConfirm={() => { onRemove(delTarget.id); setDel(null); }} 
+            onConfirm={() => { onDelete(delTarget.id); setDel(null); }} 
             onClose={() => setDel(null)} 
           />
         )}

@@ -138,6 +138,7 @@ export function ConfirmDelete({ message, onConfirm, onClose }: { message: React.
 }
 
 export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isSuperAdmin, pendingCount }: any) {
+  console.log("Drawer role:", role, "isSuperAdmin:", isSuperAdmin);
   const adminNav = [
     { id: "home", label: "প্রজেক্টসমূহ", icon: Home },
     { id: "log", label: "Activity Log", icon: ClipboardList },
@@ -150,7 +151,7 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
     { id: "expenses", label: "প্রজেক্ট ব্যয়", icon: Building2 },
     { id: "profile", label: "প্রোফাইল", icon: User }
   ];
-  const nav = role === "admin" ? adminNav : clientNav;
+  const nav = (role === "admin" || role === "superadmin") ? adminNav : clientNav;
   const color = role === "client" ? ac(user?.id || "") : (isSuperAdmin ? "#f59e0b" : "#3b82f6");
 
   return (
@@ -230,7 +231,7 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
 }
 
 export function BottomBar({ role, page, setPage }: any) {
-  if (role === "admin") return null;
+  if (role === "admin" || role === "superadmin") return null;
   const tabs = [
     { id: "installments", label: "কিস্তি", icon: Receipt },
     { id: "receipts", label: "রিসিপ্ট", icon: Receipt },
@@ -258,25 +259,23 @@ export function BottomBar({ role, page, setPage }: any) {
   );
 }
 
-export function Login({ clients, admins, onLogin }: any) {
+export function Login({ onLogin }: any) {
   const [role, setRole] = useState("admin");
   const [id, setId] = useState("");
   const [pass, setPass] = useState("");
   const [show, setShow] = useState(false);
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const attempt = () => {
+  const attempt = async () => {
+    if (!id || !pass) return setErr("সব তথ্য দিন");
     setErr("");
-    if (role === "admin") {
-      const adm = admins.find((a: any) => a.username.toLowerCase() === id.trim().toLowerCase());
-      if (!adm) return setErr("এই username এ কোনো অ্যাকাউন্ট নেই");
-      if (pass !== adm.password) return setErr("পাসওয়ার্ড ভুল");
-      return onLogin("admin", adm);
+    setLoading(true);
+    const res = await onLogin(role, id, pass);
+    if (res?.error) {
+      setErr(res.error);
+      setLoading(false);
     }
-    const c = clients.find((c: any) => c.id.toLowerCase() === id.trim().toLowerCase());
-    if (!c) return setErr("এই Customer ID তে কোনো অ্যাকাউন্ট নেই");
-    if (pass !== c.password) return setErr("পাসওয়ার্ড ভুল");
-    onLogin("client", c);
   };
 
   return (
@@ -315,7 +314,7 @@ export function Login({ clients, admins, onLogin }: any) {
         <FG label={role === "admin" ? "Username" : "Customer ID"}>
           <input 
             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
-            placeholder={role === "admin" ? "superadmin" : "যেমন: C001"} 
+            placeholder={role === "admin" ? "যেমন: admin" : "যেমন: C001"} 
             value={id} onChange={e => setId(e.target.value)} 
           />
         </FG>
@@ -346,10 +345,11 @@ export function Login({ clients, admins, onLogin }: any) {
         </AnimatePresence>
 
         <button 
-          className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors mb-6" 
+          disabled={loading}
+          className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors mb-6 disabled:opacity-50" 
           onClick={attempt}
         >
-          প্রবেশ করুন
+          {loading ? "লোডিং..." : "প্রবেশ করুন"}
         </button>
 
         <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs text-slate-500">

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -19,6 +19,16 @@ import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
 import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { CategoryIcon, CategoryColor } from "./components/Shared";
+
+// Firebase
+import { 
+  onSnapshot, collection, doc, setDoc, updateDoc, deleteDoc, 
+  query, where, getDocs, writeBatch, orderBy, limit, getDoc 
+} from "firebase/firestore";
+import { 
+  onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut 
+} from "firebase/auth";
+import { db, auth as fbAuth, handleFirestoreError, OperationType } from "./firebase";
 
 // --- Components that were in App.tsx ---
 
@@ -389,158 +399,370 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
 
 // ROOT APP COMPONENT
 export default function App() {
-  const [auth, setAuth] = useState<any>(null);
+  const [auth, setAuth] = useState<any>(() => {
+    const saved = localStorage.getItem("marq_auth");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  useEffect(() => {
+    if (auth) localStorage.setItem("marq_auth", JSON.stringify(auth));
+    else localStorage.removeItem("marq_auth");
+  }, [auth]);
   const [page, setPage] = useState("home");
-  const [projects, setProjects] = useState(SP);
-  const [clients, setClients] = useState(SC);
-  const [instDefs, setInstDefs] = useState(SD);
-  const [payments, setPayments] = useState(SPA);
-  const [expenses, setExpenses] = useState(SE);
-  const [admins, setAdmins] = useState(INIT_ADMINS);
-  const [logs, setLogs] = useState(INIT_LOGS);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [instDefs, setInstDefs] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [drawer, setDrawer] = useState(false);
   const [selProject, setSelProject] = useState<string | null>(null);
   const [forceChangePw, setForceChangePw] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const addLog = (adminUser: any, action: string, target: string, detail: string, projectId: string | null = null) => {
-    setLogs(prev => [{ id: uid("LOG"), adminId: adminUser.id, adminName: adminUser.name, action, target, detail: detail || "", projectId, ts: tsNow() }, ...prev]);
+  // Firestore Real-time Listeners
+  useEffect(() => {
+    // Initial data load and superadmin bootstrap
+    const init = async () => {
+      try {
+        // Always ensure superadmin exists
+        const superAdmin = { id: "superadmin", name: "Super Admin", username: "superadmin", password: "1234", role: "superadmin", isTemp: false };
+        await setDoc(doc(db, "admins", "superadmin"), superAdmin);
+      } catch (e) {
+        console.error("Init error:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+
+    const unsubProjects = onSnapshot(collection(db, "projects"), (s) => setProjects(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "projects"));
+    const unsubClients = onSnapshot(collection(db, "clients"), (s) => setClients(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
+    const unsubInstDefs = onSnapshot(collection(db, "instDefs"), (s) => setInstDefs(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "instDefs"));
+    const unsubPayments = onSnapshot(collection(db, "payments"), (s) => setPayments(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
+    const unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => setExpenses(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
+    const unsubAdmins = onSnapshot(collection(db, "admins"), (s) => setAdmins(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "admins"));
+    const unsubLogs = onSnapshot(query(collection(db, "logs"), orderBy("ts", "desc"), limit(100)), (s) => setLogs(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
+
+    return () => {
+      unsubProjects(); unsubClients(); unsubInstDefs(); unsubPayments(); unsubExpenses(); unsubAdmins(); unsubLogs();
+    };
+  }, []);
+
+  const addLog = async (adminUser: any, action: string, target: string, detail: string, projectId: string | null = null) => {
+    if (!adminUser) return;
+    const newLog = { id: uid("LOG"), adminId: adminUser.id, adminName: adminUser.name, action, target, detail: detail || "", projectId, ts: tsNow() };
+    try {
+      await setDoc(doc(db, "logs", newLog.id), newLog);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, `logs/${newLog.id}`);
+    }
   };
 
-  const login = (role: string, user: any) => {
-    setAuth({ role, user });
-    if (role === "admin" && user.isTemp) { setForceChangePw(true); return; }
-    setPage(role === "admin" ? "home" : "installments");
+  const login = async (role: string, id: string, pass: string) => {
+    setLoading(true);
+    try {
+      // Hardcoded bypass for superadmin
+      if (id === "superadmin" && pass === "1234") {
+        const superAdmin = { id: "superadmin", name: "Super Admin", username: "superadmin", password: "1234", role: "superadmin", isTemp: false };
+        setAuth({ role: "superadmin", user: superAdmin });
+        setPage("home");
+        setLoading(false);
+        return;
+      }
+
+      const collectionName = role === "admin" ? "admins" : "clients";
+      
+      if (role === "admin") {
+        const q = query(collection(db, collectionName), where("username", "==", id));
+        const snap = await getDocs(q);
+        console.log("Admin login query result:", snap.empty, "docs length:", snap.docs.length);
+        
+        if (snap.empty) {
+          setLoading(false);
+          return { error: "অ্যাকাউন্টটি খুঁজে পাওয়া যায়নি" };
+        }
+        const userData = snap.docs[0].data();
+        if (userData.password !== pass) {
+          setLoading(false);
+          return { error: "পাসওয়ার্ড ভুল" };
+        }
+        const userRole = userData.role === "superadmin" ? "superadmin" : role;
+        setAuth({ role: userRole, user: userData });
+        if (role === "admin" && userData.isTemp) setForceChangePw(true);
+        setPage(userRole === "admin" || userRole === "superadmin" ? "home" : "installments");
+      } else {
+        // Client login
+        console.log("Attempting client login with ID:", id, "in collection:", collectionName);
+        const docRef = doc(db, collectionName, id);
+        const snap = await getDoc(docRef);
+        console.log("Client login query result (exists):", snap.exists());
+        
+        if (!snap.exists()) {
+          setLoading(false);
+          console.log("Client document does not exist for ID:", id);
+          return { error: "অ্যাকাউন্টটি খুঁজে পাওয়া যায়নি" };
+        }
+        const userData = snap.data();
+        console.log("Client user data:", userData);
+        if (userData.password !== pass) {
+          setLoading(false);
+          console.log("Password mismatch for client ID:", id);
+          return { error: "পাসওয়ার্ড ভুল" };
+        }
+        setAuth({ role: "client", user: userData });
+        setPage("installments");
+      }
+    } catch (e) {
+      console.error("Login error:", e);
+      return { error: "লগইন করতে সমস্যা হয়েছে" };
+    } finally {
+      setLoading(false);
+    }
   };
   
-  const logout = () => { setAuth(null); setPage("home"); setSelProject(null); setForceChangePw(false); };
+  const logout = () => { 
+    setAuth(null); setPage("home"); setSelProject(null); setForceChangePw(false); 
+  };
 
   const isSuperAdmin = auth?.user?.role === "superadmin";
-  const adminUser = auth?.role === "admin" ? auth.user : null;
+  const adminUser = (auth?.role === "admin" || auth?.role === "superadmin") ? auth.user : null;
 
   // Client CRUD
-  const updateClient = (c: any, oldId: string) => {
-    setClients(x => x.map(cl => cl.id === (oldId || c.id) ? c : cl));
-    if (oldId && oldId !== c.id) {
-      setPayments(x => x.map(p => p.clientId === oldId ? { ...p, clientId: c.id } : p));
-      addLog(adminUser, "client_id_change", `${oldId} → ${c.id}`, `${c.name} এর ID পরিবর্তন`, c.projectId);
-    } else {
-      addLog(adminUser, "client_edit", `${c.id} - ${c.name}`, "তথ্য আপডেট", c.projectId);
+  const updateClient = async (c: any, oldId: string) => {
+    try {
+      await setDoc(doc(db, "clients", c.id), c);
+      if (oldId && oldId !== c.id) {
+        // Migrate payments
+        const batch = writeBatch(db);
+        const clientPayments = payments.filter(p => p.clientId === oldId);
+        clientPayments.forEach(p => {
+          batch.update(doc(db, "payments", p.id), { clientId: c.id });
+        });
+        await batch.commit();
+        await deleteDoc(doc(db, "clients", oldId));
+        addLog(adminUser, "client_id_change", `${oldId} → ${c.id}`, `${c.name} এর ID পরিবর্তন`, c.projectId);
+      } else {
+        addLog(adminUser, "client_edit", `${c.id} - ${c.name}`, "তথ্য আপডেট", c.projectId);
+      }
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `clients/${c.id}`);
     }
-    if (auth?.role === "client" && auth.user?.id === (oldId || c.id)) setAuth((a: any) => ({ ...a, user: c }));
   };
   
-  const addClient = (c: any) => {
+  const addClient = async (c: any) => {
     if (clients.find(cl => cl.id === c.id)) { alert("এই ID আছে"); return; }
-    setClients(x => [...x, c]);
-    addLog(adminUser, "client_add", `${c.id} - ${c.name}`, "নতুন ক্লাইন্ট", c.projectId);
+    try {
+      await setDoc(doc(db, "clients", c.id), c);
+      addLog(adminUser, "client_add", `${c.id} - ${c.name}`, "নতুন ক্লাইন্ট", c.projectId);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, `clients/${c.id}`);
+    }
   };
   
-  const deleteClient = (id: string) => {
+  const deleteClient = async (id: string) => {
     const c = clients.find(cl => cl.id === id);
-    setClients(x => x.filter(cl => cl.id !== id));
-    if (c) addLog(adminUser, "client_delete", `${c.id} - ${c.name}`, "মুছে ফেলা হয়েছে", c.projectId);
+    try {
+      await deleteDoc(doc(db, "clients", id));
+      if (c) addLog(adminUser, "client_delete", `${c.id} - ${c.name}`, "মুছে ফেলা হয়েছে", c.projectId);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `clients/${id}`);
+    }
   };
   
-  const addBulkClients = (bulk: any[]) => {
-    setClients(prev => { 
-      const map = new Map(prev.map(c => [c.id, c])); 
-      bulk.forEach(c => map.set(c.id, { ...((map.get(c.id) as any) || {}), ...c })); 
-      return Array.from(map.values()); 
+  const addBulkClients = async (bulk: any[]) => {
+    const batch = writeBatch(db);
+    bulk.forEach(c => {
+      batch.set(doc(db, "clients", c.id), c);
     });
-    addLog(adminUser, "client_add", `${bulk.length}জন ক্লাইন্ট`, "Bulk import");
+    try {
+      await batch.commit();
+      addLog(adminUser, "client_add", `${bulk.length}জন ক্লাইন্ট`, "Bulk import");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, "clients (bulk)");
+    }
   };
 
   // Project CRUD
-  const addProject = (p: any) => { setProjects(x => [...x, p]); addLog(adminUser, "project_add", p.name, "নতুন প্রজেক্ট"); };
-  const deleteProject = (id: string) => {
+  const addProject = async (p: any) => { 
+    try {
+      await setDoc(doc(db, "projects", p.id), p);
+      addLog(adminUser, "project_add", p.name, "নতুন প্রজেক্ট"); 
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, `projects/${p.id}`);
+    }
+  };
+  const deleteProject = async (id: string) => {
     const prj = projects.find(p => p.id === id);
     const ids = clients.filter(c => c.projectId === id).map(c => c.id);
-    setProjects(x => x.filter(p => p.id !== id));
-    setClients(x => x.filter(c => c.projectId !== id));
-    setInstDefs(x => x.filter(d => d.projectId !== id));
-    setExpenses(x => x.filter(e => e.projectId !== id));
-    setPayments(x => x.filter(p => !ids.includes(p.clientId)));
-    if (prj) addLog(adminUser, "project_delete", prj.name, "মুছে ফেলা হয়েছে");
+    
+    const batch = writeBatch(db);
+    batch.delete(doc(db, "projects", id));
+    clients.filter(c => c.projectId === id).forEach(c => batch.delete(doc(db, "clients", c.id)));
+    instDefs.filter(d => d.projectId === id).forEach(d => batch.delete(doc(db, "instDefs", d.id)));
+    expenses.filter(e => e.projectId === id).forEach(e => batch.delete(doc(db, "expenses", e.id)));
+    payments.filter(p => ids.includes(p.clientId)).forEach(p => batch.delete(doc(db, "payments", p.id)));
+
+    try {
+      await batch.commit();
+      if (prj) addLog(adminUser, "project_delete", prj.name, "মুছে ফেলা হয়েছে");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `projects/${id}`);
+    }
   };
 
   // InstDef CRUD
-  const addInstDef = (d: any) => {
-    setInstDefs(x => [...x, d]);
-    const prj = projects.find(p => p.id === d.projectId);
-    addLog(adminUser, "instdef_add", d.title, `${prj?.name || ""} · ৳${d.targetAmount}`, d.projectId);
+  const addInstDef = async (d: any) => {
+    try {
+      await setDoc(doc(db, "instDefs", d.id), d);
+      const prj = projects.find(p => p.id === d.projectId);
+      addLog(adminUser, "instdef_add", d.title, `${prj?.name || ""} · ৳${d.targetAmount}`, d.projectId);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, `instDefs/${d.id}`);
+    }
   };
-  const deleteInstDef = (id: string, projectId: string) => {
+  const deleteInstDef = async (id: string, projectId: string) => {
     const d = instDefs.find(x => x.id === id);
-    setInstDefs(x => x.filter(x => x.id !== id));
-    if (d) addLog(adminUser, "instdef_delete", d.title, "কিস্তি কলাম মুছে ফেলা হয়েছে", projectId);
+    try {
+      await deleteDoc(doc(db, "instDefs", id));
+      if (d) addLog(adminUser, "instdef_delete", d.title, "কিস্তি কলাম মুছে ফেলা হয়েছে", projectId);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `instDefs/${id}`);
+    }
   };
 
   // Payment CRUD
-  const addPayment = (p: any) => {
-    setPayments(x => [...x, p]);
-    const c = clients.find(cl => cl.id === p.clientId);
-    const d = instDefs.find(di => di.id === p.instDefId);
-    const action = p.status === "approved" ? "payment_add" : "payment_pending";
-    addLog(adminUser, action, `${c?.id} - ${c?.name}`, `${BDT(p.amount)} — ${d?.title}${p.status === "pending" ? " (pending)" : ""}`, c?.projectId);
-  };
-  const deletePayment = (id: string) => {
-    const p = payments.find(x => x.id === id);
-    setPayments(x => x.filter(x => x.id !== id));
-    if (p) {
+  const addPayment = async (p: any) => {
+    try {
+      await setDoc(doc(db, "payments", p.id), p);
       const c = clients.find(cl => cl.id === p.clientId);
       const d = instDefs.find(di => di.id === p.instDefId);
-      addLog(adminUser, "payment_delete", `${c?.name || p.clientId}`, `${BDT(p.amount)} — ${d?.title}`, c?.projectId);
+      const action = p.status === "approved" ? "payment_add" : "payment_pending";
+      addLog(adminUser, action, `${c?.id} - ${c?.name}`, `${BDT(p.amount)} — ${d?.title}${p.status === "pending" ? " (pending)" : ""}`, c?.projectId);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, `payments/${p.id}`);
     }
   };
-  const approvePayment = (id: string) => {
+  const deletePayment = async (id: string) => {
     const p = payments.find(x => x.id === id);
-    setPayments(x => x.map(pay => pay.id === id ? { ...pay, status: "approved", approvedBy: adminUser.id } : pay));
-    if (p) {
-      const c = clients.find(cl => cl.id === p.clientId);
-      const d = instDefs.find(di => di.id === p.instDefId);
-      addLog(adminUser, "payment_approved", `${c?.name || p.clientId}`, `${BDT(p.amount)} — ${d?.title}`, c?.projectId);
+    try {
+      await deleteDoc(doc(db, "payments", id));
+      if (p) {
+        const c = clients.find(cl => cl.id === p.clientId);
+        const d = instDefs.find(di => di.id === p.instDefId);
+        addLog(adminUser, "payment_delete", `${c?.name || p.clientId}`, `${BDT(p.amount)} — ${d?.title}`, c?.projectId);
+      }
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `payments/${id}`);
     }
   };
-  const rejectPayment = (id: string) => {
-    const p = payments.find(x => x.id === id);
-    setPayments(x => x.filter(pay => pay.id !== id));
-    if (p) {
-      const c = clients.find(cl => cl.id === p.clientId);
-      const d = instDefs.find(di => di.id === p.instDefId);
-      addLog(adminUser, "payment_rejected", `${c?.name || p.clientId}`, `${BDT(p.amount)} — ${d?.title}`, c?.projectId);
+  const approvePayment = async (id: string) => {
+    try {
+      await updateDoc(doc(db, "payments", id), { status: "approved", approvedBy: adminUser.id });
+      const p = payments.find(x => x.id === id);
+      if (p) {
+        const c = clients.find(cl => cl.id === p.clientId);
+        const d = instDefs.find(di => di.id === p.instDefId);
+        addLog(adminUser, "payment_approved", `${c?.id} - ${c?.name}`, `${BDT(p.amount)} — ${d?.title}`, c?.projectId);
+      }
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `payments/${id}`);
+    }
+  };
+  const rejectPayment = async (id: string) => {
+    try {
+      await updateDoc(doc(db, "payments", id), { status: "rejected" });
+      const p = payments.find(x => x.id === id);
+      if (p) {
+        const c = clients.find(cl => cl.id === p.clientId);
+        const d = instDefs.find(di => di.id === p.instDefId);
+        addLog(adminUser, "payment_rejected", `${c?.id} - ${c?.name}`, `${BDT(p.amount)} — ${d?.title}`, c?.projectId);
+      }
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `payments/${id}`);
     }
   };
 
   // Expense CRUD
-  const addExpense = (e: any) => {
-    setExpenses(x => [...x, e]);
-    const prj = projects.find(p => p.id === e.projectId);
-    addLog(adminUser, "expense_add", prj?.name || e.projectId, `${e.category} · ${BDT(e.amount)}`, e.projectId);
+  const addExpense = async (e: any) => {
+    try {
+      await setDoc(doc(db, "expenses", e.id), e);
+      addLog(adminUser, "expense_add", e.category, `${BDT(e.amount)} — ${e.description}`, e.projectId);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `expenses/${e.id}`);
+    }
   };
-  const deleteExpense = (id: string) => {
+  const deleteExpense = async (id: string) => {
     const e = expenses.find(x => x.id === id);
-    setExpenses(x => x.filter(x => x.id !== id));
-    if (e) addLog(adminUser, "expense_delete", e.category, BDT(e.amount), e.projectId);
+    try {
+      await deleteDoc(doc(db, "expenses", id));
+      if (e) addLog(adminUser, "expense_delete", e.category, `${BDT(e.amount)} — ${e.description}`, e.projectId);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `expenses/${id}`);
+    }
   };
 
   // Admin CRUD
-  const addAdmin = (adm: any) => { setAdmins(x => [...x, adm]); addLog(adminUser, "admin_add", adm.name, `@${adm.username}`); };
-  const removeAdmin = (id: string) => { const adm = admins.find(a => a.id === id); setAdmins(x => x.filter(a => a.id !== id)); if (adm) addLog(adminUser, "admin_remove", adm.name, `@${adm.username}`); };
-  const resetAdminPw = (id: string, tempPw: string) => { const adm = admins.find(a => a.id === id); setAdmins(x => x.map(a => a.id === id ? { ...a, password: tempPw, isTemp: true } : a)); if (adm) addLog(adminUser, "admin_reset_pw", adm.name, "Temporary password সেট"); };
-  const updateAdminSelf = (updated: any) => { setAdmins(x => x.map(a => a.id === updated.id ? updated : a)); setAuth((a: any) => ({ ...a, user: updated })); addLog(updated, "pw_change", updated.name, "নিজের password পরিবর্তন"); };
+  const addAdmin = async (a: any) => {
+    try {
+      await setDoc(doc(db, "admins", a.id), a);
+      addLog(adminUser, "admin_add", a.name, a.role);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, `admins/${a.id}`);
+    }
+  };
+  const removeAdmin = async (id: string) => {
+    const a = admins.find(x => x.id === id);
+    try {
+      await deleteDoc(doc(db, "admins", id));
+      if (a) addLog(adminUser, "admin_remove", a.name, a.role);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `admins/${id}`);
+    }
+  };
+  const resetAdminPw = async (id: string, newPw: string) => {
+    try {
+      await updateDoc(doc(db, "admins", id), { password: newPw, isTemp: true });
+      const a = admins.find(x => x.id === id);
+      if (a) addLog(adminUser, "admin_reset_pw", a.name, "Temporary password সেট");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `admins/${id}`);
+    }
+  };
+  const changeMyPw = async (newPw: string, wasTemp: boolean) => {
+    if (!auth?.user?.username) return;
+    try {
+      // Find the doc by username since that's our unique ID for admins
+      const q = query(collection(db, "admins"), where("username", "==", auth.user.username));
+      const snap = await getDocs(q);
+      if (snap.empty) throw new Error("Admin not found");
+      
+      const docId = snap.docs[0].id;
+      await updateDoc(doc(db, "admins", docId), { password: newPw, isTemp: false });
+      
+      const updatedUser = { ...auth.user, password: newPw, isTemp: false };
+      setAuth({ ...auth, user: updatedUser });
+      setForceChangePw(false);
+      addLog(updatedUser, "pw_change", updatedUser.name, wasTemp ? "Temporary password পরিবর্তন" : "পাসওয়ার্ড পরিবর্তন");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `admins/${auth.user.username}`);
+    }
+  };
 
-  if (!auth) return <Login clients={clients} admins={admins} onLogin={login} />;
-  const { role, user } = auth;
-
-  if (forceChangePw && role === "admin") return (
-    <ForceChangePw admin={user} onDone={(newPw: string, changed: boolean) => {
-      const updated = { ...user, password: newPw, isTemp: false };
-      setAdmins(x => x.map(a => a.id === user.id ? updated : a));
-      setAuth((a: any) => ({ ...a, user: updated }));
-      if (changed) addLog(updated, "pw_change", updated.name, "প্রথম login এ password পরিবর্তন");
-      setForceChangePw(false); setPage("home");
-    }} />
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+        <div className="text-sm font-bold text-slate-500">লোডিং...</div>
+      </div>
+    </div>
   );
+
+  if (!auth) return <Login onLogin={login} />;
+  if (forceChangePw && adminUser) return <ForceChangePw admin={adminUser} onDone={changeMyPw} />;
+
+  const { role, user } = auth;
 
   const curProject = selProject ? projects.find(p => p.id === selProject) : null;
   const PAGE_TITLES: Record<string, string> = { home: "প্রজেক্টসমূহ", log: "Activity Log", admins: "Admin ম্যানেজমেন্ট", profile: "প্রোফাইল", installments: "আমার কিস্তি", receipts: "রিসিপ্টসমূহ", expenses: "প্রজেক্ট ব্যয়" };
@@ -574,30 +796,30 @@ export default function App() {
         user={user} onLogout={logout} open={drawer} onClose={() => setDrawer(false)} 
         isSuperAdmin={isSuperAdmin} pendingCount={pendingCount} 
       />
+      <div className="fixed bottom-4 right-4 bg-black text-white p-2 rounded text-xs z-[200]">Role: {role}</div>
 
       <main className="pt-20 px-4 pb-24 max-w-4xl mx-auto">
-        {role === "admin" && !selProject && page === "home" && (
+        {(role === "admin" || role === "superadmin") && !selProject && page === "home" && (
           <AdminHome 
             projects={projects} clients={clients} payments={payments} instDefs={instDefs} expenses={expenses} 
             onSelect={(id: string) => setSelProject(id)} onAddProject={addProject} onDeleteProject={deleteProject} 
             isSuperAdmin={isSuperAdmin} onApprovePayment={approvePayment} onRejectPayment={rejectPayment} 
           />
         )}
-        {role === "admin" && !selProject && page === "log" && <AuditLogPage logs={logs} projects={projects} />}
+        {(role === "admin" || role === "superadmin") && !selProject && page === "log" && <AuditLogPage logs={logs} projects={projects} />}
         
-        {/* Placeholders for other components to avoid token limits, I will implement them in the next steps */}
-        {role === "admin" && !selProject && page === "profile" && <AdminProfile adminUser={adminUser} onUpdate={(u: any) => { setAdmins(x => x.map(a => a.id === u.id ? u : a)); setAuth({ ...auth, user: u }); addLog(adminUser, "update", "Admin", `Updated own profile`); }} />}
-        {role === "admin" && !selProject && page === "admins" && isSuperAdmin && <AdminManagePage admins={admins} onAdd={(a: any) => { setAdmins([...admins, a]); addLog(adminUser, "create", "Admin", `Added admin ${a.name}`); }} onUpdate={(a: any) => { setAdmins(x => x.map(ad => ad.id === a.id ? a : ad)); addLog(adminUser, "update", "Admin", `Updated admin ${a.name}`); }} onDelete={(id: string) => { setAdmins(x => x.filter(a => a.id !== id)); addLog(adminUser, "delete", "Admin", `Deleted admin ${id}`); }} />}
-        {role === "admin" && selProject && curProject && (
+        {(role === "admin" || role === "superadmin") && !selProject && page === "profile" && <AdminProfile admin={adminUser} onUpdate={changeMyPw} />}
+        {(role === "admin" || role === "superadmin") && !selProject && page === "admins" && isSuperAdmin && <AdminManagePage admins={admins} onAdd={addAdmin} onUpdate={addAdmin} onDelete={removeAdmin} onResetPw={resetAdminPw} currentAdminId={adminUser.id} />}
+        {(role === "admin" || role === "superadmin") && selProject && curProject && (
           <ProjectDetail 
             project={curProject} clients={clients} allClients={clients} instDefs={instDefs} payments={payments} expenses={expenses} logs={logs} isSuperAdmin={isSuperAdmin}
             onBack={() => setSelProject(null)}
-            onAddDef={(d: any) => { setInstDefs([...instDefs, d]); addLog(adminUser, "create", "Installment", `Added installment ${d.title}`, curProject.id); }}
-            onDeleteInstDef={(id: string) => { setInstDefs(x => x.filter(d => d.id !== id)); addLog(adminUser, "delete", "Installment", `Deleted installment`, curProject.id); }}
-            onAddPayment={(p: any) => { setPayments([...payments, p]); addLog(adminUser, "create", "Payment", `Recorded payment of ${BDT(p.amount)}`, curProject.id); }}
-            onDeletePayment={(id: string) => { setPayments(x => x.filter(p => p.id !== id)); addLog(adminUser, "delete", "Payment", `Deleted payment`, curProject.id); }}
-            onAddExpense={(e: any) => { setExpenses([...expenses, e]); addLog(adminUser, "create", "Expense", `Added expense ${BDT(e.amount)} for ${e.category}`, curProject.id); }}
-            onDeleteExpense={(id: string) => { setExpenses(x => x.filter(e => e.id !== id)); addLog(adminUser, "delete", "Expense", `Deleted expense`, curProject.id); }}
+            onAddDef={addInstDef}
+            onDeleteInstDef={deleteInstDef}
+            onAddPayment={addPayment}
+            onDeletePayment={deletePayment}
+            onAddExpense={addExpense}
+            onDeleteExpense={deleteExpense}
             onUpdateClient={updateClient} onAddBulkClients={addBulkClients} onAddClient={addClient} onDeleteClient={deleteClient}
           />
         )}

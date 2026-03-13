@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: admins
+    // Fields: id, name, username, password, role, isTemp
+    //
+    // Collection: projects
+    // Fields: id, name, description
+    //
+    // Collection: clients
+    // Fields: id, projectId, name, fatherHusband, birthDate, phone, email, nid, plot, totalAmount, password, photo, remarks
+    //
+    // Collection: instDefs
+    // Fields: id, projectId, title, dueDate, targetAmount
+    //
+    // Collection: payments
+    // Fields: id, clientId, instDefId, amount, date, note, status, approvedBy
+    //
+    // Collection: expenses
+    // Fields: id, projectId, date, category, description, amount
+    //
+    // Collection: logs
+    // Fields: id, adminId, adminName, action, target, detail, projectId, ts
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+          (request.auth.token.email == "zyhn.ab@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isClient() {
+      return isAuthenticated() && exists(/databases/$(database)/documents/clients/$(request.auth.uid));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+      // Allow initial admin creation if email matches
+      allow create: if isAuthenticated() && request.auth.token.email == "zyhn.ab@gmail.com" && request.auth.token.email_verified == true;
+    }
+
+    match /projects/{projectId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /clients/{clientId} {
+      allow read: if isAdmin() || isOwner(clientId);
+      allow write: if isAdmin();
+    }
+
+    match /instDefs/{instDefId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.clientId == request.auth.uid);
+      allow create: if isAdmin() || (isAuthenticated() && request.resource.data.clientId == request.auth.uid && request.resource.data.status == 'pending');
+      allow update, delete: if isAdmin();
+    }
+
+    match /expenses/{expenseId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
