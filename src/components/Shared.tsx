@@ -138,7 +138,6 @@ export function ConfirmDelete({ message, onConfirm, onClose }: { message: React.
 }
 
 export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isSuperAdmin, pendingCount }: any) {
-  console.log("Drawer role:", role, "isSuperAdmin:", isSuperAdmin);
   const adminNav = [
     { id: "home", label: "প্রজেক্টসমূহ", icon: Home },
     { id: "log", label: "Activity Log", icon: ClipboardList },

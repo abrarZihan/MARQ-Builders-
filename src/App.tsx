@@ -464,7 +464,7 @@ export default function App() {
     setLoading(true);
     try {
       // Hardcoded bypass for superadmin
-      if (id === "superadmin" && pass === "1234") {
+      if (role === "admin" && id === "superadmin" && pass === "1234") {
         const superAdmin = { id: "superadmin", name: "Super Admin", username: "superadmin", password: "1234", role: "superadmin", isTemp: false };
         setAuth({ role: "superadmin", user: superAdmin });
         setPage("home");
@@ -477,7 +477,6 @@ export default function App() {
       if (role === "admin") {
         const q = query(collection(db, collectionName), where("username", "==", id));
         const snap = await getDocs(q);
-        console.log("Admin login query result:", snap.empty, "docs length:", snap.docs.length);
         
         if (snap.empty) {
           setLoading(false);
@@ -494,21 +493,16 @@ export default function App() {
         setPage(userRole === "admin" || userRole === "superadmin" ? "home" : "installments");
       } else {
         // Client login
-        console.log("Attempting client login with ID:", id, "in collection:", collectionName);
         const docRef = doc(db, collectionName, id);
         const snap = await getDoc(docRef);
-        console.log("Client login query result (exists):", snap.exists());
         
         if (!snap.exists()) {
           setLoading(false);
-          console.log("Client document does not exist for ID:", id);
           return { error: "অ্যাকাউন্টটি খুঁজে পাওয়া যায়নি" };
         }
         const userData = snap.data();
-        console.log("Client user data:", userData);
         if (userData.password !== pass) {
           setLoading(false);
-          console.log("Password mismatch for client ID:", id);
           return { error: "পাসওয়ার্ড ভুল" };
         }
         setAuth({ role: "client", user: userData });
@@ -796,7 +790,6 @@ export default function App() {
         user={user} onLogout={logout} open={drawer} onClose={() => setDrawer(false)} 
         isSuperAdmin={isSuperAdmin} pendingCount={pendingCount} 
       />
-      <div className="fixed bottom-4 right-4 bg-black text-white p-2 rounded text-xs z-[200]">Role: {role}</div>
 
       <main className="pt-20 px-4 pb-24 max-w-4xl mx-auto">
         {(role === "admin" || role === "superadmin") && !selProject && page === "home" && (
