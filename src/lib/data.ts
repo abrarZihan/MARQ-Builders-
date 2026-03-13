@@ -116,4 +116,5 @@ export const ACTION_META: Record<string, any> = {
   admin_remove:     { icon: "ShieldMinus", color: "text-rose-600", bg: "bg-rose-100", label: "Admin Remove" },
   admin_reset_pw:   { icon: "KeyRound", color: "text-orange-600", bg: "bg-orange-100", label: "Password Reset" },
   pw_change:        { icon: "Key", color: "text-cyan-700", bg: "bg-cyan-100", label: "Password Change" },
+  admin_clear_logs: { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100", label: "Log Clear" },
 };

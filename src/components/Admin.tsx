@@ -48,9 +48,10 @@ export function LogRow({ log, projects }: any) {
   );
 }
 
-export function AuditLogPage({ logs, projects }: any) {
+export function AuditLogPage({ logs, projects, isSuperAdmin, onClearLogs }: any) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   
   const filtered = [...logs].sort((a, b) => b.ts.localeCompare(a.ts)).filter(l => {
     const matchFilter = filter === "all" || l.action.startsWith(filter);
@@ -74,6 +75,15 @@ export function AuditLogPage({ logs, projects }: any) {
           <h1 className="text-xl font-black text-slate-900">Activity Log</h1>
           <p className="text-xs font-medium text-slate-500">{filtered.length}টি রেকর্ড</p>
         </div>
+        {isSuperAdmin && logs.length > 0 && (
+          <button 
+            onClick={() => setShowClearConfirm(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold hover:bg-rose-100 transition-colors"
+          >
+            <Trash2 size={14} />
+            Log মুছুন
+          </button>
+        )}
       </div>
       
       <input 
@@ -104,6 +114,14 @@ export function AuditLogPage({ logs, projects }: any) {
           filtered.map(l => <LogRow key={l.id} log={l} projects={projects} />)
         )}
       </div>
+
+      {showClearConfirm && (
+        <ConfirmDelete 
+          message="সব লগ মুছে যাবে। এই কাজ আর ফিরিয়ে আনা যাবে না।" 
+          onConfirm={() => { onClearLogs(); setShowClearConfirm(false); }} 
+          onClose={() => setShowClearConfirm(false)} 
+        />
+      )}
     </motion.div>
   );
 }

@@ -724,6 +724,28 @@ export default function App() {
       handleFirestoreError(e, OperationType.UPDATE, `admins/${id}`);
     }
   };
+
+  const clearLogs = async () => {
+    if (!isSuperAdmin) return;
+    try {
+      const snap = await getDocs(collection(db, "logs"));
+      const docs = snap.docs;
+      
+      // Firestore writeBatch has a limit of 500 operations.
+      // We process in chunks of 500.
+      for (let i = 0; i < docs.length; i += 500) {
+        const batch = writeBatch(db);
+        const chunk = docs.slice(i, i + 500);
+        chunk.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+      
+      addLog(adminUser, "admin_clear_logs", "All Logs", "Logs cleared by Super Admin");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, "logs");
+    }
+  };
+
   const changeMyPw = async (newPw: string, wasTemp: boolean) => {
     if (!auth?.user?.username) return;
     try {
@@ -799,7 +821,12 @@ export default function App() {
             isSuperAdmin={isSuperAdmin} onApprovePayment={approvePayment} onRejectPayment={rejectPayment} 
           />
         )}
-        {(role === "admin" || role === "superadmin") && !selProject && page === "log" && <AuditLogPage logs={logs} projects={projects} />}
+        {(role === "admin" || role === "superadmin") && !selProject && page === "log" && (
+          <AuditLogPage 
+            logs={logs} projects={projects} 
+            isSuperAdmin={isSuperAdmin} onClearLogs={clearLogs} 
+          />
+        )}
         
         {(role === "admin" || role === "superadmin") && !selProject && page === "profile" && <AdminProfile admin={adminUser} onUpdate={changeMyPw} />}
         {(role === "admin" || role === "superadmin") && !selProject && page === "admins" && isSuperAdmin && <AdminManagePage admins={admins} onAdd={addAdmin} onUpdate={addAdmin} onDelete={removeAdmin} onResetPw={resetAdminPw} currentAdminId={adminUser.id} />}
