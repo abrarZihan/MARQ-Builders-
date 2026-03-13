@@ -6,7 +6,7 @@ import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
 import { ClientInfoPage } from "./ClientInfo";
 import { CellPaySheet, AddDefSheet, AddExpSheet } from "./ProjectModals";
-import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus } from "lucide-react";
+import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer } from "lucide-react";
 
 export function ProjectDetail({ project, clients, allClients, instDefs, payments, expenses, logs, isSuperAdmin, onBack, onAddDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
   const [tab, setTab] = useState("sheet");
@@ -83,7 +83,13 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
 
       {tab === "sheet" && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end gap-3 mb-4 no-print">
+            <button 
+              className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2" 
+              onClick={() => window.print()}
+            >
+              <Printer size={14} /> প্রিন্ট শিট
+            </button>
             <button 
               className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm flex items-center gap-2" 
               onClick={() => setAddDefModal(true)}
@@ -167,8 +173,8 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                           
                           return (
                             <td key={d.id} className="p-2 border-r border-b border-slate-100 text-center align-middle">
-                              <div 
-                                className={cn("rounded-xl p-2 cursor-pointer transition-transform hover:scale-95", m.bg)} 
+                              <button 
+                                className={cn("w-full rounded-xl p-2 cursor-pointer transition-transform active:scale-95", m.bg)} 
                                 onClick={() => setCellModal({ client, instDef: d })}
                               >
                                 <span className={cn("block text-xs font-black whitespace-nowrap", m.text)}>
@@ -183,7 +189,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                                     <div className={cn("h-full rounded-full", m.bar)} style={{ width: `${pct}%` }} />
                                   </div>
                                 )}
-                              </div>
+                              </button>
                             </td>
                           );
                         })}
@@ -323,7 +329,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
         </div>
       )}
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {cellModal && <CellPaySheet client={cellModal.client} instDef={cellModal.instDef} payments={payments} isSuperAdmin={isSuperAdmin} onSave={(p: any) => { onAddPayment(p); setCellModal(null); }} onDelete={(id: string) => onDeletePayment(id)} onClose={() => setCellModal(null)} />}
         {addDefModal && <AddDefSheet projectId={project.id} onSave={(d: any) => { onAddDef(d); setAddDefModal(false); }} onClose={() => setAddDefModal(false)} />}
         {addExpModal && <AddExpSheet projectId={project.id} onSave={(e: any) => { onAddExpense(e); setAddExpModal(false); }} onClose={() => setAddExpModal(false)} />}

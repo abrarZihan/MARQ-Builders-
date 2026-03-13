@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "motion/react";
 import { BDT, BDTshort, ac, initials, uid, todayStr, cn, genClientId } from "../lib/utils";
 import { FG, ConfirmDelete, ClientAvatar, PassCell } from "./Shared";
-import { Trash2, Eye, EyeOff, Edit2, Camera } from "lucide-react";
+import { Trash2, Eye, EyeOff, Edit2, Camera, Printer } from "lucide-react";
 
 export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAddSingle, onDelete, projectId }: any) {
   const [search, setSearch] = useState("");
@@ -94,7 +94,13 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
           <h1 className="text-xl font-black text-slate-900">ক্লাইন্ট তথ্য</h1>
           <p className="text-xs font-medium text-slate-500">{clients.length}জন</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 no-print">
+          <button 
+            className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2" 
+            onClick={() => window.print()}
+          >
+            <Printer size={14} /> প্রিন্ট
+          </button>
           <button 
             className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm" 
             onClick={() => fileRef.current?.click()}
@@ -116,7 +122,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
       />
       
       <input 
-        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all mb-4" 
+        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all mb-4 no-print" 
         placeholder="নাম, আইডি, ফোন বা NID..." 
         value={search} onChange={e => setSearch(e.target.value)} 
       />
@@ -135,7 +141,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
               <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">Password</th>
               <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">Email</th>
               <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">NID</th>
-              <th className="bg-slate-900 text-white p-3 text-center font-bold">Action</th>
+              <th className="bg-slate-900 text-white p-3 text-center font-bold no-print">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -159,7 +165,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
                 <td className="p-3"><PassCell value={c.password || "1234"} /></td>
                 <td className="p-3 text-blue-600 font-medium">{c.email || "—"}</td>
                 <td className="p-3"><span className="bg-amber-50 text-amber-700 px-2 py-1 rounded-md font-mono text-[10px] font-bold">{c.nid || "—"}</span></td>
-                <td className="p-3">
+                <td className="p-3 no-print">
                   <div className="flex gap-1.5 justify-center">
                     <button className="w-7 h-7 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center hover:bg-slate-200 transition-colors" onClick={() => setViewClient(c)}><Eye size={14} /></button>
                     <button className="w-7 h-7 bg-slate-900 text-white rounded-lg flex items-center justify-center hover:bg-slate-800 transition-colors" onClick={() => setEditClient({ ...c })}><Edit2 size={14} /></button>
@@ -176,7 +182,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
         <span className="font-bold">🔐 Username = Phone · Default Password = 1234</span> · ID change করলে সব payment data migrate হয়
       </div>
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {viewClient && <ClientDetailSheet client={viewClient} onClose={() => setViewClient(null)} onEdit={(c: any) => { setViewClient(null); setEditClient({ ...c }); }} />}
         {editClient && <ClientEditSheet client={editClient} allClients={allClients} onSave={(c: any, oldId: string) => { if (c.__new) { onAddSingle(c); } else { onUpdate(c, oldId); } setEditClient(null); }} onClose={() => setEditClient(null)} />}
         {importSheet && importData && <ImportPreviewSheet data={importData} onConfirm={() => { onAddBulk(importData); setImportSheet(false); setImportData(null); }} onClose={() => { setImportSheet(false); setImportData(null); }} />}
@@ -230,8 +236,9 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
           </div>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex gap-3 no-print">
           <button className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2" onClick={() => onEdit(client)}><Edit2 size={16} /> Edit</button>
+          <button className="flex-1 bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2" onClick={() => window.print()}><Printer size={16} /> প্রিন্ট</button>
           <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>বন্ধ</button>
         </div>
       </motion.div>

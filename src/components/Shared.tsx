@@ -154,7 +154,7 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
   const color = role === "client" ? ac(user?.id || "") : (isSuperAdmin ? "#f59e0b" : "#3b82f6");
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {open && (
         <>
           <motion.div 
@@ -238,7 +238,7 @@ export function BottomBar({ role, page, setPage }: any) {
     { id: "profile", label: "প্রোফাইল", icon: User }
   ];
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex z-[100] pb-safe">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex z-[100] pb-safe no-print">
       {tabs.map(t => {
         const Icon = t.icon;
         const isActive = page === t.id;

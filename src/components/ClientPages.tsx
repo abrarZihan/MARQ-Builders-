@@ -147,7 +147,7 @@ export function ClientReceipts({ client, instDefs, payments }: any) {
         </div>
       )}
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {viewR && <ReceiptSheet payment={viewR} instDef={instDefs.find((d: any) => d.id === viewR.instDefId)} client={client} onClose={() => setViewR(null)} />}
       </AnimatePresence>
     </motion.div>

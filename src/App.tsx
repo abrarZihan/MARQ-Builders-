@@ -787,7 +787,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="fixed top-0 left-0 right-0 h-16 bg-slate-900 flex items-center px-4 gap-3 z-[100] shadow-md">
+      <div className="fixed top-0 left-0 right-0 h-16 bg-slate-900 flex items-center px-4 gap-3 z-[100] shadow-md no-print">
         <div className="flex-1 min-w-0">
           <div className="font-black text-lg text-white tracking-tight">MARQ <span className="text-slate-400 font-bold">Builders</span></div>
           <div className="text-[11px] text-slate-400 font-bold tracking-wider uppercase truncate">{topTitle}</div>

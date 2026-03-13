@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { BDT, uid, todayStr } from "../lib/utils";
 import { FG, ConfirmDelete, PBar } from "./Shared";
 import { EXP_CATS } from "../lib/data";
-import { Trash2, Clock } from "lucide-react";
+import { Trash2, Clock, Printer } from "lucide-react";
 
 export function CellPaySheet({ client, instDef, payments, isSuperAdmin, onSave, onDelete, onClose }: any) {
   const existPays = payments.filter((p: any) => p.clientId === client.id && p.instDefId === instDef.id);
@@ -224,7 +224,7 @@ export function ReceiptSheet({ payment, instDef, client, onClose }: any) {
         className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
+        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden no-print" />
         
         <div className="text-center mb-6">
           <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-2xl mx-auto mb-3">🏗️</div>
@@ -253,9 +253,17 @@ export function ReceiptSheet({ payment, instDef, client, onClose }: any) {
           <div className="text-3xl font-black text-emerald-700">{BDT(payment.amount)}</div>
         </div>
         
-        <button className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" onClick={onClose}>
-          বন্ধ করুন
-        </button>
+        <div className="flex gap-3 no-print">
+          <button 
+            className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2" 
+            onClick={() => window.print()}
+          >
+            <Printer size={18} /> প্রিন্ট
+          </button>
+          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>
+            বন্ধ করুন
+          </button>
+        </div>
       </motion.div>
     </div>
   );
