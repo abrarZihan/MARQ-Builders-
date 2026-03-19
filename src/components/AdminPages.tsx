@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
+import { useLanguage } from "../lib/i18n";
 import { motion, AnimatePresence } from "motion/react";
 import { BDT, BDTshort, ac, initials, uid, todayStr, cn } from "../lib/utils";
 import { FG, ConfirmDelete } from "./Shared";
 import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus } from "lucide-react";
 
 export function AdminProfile({ admin, onUpdate }: any) {
+  const { t } = useLanguage();
   if (!admin) return null;
   const [old, setOld] = useState("");
   const [nw, setNw] = useState("");
@@ -17,13 +19,13 @@ export function AdminProfile({ admin, onUpdate }: any) {
   
   const save = () => {
     setMsg(null);
-    if (!old) return setMsg({ t: "e", v: "বর্তমান পাসওয়ার্ড লিখুন" });
-    if (old !== admin.password) return setMsg({ t: "e", v: "বর্তমান পাসওয়ার্ড ভুল" });
-    if (!nw || nw.length < 4) return setMsg({ t: "e", v: "কমপক্ষে ৪ অক্ষর" });
-    if (nw !== conf) return setMsg({ t: "e", v: "নতুন পাসওয়ার্ড মিলছে না" });
+    if (!old) return setMsg({ t: "e", v: t('common.error_enter_current_pw') });
+    if (old !== admin.password) return setMsg({ t: "e", v: t('common.error_wrong_current_pw') });
+    if (!nw || nw.length < 4) return setMsg({ t: "e", v: t('common.error_min_chars', { count: 4 }) });
+    if (nw !== conf) return setMsg({ t: "e", v: t('common.error_pw_mismatch') });
     onUpdate(nw, false);
     setOld(""); setNw(""); setConf("");
-    setMsg({ t: "s", v: "পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে" });
+    setMsg({ t: "s", v: t('common.success_pw_changed') });
   };
 
   return (
@@ -43,7 +45,7 @@ export function AdminProfile({ admin, onUpdate }: any) {
               "px-3 py-1 rounded-lg text-xs font-bold inline-block mt-3",
               admin.role === "superadmin" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
             )}>
-              {admin.role === "superadmin" ? "Super Admin" : "Admin"}
+              {admin.role === "superadmin" ? t('common.super_admin') : t('common.admin')}
             </span>
           </div>
         </div>
@@ -54,10 +56,10 @@ export function AdminProfile({ admin, onUpdate }: any) {
           <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
             <KeyRound size={20} />
           </div>
-          <h2 className="text-lg font-black text-slate-900">পাসওয়ার্ড পরিবর্তন</h2>
+          <h2 className="text-lg font-black text-slate-900">{t('common.change_password')}</h2>
         </div>
         
-        <FG label="বর্তমান পাসওয়ার্ড">
+        <FG label={t('common.current_password')}>
           <div className="relative">
             <input 
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all pr-12" 
@@ -70,7 +72,7 @@ export function AdminProfile({ admin, onUpdate }: any) {
           </div>
         </FG>
         
-        <FG label="নতুন পাসওয়ার্ড">
+        <FG label={t('common.new_password')}>
           <div className="relative">
             <input 
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all pr-12" 
@@ -83,7 +85,7 @@ export function AdminProfile({ admin, onUpdate }: any) {
           </div>
         </FG>
         
-        <FG label="নিশ্চিত করুন">
+        <FG label={t('common.confirm_password')}>
           <input 
             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
             type="password" 
@@ -105,7 +107,7 @@ export function AdminProfile({ admin, onUpdate }: any) {
         </AnimatePresence>
         
         <button className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors mt-2" onClick={save}>
-          পাসওয়ার্ড পরিবর্তন করুন
+          {t('common.change_password')}
         </button>
       </div>
     </motion.div>
@@ -113,6 +115,7 @@ export function AdminProfile({ admin, onUpdate }: any) {
 }
 
 export function AdminManagePage({ admins, onAdd, onDelete, onResetPw, currentAdminId }: any) {
+  const { t } = useLanguage();
   const [addModal, setAddModal] = useState(false);
   const [resetTarget, setReset] = useState<any>(null);
   const [delTarget, setDel] = useState<any>(null);
@@ -125,15 +128,15 @@ export function AdminManagePage({ admins, onAdd, onDelete, onResetPw, currentAdm
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-black text-slate-900">Admin ম্যানেজমেন্ট</h1>
-          <p className="text-xs font-medium text-slate-500">{admins.length}জন Admin</p>
+          <h1 className="text-xl font-black text-slate-900">{t('common.admin_management')}</h1>
+          <p className="text-xs font-medium text-slate-500">{t('common.admins_count', { count: admins.length })}</p>
         </div>
         <button 
           className="bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow-sm flex items-center gap-2" 
           onClick={() => setAddModal(true)}
         >
           <ShieldPlus size={18} />
-          Admin যোগ
+          {t('common.add_admin')}
         </button>
       </div>
 
@@ -154,14 +157,14 @@ export function AdminManagePage({ admins, onAdd, onDelete, onResetPw, currentAdm
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <span className="text-base font-extrabold text-slate-900">{adm.name}</span>
-                  {isSelf && <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700">আপনি</span>}
+                  {isSelf && <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700">{t('common.you')}</span>}
                   <span className={cn(
                     "px-2 py-0.5 rounded-md text-[10px] font-bold",
                     isSuper ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
                   )}>
-                    {isSuper ? "Super Admin" : "Admin"}
+                    {isSuper ? t('common.super_admin') : t('common.admin')}
                   </span>
-                  {adm.isTemp && <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-100 text-orange-600">Temp PW</span>}
+                  {adm.isTemp && <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-100 text-orange-600">{t('common.temp_pw')}</span>}
                 </div>
                 <div className="text-xs font-bold text-slate-400">@{adm.username}</div>
               </div>
@@ -198,16 +201,16 @@ export function AdminManagePage({ admins, onAdd, onDelete, onResetPw, currentAdm
               onClick={e => e.stopPropagation()}
             >
               <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-              <div className="text-xl font-black text-slate-900 mb-6">নতুন Admin যোগ</div>
+              <div className="text-xl font-black text-slate-900 mb-6">{t('common.new_admin_title')}</div>
               
-              <FG label="পূর্ণ নাম">
+              <FG label={t('common.full_name')}>
                 <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={newF.name} onChange={e => s("name", e.target.value)} />
               </FG>
               <div className="grid grid-cols-2 gap-4">
-                <FG label="Username">
+                <FG label={t('common.username')}>
                   <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={newF.username} onChange={e => s("username", e.target.value)} />
                 </FG>
-                <FG label="Temp Password">
+                <FG label={t('common.temp_password')}>
                   <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={newF.password} onChange={e => s("password", e.target.value)} />
                 </FG>
               </div>
@@ -216,14 +219,14 @@ export function AdminManagePage({ admins, onAdd, onDelete, onResetPw, currentAdm
                 <button 
                   className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" 
                   onClick={() => {
-                    if (!newF.name || !newF.username || !newF.password) { alert("সব তথ্য দিন"); return; }
+                    if (!newF.name || !newF.username || !newF.password) { alert(t('common.error_fill_all')); return; }
                     onAdd({ id: uid("adm-"), name: newF.name, username: newF.username, password: newF.password, role: "admin", isTemp: true });
                     setAddModal(false); setNewF({ name: "", username: "", password: "" });
                   }}
                 >
-                  যোগ করুন
+                  {t('common.add_button')}
                 </button>
-                <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={() => setAddModal(false)}>বাতিল</button>
+                <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={() => setAddModal(false)}>{t('common.cancel')}</button>
               </div>
             </motion.div>
           </div>
@@ -240,9 +243,9 @@ export function AdminManagePage({ admins, onAdd, onDelete, onResetPw, currentAdm
               onClick={e => e.stopPropagation()}
             >
               <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-              <div className="text-xl font-black text-slate-900 mb-6">Password Reset — {resetTarget.name}</div>
+              <div className="text-xl font-black text-slate-900 mb-6">{t('common.reset_password_title', { name: resetTarget.name })}</div>
               
-              <FG label="নতুন Temporary Password">
+              <FG label={t('common.new_temp_password')}>
                 <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={tempPw} onChange={e => setTempPw(e.target.value)} />
               </FG>
               
@@ -250,14 +253,14 @@ export function AdminManagePage({ admins, onAdd, onDelete, onResetPw, currentAdm
                 <button 
                   className="flex-1 bg-orange-100 text-orange-700 font-bold py-3.5 rounded-xl hover:bg-orange-200 transition-colors" 
                   onClick={() => {
-                    if (!tempPw) { alert("পাসওয়ার্ড লিখুন"); return; }
+                    if (!tempPw) { alert(t('common.error_enter_pw')); return; }
                     onResetPw(resetTarget.id, tempPw);
                     setReset(null);
                   }}
                 >
-                  Reset করুন
+                  {t('common.reset_button')}
                 </button>
-                <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={() => setReset(null)}>বাতিল</button>
+                <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={() => setReset(null)}>{t('common.cancel')}</button>
               </div>
             </motion.div>
           </div>
@@ -267,7 +270,7 @@ export function AdminManagePage({ admins, onAdd, onDelete, onResetPw, currentAdm
       <AnimatePresence>
         {delTarget && (
           <ConfirmDelete 
-            message={<><b>{delTarget.name}</b> (@{delTarget.username}) কে remove করবেন?</>} 
+            message={<div dangerouslySetInnerHTML={{ __html: t('common.delete_admin_confirm', { name: delTarget.name, username: delTarget.username }) }} />} 
             onConfirm={() => { onDelete(delTarget.id); setDel(null); }} 
             onClose={() => setDel(null)} 
           />

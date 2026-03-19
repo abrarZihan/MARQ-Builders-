@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { BDT, BDTshort, ac, initials, uid, todayStr, cn, clientPaidForDef, cellStatus } from "../lib/utils";
+import { BDT, BDTshort, dotJoin, ac, initials, uid, todayStr, cn, clientPaidForDef, cellStatus } from "../lib/utils";
 import { FG, ConfirmDelete, ClientAvatar, PassCell, PBar, CategoryIcon, CategoryColor } from "./Shared";
 import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
@@ -8,7 +8,10 @@ import { ClientInfoPage } from "./ClientInfo";
 import { CellPaySheet, AddDefSheet, AddExpSheet } from "./ProjectModals";
 import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer } from "lucide-react";
 
+import { useLanguage } from "../lib/i18n";
+
 export function ProjectDetail({ project, clients, allClients, instDefs, payments, expenses, logs, isSuperAdmin, onBack, onAddDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
+  const { t } = useLanguage();
   const [tab, setTab] = useState("sheet");
   const [cellModal, setCellModal] = useState<any>(null);
   const [addDefModal, setAddDefModal] = useState(false);
@@ -26,11 +29,11 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
   const totalDue = Math.max(0, totalTarget - totalCollected);
   
   const TABS = [
-    ["sheet", <span className="flex items-center gap-1.5"><Table size={14} /> শিট</span>], 
-    ["clientinfo", <span className="flex items-center gap-1.5"><Users size={14} /> ক্লাইন্ট</span>], 
-    ["kistisum", <span className="flex items-center gap-1.5"><CreditCard size={14} /> সারাংশ</span>], 
-    ["expenses", <span className="flex items-center gap-1.5"><Building2 size={14} /> ব্যয়</span>], 
-    ["log", <span className="flex items-center gap-1.5"><ClipboardList size={14} /> Log</span>]
+    ["sheet", <span className="flex items-center gap-1.5"><Table size={14} /> {t("project_detail.tab_sheet")}</span>], 
+    ["clientinfo", <span className="flex items-center gap-1.5"><Users size={14} /> {t("project_detail.tab_client")}</span>], 
+    ["kistisum", <span className="flex items-center gap-1.5"><CreditCard size={14} /> {t("project_detail.tab_summary")}</span>], 
+    ["expenses", <span className="flex items-center gap-1.5"><Building2 size={14} /> {t("project_detail.tab_expense")}</span>], 
+    ["log", <span className="flex items-center gap-1.5"><ClipboardList size={14} /> {t("project_detail.tab_log")}</span>]
   ];
 
   return (
@@ -44,24 +47,24 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
         </button>
         <div className="flex-1 min-w-0">
           <div className="text-xl font-black text-slate-900 truncate">{project.name}</div>
-          <div className="text-xs font-bold text-slate-500">{prjClients.length}জন · {prjDefs.length}টি কিস্তি</div>
+          <div className="text-xs font-bold text-slate-500">{t("project_detail.stats", { clients: prjClients.length, insts: prjDefs.length })}</div>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-3 flex flex-col justify-center items-center text-center">
           <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mb-2"><CheckCircle2 size={16} /></div>
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">আদায়</div>
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t("project_detail.collected")}</div>
           <div className="text-sm font-black text-slate-900">{BDTshort(totalCollected)}</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-3 flex flex-col justify-center items-center text-center">
           <div className="w-8 h-8 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mb-2"><Clock size={16} /></div>
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">বাকি</div>
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t("project_detail.due")}</div>
           <div className="text-sm font-black text-slate-900">{BDTshort(totalDue)}</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-3 flex flex-col justify-center items-center text-center">
           <div className="w-8 h-8 bg-violet-100 text-violet-600 rounded-lg flex items-center justify-center mb-2"><Building2 size={16} /></div>
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">ব্যয়</div>
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t("project_detail.expense")}</div>
           <div className="text-sm font-black text-slate-900">{BDTshort(prjExpenses.reduce((s: number, e: any) => s + e.amount, 0))}</div>
         </div>
       </div>
@@ -88,23 +91,23 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
               className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2" 
               onClick={() => window.print()}
             >
-              <Printer size={14} /> প্রিন্ট শিট
+              <Printer size={14} /> {t("project_detail.print_sheet")}
             </button>
             <button 
               className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm flex items-center gap-2" 
               onClick={() => setAddDefModal(true)}
             >
-              <Plus size={14} /> কিস্তি কলাম
+              <Plus size={14} /> {t("project_detail.installment_col")}
             </button>
           </div>
           
           {prjClients.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 font-bold text-sm">
-              ক্লাইন্ট ট্যাবে গিয়ে ক্লাইন্ট যোগ করুন
+              {t("project_detail.add_client_prompt")}
             </div>
           ) : prjDefs.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 font-bold text-sm">
-              + কিস্তি কলাম যোগ করুন
+              {t("project_detail.add_inst_prompt")}
             </div>
           ) : (
             <div className="overflow-x-auto overflow-y-auto max-h-[60vh] rounded-2xl border border-slate-200 bg-white shadow-sm scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
@@ -112,13 +115,13 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                 <thead>
                   <tr>
                     <th className="sticky left-0 top-0 z-30 bg-slate-900 text-white text-left p-3 min-w-[140px] font-bold border-r border-b border-white/10 shadow-[4px_0_8px_rgba(0,0,0,0.15)]">
-                      ক্লাইন্ট
+                      {t("project_detail.client_col")}
                     </th>
                     {prjDefs.map((d: any) => {
                       const taps = defTaps[d.id] || 0;
                       const tapColor = taps === 0 ? "text-rose-400" : taps === 1 ? "text-amber-500" : "text-emerald-500";
                       const tapBg = taps === 0 ? "bg-rose-500/20" : taps === 1 ? "bg-amber-500/20" : "bg-emerald-500/20";
-                      const tapLabel = taps === 0 ? "Delete" : taps === 1 ? "Confirm? (2/3)" : "Delete (3/3)";
+                      const tapLabel = taps === 0 ? t("project_detail.delete") : taps === 1 ? t("project_detail.confirm_2_3") : t("project_detail.delete_3_3");
                       
                       return (
                         <th key={d.id} className="sticky top-0 z-10 bg-slate-900 text-white p-3 min-w-[120px] font-bold border-r border-b border-white/10 text-center">
@@ -145,7 +148,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                         </th>
                       );
                     })}
-                    <th className="sticky top-0 z-10 bg-slate-900 text-white p-3 min-w-[100px] font-bold text-center border-b border-white/10">মোট</th>
+                    <th className="sticky top-0 z-10 bg-slate-900 text-white p-3 min-w-[100px] font-bold text-center border-b border-white/10">{t("project_detail.total_col")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -203,7 +206,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                     );
                   })}
                   <tr className="bg-slate-50 font-bold">
-                    <td className="sticky left-0 z-20 bg-slate-50 border-r border-slate-200 p-3 text-slate-900 text-xs shadow-[2px_0_5px_rgba(0,0,0,0.05)]">মোট</td>
+                    <td className="sticky left-0 z-20 bg-slate-50 border-r border-slate-200 p-3 text-slate-900 text-xs shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t("project_detail.total_col")}</td>
                     {prjDefs.map((d: any) => {
                       const ct = prjClients.reduce((s: number, c: any) => s + clientPaidForDef(c.id, d.id, payments), 0);
                       const cT = prjClients.length * d.targetAmount;
@@ -237,7 +240,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-3">
           {prjClients.length === 0 && (
             <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 font-bold text-sm">
-              কোনো ক্লাইন্ট নেই
+              {t("project_detail.no_clients")}
             </div>
           )}
           {prjClients.map((c: any) => {
@@ -250,7 +253,15 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                   <div className="flex-1 min-w-0">
                     <div className="text-base font-black text-slate-900">{c.name}</div>
                     <div className="text-xs text-slate-500 font-medium mt-1">
-                      {c.phone} · <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold">{c.plot}</span>
+                      {c.phone}
+                      {c.plot && (
+                        <>
+                          {" · "}
+                          <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold">
+                            {c.plot}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -269,7 +280,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                 <CategoryIcon category="মোট ব্যয়" size={32} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">মোট ব্যয়</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t("project_detail.total_expense")}</div>
                 <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight break-words">
                   {BDT(prjExpenses.reduce((s: number, e: any) => s + e.amount, 0))}
                 </div>
@@ -279,13 +290,13 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
               className="w-full sm:w-auto bg-slate-900 text-white px-5 py-3.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2 shrink-0" 
               onClick={() => setAddExpModal(true)}
             >
-              <Plus size={18} /> নতুন ব্যয়
+              <Plus size={18} /> {t("project_detail.new_expense")}
             </button>
           </div>
           
           {prjExpenses.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 font-bold text-sm">
-              কোনো ব্যয় নেই
+              {t("project_detail.no_expenses")}
             </div>
           ) : (
             <div className="space-y-3">
@@ -322,7 +333,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
       {tab === "log" && (
         <div className="bg-white rounded-2xl border border-slate-200 p-2">
           {prjLogs.length === 0 ? (
-            <div className="text-center py-10 text-slate-400 font-medium">কোনো activity নেই</div>
+            <div className="text-center py-10 text-slate-400 font-medium">{t("project_detail.no_activity")}</div>
           ) : (
             prjLogs.map(l => <LogRow key={l.id} log={l} projects={[project]} />)
           )}
@@ -333,7 +344,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
         {cellModal && <CellPaySheet client={cellModal.client} instDef={cellModal.instDef} payments={payments} isSuperAdmin={isSuperAdmin} onSave={(p: any) => { onAddPayment(p); setCellModal(null); }} onDelete={(id: string) => onDeletePayment(id)} onClose={() => setCellModal(null)} />}
         {addDefModal && <AddDefSheet projectId={project.id} onSave={(d: any) => { onAddDef(d); setAddDefModal(false); }} onClose={() => setAddDefModal(false)} />}
         {addExpModal && <AddExpSheet projectId={project.id} onSave={(e: any) => { onAddExpense(e); setAddExpModal(false); }} onClose={() => setAddExpModal(false)} />}
-        {delExp && <ConfirmDelete message={<><b>{delExp.category}</b> — {BDT(delExp.amount)} মুছে যাবে।</>} onConfirm={() => { onDeleteExpense(delExp.id); setDelExp(null); }} onClose={() => setDelExp(null)} />}
+        {delExp && <ConfirmDelete message={<><b>{delExp.category}</b> — {BDT(delExp.amount)}{t("project_detail.will_be_deleted")}</>} onConfirm={() => { onDeleteExpense(delExp.id); setDelExp(null); }} onClose={() => setDelExp(null)} />}
       </AnimatePresence>
     </motion.div>
   );

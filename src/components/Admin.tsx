@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { BDT, BDTshort, ac, initials, fmtTs, uid, todayStr, clientPaidForDef, cellStatus, cn } from "../lib/utils";
+import { BDT, BDTshort, dotJoin, ac, initials, fmtTs, uid, todayStr, clientPaidForDef, cellStatus, cn } from "../lib/utils";
 import { ACTION_META, EXP_CATS, STATUS, STATUS_LABEL } from "../lib/data";
 import { Badge, PBar, FG, ClientAvatar, PassCell, ConfirmDelete } from "./Shared";
 import { motion } from "motion/react";
 import { Building2, CheckCircle2, Clock, Trash2, Edit2, UserPlus, FileText, Pickaxe, HardHat, Package, Users, Zap, Droplets, Paintbrush, Box, CircleDollarSign, XCircle, RefreshCw, UserMinus, Building, ShieldPlus, ShieldMinus, KeyRound, Key, ClipboardList, Shield } from "lucide-react";
 
+import { useLanguage } from "../lib/i18n";
+
 export function LogRow({ log, projects }: any) {
-  const m = ACTION_META[log.action] || { icon: "FileText", color: "text-slate-600", bg: "bg-slate-100", label: log.action };
+  const { t } = useLanguage();
+  const m = ACTION_META[log.action] || { icon: "FileText", color: "text-slate-600", bg: "bg-slate-100" };
+  const label = t('common.actions.' + log.action) || log.action;
   const prj = projects?.find((p: any) => p.id === log.projectId);
   
   // Map string icons to Lucide components
@@ -35,12 +39,14 @@ export function LogRow({ log, projects }: any) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-1">
           <span className="text-sm font-extrabold text-slate-900">{log.adminName}</span>
-          <span className={cn("px-2 py-0.5 rounded-md text-[10px] font-bold", m.bg, m.color)}>{m.label}</span>
+          <span className={cn("px-2 py-0.5 rounded-md text-[10px] font-bold", m.bg, m.color)}>{label}</span>
           {prj && <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">{prj.name}</span>}
         </div>
         <div className="text-xs text-slate-600 font-medium">
-          {log.target}
-          {log.detail && <span className="text-slate-400"> · {log.detail}</span>}
+          {dotJoin(
+            typeof log.target === 'object' ? JSON.stringify(log.target) : log.target, 
+            typeof log.detail === 'object' ? JSON.stringify(log.detail) : log.detail
+          )}
         </div>
         <div className="text-[10px] text-slate-400 mt-1 font-medium">{fmtTs(log.ts)}</div>
       </div>
@@ -49,6 +55,7 @@ export function LogRow({ log, projects }: any) {
 }
 
 export function AuditLogPage({ logs, projects, isSuperAdmin, onClearLogs }: any) {
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -61,19 +68,19 @@ export function AuditLogPage({ logs, projects, isSuperAdmin, onClearLogs }: any)
   });
   
   const cats = [
-    ["all", "সব"], ["payment", <span className="flex items-center gap-1"><CircleDollarSign size={12} /> Payment</span>], 
-    ["client", <span className="flex items-center gap-1"><Users size={12} /> Client</span>], 
-    ["expense", <span className="flex items-center gap-1"><Pickaxe size={12} /> ব্যয়</span>], 
-    ["admin", <span className="flex items-center gap-1"><Shield size={12} /> Admin</span>], 
-    ["project", <span className="flex items-center gap-1"><Building size={12} /> Project</span>]
+    ["all", t('common.all')], ["payment", <span className="flex items-center gap-1"><CircleDollarSign size={12} /> {t('common.payment')}</span>], 
+    ["client", <span className="flex items-center gap-1"><Users size={12} /> {t('common.client')}</span>], 
+    ["expense", <span className="flex items-center gap-1"><Pickaxe size={12} /> {t('common.expenses')}</span>], 
+    ["admin", <span className="flex items-center gap-1"><Shield size={12} /> {t('common.admin')}</span>], 
+    ["project", <span className="flex items-center gap-1"><Building size={12} /> {t('common.project')}</span>]
   ];
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-black text-slate-900">Activity Log</h1>
-          <p className="text-xs font-medium text-slate-500">{filtered.length}টি রেকর্ড</p>
+          <h1 className="text-xl font-black text-slate-900">{t('common.activity_log')}</h1>
+          <p className="text-xs font-medium text-slate-500">{t('common.records_count', { count: filtered.length })}</p>
         </div>
         {isSuperAdmin && logs.length > 0 && (
           <button 
@@ -81,14 +88,14 @@ export function AuditLogPage({ logs, projects, isSuperAdmin, onClearLogs }: any)
             className="flex items-center gap-2 px-3 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold hover:bg-rose-100 transition-colors"
           >
             <Trash2 size={14} />
-            Log মুছুন
+            {t('common.clear_logs')}
           </button>
         )}
       </div>
       
       <input 
         className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all mb-3" 
-        placeholder="Admin নাম, client বা বিবরণ..." 
+        placeholder={t('common.search_logs_placeholder')} 
         value={search} onChange={e => setSearch(e.target.value)} 
       />
       
@@ -109,7 +116,7 @@ export function AuditLogPage({ logs, projects, isSuperAdmin, onClearLogs }: any)
       
       <div className="bg-white rounded-2xl border border-slate-200 p-2">
         {filtered.length === 0 ? (
-          <div className="text-center py-10 text-slate-400 font-medium">কোনো রেকর্ড নেই</div>
+          <div className="text-center py-10 text-slate-400 font-medium">{t('common.no_records')}</div>
         ) : (
           filtered.map(l => <LogRow key={l.id} log={l} projects={projects} />)
         )}
@@ -117,7 +124,7 @@ export function AuditLogPage({ logs, projects, isSuperAdmin, onClearLogs }: any)
 
       {showClearConfirm && (
         <ConfirmDelete 
-          message="সব লগ মুছে যাবে। এই কাজ আর ফিরিয়ে আনা যাবে না।" 
+          message={t('common.clear_logs_confirm')} 
           onConfirm={() => { onClearLogs(); setShowClearConfirm(false); }} 
           onClose={() => setShowClearConfirm(false)} 
         />

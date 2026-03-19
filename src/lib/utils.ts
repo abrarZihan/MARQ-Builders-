@@ -5,6 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const dotJoin = (...parts: (string | number | undefined | null)[]) => 
+  parts.filter(p => p !== undefined && p !== null && String(p).trim() !== "").join(" · ");
+
 export const BDT = (n: number | string) => "৳ " + Number(n || 0).toLocaleString("en-IN");
 export const BDTshort = (n: number | string) => {
   const v = Number(n || 0);
@@ -20,7 +23,10 @@ export const todayStr = () => new Date().toISOString().slice(0, 10);
 export const tsNow = () => new Date().toISOString();
 export const fmtTs = (ts: string) => {
   const d = new Date(ts);
-  return d.toLocaleDateString("bn-BD", { day: "numeric", month: "short", year: "numeric" }) + " · " + d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  return dotJoin(
+    d.toLocaleDateString("bn-BD", { day: "numeric", month: "short", year: "numeric" }),
+    d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+  );
 };
 
 export const genClientId = (existing: any[]) => {

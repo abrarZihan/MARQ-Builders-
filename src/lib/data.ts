@@ -82,7 +82,7 @@ export const STATUS: Record<string, any> = {
   partial: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500", bar: "bg-amber-500" },
   unpaid:  { bg: "bg-slate-100", text: "text-slate-500", dot: "bg-slate-300", bar: "bg-slate-300" },
 };
-export const STATUS_LABEL: Record<string, string> = { paid: "সম্পূর্ণ", partial: "আংশিক", unpaid: "বাকি" };
+export const STATUS_LABEL: Record<string, string> = { paid: "status.paid", partial: "status.partial", unpaid: "status.unpaid" };
 
 export const EXP_ICON: Record<string, string> = {
   "ভূমি সমতলকরণ": "Pickaxe",
@@ -97,24 +97,24 @@ export const EXP_ICON: Record<string, string> = {
 export const EXP_CATS = Object.keys(EXP_ICON);
 
 export const ACTION_META: Record<string, any> = {
-  payment_add:      { icon: "CircleDollarSign", color: "text-emerald-700", bg: "bg-emerald-100", label: "Payment যোগ" },
-  payment_pending:  { icon: "Clock", color: "text-amber-700", bg: "bg-amber-100", label: "Pending Payment" },
-  payment_approved: { icon: "CheckCircle2", color: "text-emerald-700", bg: "bg-emerald-100", label: "Payment Approved" },
-  payment_rejected: { icon: "XCircle", color: "text-rose-600", bg: "bg-rose-100", label: "Payment Rejected" },
-  payment_delete:   { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100", label: "Payment Delete" },
-  client_add:       { icon: "UserPlus", color: "text-blue-700", bg: "bg-blue-100", label: "Client যোগ" },
-  client_edit:      { icon: "Edit2", color: "text-amber-700", bg: "bg-amber-100", label: "Client Edit" },
-  client_id_change: { icon: "RefreshCw", color: "text-violet-700", bg: "bg-violet-100", label: "Client ID পরিবর্তন" },
-  client_delete:    { icon: "UserMinus", color: "text-rose-600", bg: "bg-rose-100", label: "Client Delete" },
-  expense_add:      { icon: "Building2", color: "text-violet-700", bg: "bg-violet-100", label: "ব্যয় যোগ" },
-  expense_delete:   { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100", label: "ব্যয় Delete" },
-  instdef_add:      { icon: "ClipboardList", color: "text-cyan-700", bg: "bg-cyan-100", label: "কিস্তি কলাম যোগ" },
-  instdef_delete:   { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100", label: "কিস্তি কলাম Delete" },
-  project_add:      { icon: "Building", color: "text-emerald-700", bg: "bg-emerald-100", label: "Project যোগ" },
-  project_delete:   { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100", label: "Project Delete" },
-  admin_add:        { icon: "ShieldPlus", color: "text-emerald-700", bg: "bg-emerald-100", label: "Admin যোগ" },
-  admin_remove:     { icon: "ShieldMinus", color: "text-rose-600", bg: "bg-rose-100", label: "Admin Remove" },
-  admin_reset_pw:   { icon: "KeyRound", color: "text-orange-600", bg: "bg-orange-100", label: "Password Reset" },
-  pw_change:        { icon: "Key", color: "text-cyan-700", bg: "bg-cyan-100", label: "Password Change" },
-  admin_clear_logs: { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100", label: "Log Clear" },
+  payment_add:      { icon: "CircleDollarSign", color: "text-emerald-700", bg: "bg-emerald-100" },
+  payment_pending:  { icon: "Clock", color: "text-amber-700", bg: "bg-amber-100" },
+  payment_approved: { icon: "CheckCircle2", color: "text-emerald-700", bg: "bg-emerald-100" },
+  payment_rejected: { icon: "XCircle", color: "text-rose-600", bg: "bg-rose-100" },
+  payment_delete:   { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100" },
+  client_add:       { icon: "UserPlus", color: "text-blue-700", bg: "bg-blue-100" },
+  client_edit:      { icon: "Edit2", color: "text-amber-700", bg: "bg-amber-100" },
+  client_id_change: { icon: "RefreshCw", color: "text-violet-700", bg: "bg-violet-100" },
+  client_delete:    { icon: "UserMinus", color: "text-rose-600", bg: "bg-rose-100" },
+  expense_add:      { icon: "Building2", color: "text-violet-700", bg: "bg-violet-100" },
+  expense_delete:   { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100" },
+  instdef_add:      { icon: "ClipboardList", color: "text-cyan-700", bg: "bg-cyan-100" },
+  instdef_delete:   { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100" },
+  project_add:      { icon: "Building", color: "text-emerald-700", bg: "bg-emerald-100" },
+  project_delete:   { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100" },
+  admin_add:        { icon: "ShieldPlus", color: "text-emerald-700", bg: "bg-emerald-100" },
+  admin_remove:     { icon: "ShieldMinus", color: "text-rose-600", bg: "bg-rose-100" },
+  admin_reset_pw:   { icon: "KeyRound", color: "text-orange-600", bg: "bg-orange-100" },
+  pw_change:        { icon: "Key", color: "text-cyan-700", bg: "bg-cyan-100" },
+  admin_clear_logs: { icon: "Trash2", color: "text-rose-600", bg: "bg-rose-100" },
 };

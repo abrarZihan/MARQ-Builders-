@@ -6,7 +6,7 @@ import {
   STATUS, STATUS_LABEL, EXP_CATS, ACTION_META 
 } from "./lib/data";
 import { 
-  BDT, BDTshort, uid, todayStr, tsNow, fmtTs, genClientId, 
+  BDT, BDTshort, dotJoin, uid, todayStr, tsNow, fmtTs, genClientId, 
   clientPaidForDef, cellStatus, ac, initials, cn 
 } from "./lib/utils";
 import { 
@@ -19,6 +19,7 @@ import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
 import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { CategoryIcon, CategoryColor } from "./components/Shared";
+import { useLanguage } from "./lib/i18n";
 
 // Firebase
 import { 
@@ -33,18 +34,19 @@ import { db, auth as fbAuth, handleFirestoreError, OperationType } from "./fireb
 // --- Components that were in App.tsx ---
 
 function PendingApprovals({ payments, clients, instDefs, projects, onApprove, onReject }: any) {
+  const { t } = useLanguage();
   const pending = payments.filter((p: any) => p.status === "pending");
   if (pending.length === 0) return (
     <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4 flex items-center gap-3">
       <CheckCircle2 size={24} className="text-emerald-600" />
-      <span className="text-sm font-bold text-emerald-700">কোনো pending payment নেই</span>
+      <span className="text-sm font-bold text-emerald-700">{t("dashboard.no_pending")}</span>
     </div>
   );
   return (
     <div className="mb-6">
       <div className="text-sm font-extrabold text-rose-600 mb-3 flex items-center gap-2">
         <span className="bg-rose-100 text-rose-600 rounded-full px-2.5 py-0.5 text-xs">{pending.length}</span>
-        Pending Approval
+        {t("dashboard.pending_approval")}
       </div>
       {pending.map((p: any) => {
         const client = clients.find((c: any) => c.id === p.clientId);
@@ -59,14 +61,14 @@ function PendingApprovals({ payments, clients, instDefs, projects, onApprove, on
             <div className="flex justify-between items-start mb-3">
               <div>
                 <div className="text-sm font-extrabold text-slate-900">{client?.name || p.clientId}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{prj?.name} · {def?.title}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{p.date}{p.note && ` · ${p.note}`}</div>
+                <div className="text-xs text-slate-500 mt-0.5">{dotJoin(prj?.name, def?.title)}</div>
+                <div className="text-xs text-slate-500 mt-0.5">{dotJoin(p.date, p.note)}</div>
               </div>
               <div className="text-xl font-black text-amber-700">{BDT(p.amount)}</div>
             </div>
             <div className="flex gap-2">
-              <button className="flex-1 bg-emerald-100 text-emerald-700 font-bold py-2.5 rounded-xl hover:bg-emerald-200 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onApprove(p.id)}><CheckCircle2 size={16} /> Approve</button>
-              <button className="flex-1 bg-rose-100 text-rose-700 font-bold py-2.5 rounded-xl hover:bg-rose-200 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onReject(p.id)}><XCircle size={16} /> Reject</button>
+              <button className="flex-1 bg-emerald-100 text-emerald-700 font-bold py-2.5 rounded-xl hover:bg-emerald-200 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onApprove(p.id)}><CheckCircle2 size={16} /> {t("dashboard.approve")}</button>
+              <button className="flex-1 bg-rose-100 text-rose-700 font-bold py-2.5 rounded-xl hover:bg-rose-200 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onReject(p.id)}><XCircle size={16} /> {t("dashboard.reject")}</button>
             </div>
           </motion.div>
         );
@@ -76,6 +78,7 @@ function PendingApprovals({ payments, clients, instDefs, projects, onApprove, on
 }
 
 function FinancialSummary({ projects, clients, instDefs, payments, expenses }: any) {
+  const { t } = useLanguage();
   const approvedPays = payments.filter((p: any) => p.status === "approved");
   const pendingPays = payments.filter((p: any) => p.status === "pending");
   const totalExpected = clients.reduce((s: number, c: any) => {
@@ -96,41 +99,41 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
           <div className="w-8 h-8 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center">
             <Wallet size={18} />
           </div>
-          <h1 className="text-xl font-black text-slate-900">আর্থিক সারসংক্ষেপ</h1>
+          <h1 className="text-xl font-black text-slate-900">{t("dashboard.financial_summary")}</h1>
         </div>
-        <p className="text-xs font-medium text-slate-500">সামগ্রিক আর্থিক বিশ্লেষণ</p>
+        <p className="text-xs font-medium text-slate-500">{t("dashboard.overall_analysis")}</p>
       </div>
       
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 mb-4 text-white shadow-xl">
-        <div className="text-xs text-slate-400 font-bold mb-1 tracking-wider">NET PROFIT / LOSS</div>
+        <div className="text-xs text-slate-400 font-bold mb-1 tracking-wider">{t("dashboard.net_profit_loss")}</div>
         <div className={cn("text-4xl font-black tracking-tighter", netProfit >= 0 ? "text-emerald-400" : "text-rose-400")}>
           {netProfit >= 0 ? "+" : ""}{BDT(netProfit)}
         </div>
-        <div className="text-xs text-slate-400 mt-2 font-medium">আদায় মাইনাস ব্যয়</div>
+        <div className="text-xs text-slate-400 mt-2 font-medium">{t("dashboard.collection_minus_expense")}</div>
       </div>
       
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">মোট প্রত্যাশিত</div>
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t("dashboard.total_expected")}</div>
           <div className="text-lg font-black text-slate-900 mt-1">{BDTshort(totalExpected)}</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">মোট আদায়</div>
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t("dashboard.total_collected")}</div>
           <div className="text-lg font-black text-emerald-600 mt-1">{BDTshort(totalCollected)}</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">মোট বাকি</div>
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t("dashboard.total_due")}</div>
           <div className="text-lg font-black text-rose-600 mt-1">{BDTshort(totalDue)}</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">মোট ব্যয়</div>
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t("dashboard.total_expenses")}</div>
           <div className="text-lg font-black text-violet-600 mt-1">{BDTshort(totalExpenses)}</div>
         </div>
       </div>
       
       <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-6">
         <div className="flex justify-between items-end mb-2">
-          <span className="text-sm font-bold text-slate-900">আদায়ের অগ্রগতি</span>
+          <span className="text-sm font-bold text-slate-900">{t("dashboard.collection_progress")}</span>
           <span className="text-lg font-black text-blue-600">{collectPct}%</span>
         </div>
         <div className="h-3 bg-slate-100 rounded-full overflow-hidden mb-3">
@@ -141,17 +144,17 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
           />
         </div>
         <div className="flex justify-between text-xs text-slate-500 font-medium">
-          <span>আদায়: {BDT(totalCollected)}</span>
-          <span>বাকি: {BDT(totalDue)}</span>
+          <span>{t("dashboard.collected_label")} {BDT(totalCollected)}</span>
+          <span>{t("dashboard.due_label")} {BDT(totalDue)}</span>
         </div>
         {totalPending > 0 && (
           <div className="mt-4 text-xs text-amber-700 font-bold bg-amber-50 rounded-xl p-3 border border-amber-100 flex items-center gap-2">
-            <Clock size={14} /> Pending approval: {BDT(totalPending)}
+            <Clock size={14} /> {t("dashboard.pending_approval_label")} {BDT(totalPending)}
           </div>
         )}
       </div>
       
-      <div className="text-lg font-black text-slate-900 mb-4">প্রজেক্টভিত্তিক বিশ্লেষণ</div>
+      <div className="text-lg font-black text-slate-900 mb-4">{t("dashboard.project_analysis")}</div>
       
       {projects.map((prj: any, idx: number) => {
         const prjClients = clients.filter((c: any) => c.projectId === prj.id);
@@ -177,7 +180,7 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
             <div className="flex justify-between items-start mb-4">
               <div>
                 <div className="text-base font-black text-slate-900">{prj.name}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{prjClients.length}জন client · {prjDefs.length}টি কিস্তি</div>
+                <div className="text-xs text-slate-500 mt-0.5">{t("dashboard.stats", { clients: prjClients.length, insts: prjDefs.length })}</div>
               </div>
               <span className={cn("text-sm font-black", net >= 0 ? "text-emerald-600" : "text-rose-600")}>
                 {net >= 0 ? "+" : ""}{BDTshort(net)}
@@ -186,21 +189,21 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
             
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="bg-emerald-50 rounded-xl p-2.5">
-                <div className="text-[9px] text-slate-500 font-bold uppercase">আদায়</div>
+                <div className="text-[9px] text-slate-500 font-bold uppercase">{t("dashboard.collected_short")}</div>
                 <div className="text-sm font-black text-emerald-700 mt-0.5">{BDTshort(collected)}</div>
               </div>
               <div className="bg-rose-50 rounded-xl p-2.5">
-                <div className="text-[9px] text-slate-500 font-bold uppercase">বাকি</div>
+                <div className="text-[9px] text-slate-500 font-bold uppercase">{t("dashboard.due_short")}</div>
                 <div className="text-sm font-black text-rose-700 mt-0.5">{BDTshort(due)}</div>
               </div>
               <div className="bg-violet-50 rounded-xl p-2.5">
-                <div className="text-[9px] text-slate-500 font-bold uppercase">ব্যয়</div>
+                <div className="text-[9px] text-slate-500 font-bold uppercase">{t("dashboard.expense_short")}</div>
                 <div className="text-sm font-black text-violet-700 mt-0.5">{BDTshort(spent)}</div>
               </div>
             </div>
             
             <div className="flex justify-between items-end mb-1.5">
-              <span className="text-xs text-slate-500 font-medium">আদায়ের অগ্রগতি</span>
+              <span className="text-xs text-slate-500 font-medium">{t("dashboard.collection_progress")}</span>
               <span className="text-xs font-black" style={{ color }}>{pct}%</span>
             </div>
             <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
@@ -209,7 +212,7 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
             
             {topCats.length > 0 && (
               <div>
-                <div className="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-wider">TOP EXPENSES</div>
+                <div className="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-wider">{t("dashboard.top_expenses")}</div>
                 {topCats.map(([cat, amt]) => (
                   <div key={cat} className="flex justify-between items-center text-xs mb-1.5 text-slate-600">
                     <span className="font-medium flex items-center gap-1.5">
@@ -231,6 +234,7 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
 }
 
 function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, onAddProject, onDeleteProject, isSuperAdmin, onApprovePayment, onRejectPayment }: any) {
+  const { t } = useLanguage();
   const [addModal, setAddModal] = useState(false);
   const [delProject, setDelProject] = useState<any>(null);
   const [view, setView] = useState("projects");
@@ -245,13 +249,13 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">MARQ Builders</h1>
-          <p className="text-sm font-medium text-slate-500">{projects.length}টি প্রজেক্ট</p>
+          <p className="text-sm font-medium text-slate-500">{t("admin_home.projects_count", { count: projects.length })}</p>
         </div>
         <button 
           className="bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow-sm" 
           onClick={() => setAddModal(true)}
         >
-          + প্রজেক্ট
+          {t("admin_home.add_project")}
         </button>
       </div>
       
@@ -260,13 +264,13 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
           className={cn("flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2", view === "projects" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")} 
           onClick={() => setView("projects")}
         >
-          <Building2 size={16} /> প্রজেক্টসমূহ
+          <Building2 size={16} /> {t("admin_home.projects_tab")}
         </button>
         <button 
           className={cn("flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2", view === "financial" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")} 
           onClick={() => setView("financial")}
         >
-          <Wallet size={16} /> Financial Summary
+          <Wallet size={16} /> {t("admin_home.financial_tab")}
         </button>
       </div>
       
@@ -281,22 +285,22 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
               <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-3">
                 <Building2 size={20} />
               </div>
-              <div className="text-xs text-slate-500 font-bold mb-1">মোট প্রজেক্ট</div>
-              <div className="text-xl font-black text-slate-900">{projects.length}টি</div>
+              <div className="text-xs text-slate-500 font-bold mb-1">{t("admin_home.total_projects")}</div>
+              <div className="text-xl font-black text-slate-900">{projects.length}{t("admin_home.count_suffix")}</div>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-center">
               <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-3">
                 <Wallet size={20} />
               </div>
-              <div className="text-xs text-slate-500 font-bold mb-1">মোট আদায়</div>
+              <div className="text-xs text-slate-500 font-bold mb-1">{t("admin_home.total_collected")}</div>
               <div className="text-xl font-black text-slate-900">{BDTshort(allCollected)}</div>
             </div>
           </div>
           
           {pendingCount > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex justify-between items-center">
-              <span className="text-sm font-bold text-amber-700 flex items-center gap-2"><Clock size={16} /> {pendingCount}টি payment pending</span>
-              {!isSuperAdmin && <span className="text-xs font-medium text-amber-600">Super Admin approve করবেন</span>}
+              <span className="text-sm font-bold text-amber-700 flex items-center gap-2"><Clock size={16} /> {pendingCount}{t("admin_home.pending_payments")}</span>
+              {!isSuperAdmin && <span className="text-xs font-medium text-amber-600">{t("admin_home.super_admin_approve")}</span>}
             </div>
           )}
           
@@ -334,7 +338,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
                       className="text-rose-500 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5" 
                       onClick={e => { e.stopPropagation(); setDelProject(prj); }}
                     >
-                      <Trash2 size={14} /> Delete
+                      <Trash2 size={14} /> {t("project_detail.delete")}
                     </button>
                   </div>
                 </motion.div>
@@ -354,15 +358,15 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
               onClick={e => e.stopPropagation()}
             >
               <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-              <div className="text-xl font-black text-slate-900 mb-6">নতুন প্রজেক্ট</div>
-              <FG label="নাম">
+              <div className="text-xl font-black text-slate-900 mb-6">{t("admin_home.new_project")}</div>
+              <FG label={t("admin_home.project_name")}>
                 <input 
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
-                  placeholder="যেমন: MARQ Skyline" 
+                  placeholder={t("admin_home.project_name_ph")} 
                   value={newName} onChange={e => setNewName(e.target.value)} 
                 />
               </FG>
-              <FG label="বিবরণ">
+              <FG label={t("admin_home.project_desc")}>
                 <input 
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
                   value={newDesc} onChange={e => setNewDesc(e.target.value)} 
@@ -377,7 +381,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
                   }
                 }}
               >
-                যোগ করুন
+                {t("admin_home.add_btn")}
               </button>
             </motion.div>
           </div>
@@ -387,7 +391,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
       <AnimatePresence>
         {delProject && (
           <ConfirmDelete 
-            message={<><b>{delProject.name}</b> এবং সব ক্লাইন্ট, কিস্তি ও ব্যয় মুছে যাবে।</>} 
+            message={<><b>{delProject.name}</b> {t("admin_home.delete_warning")}</>} 
             onConfirm={() => { onDeleteProject(delProject.id); setDelProject(null); }} 
             onClose={() => setDelProject(null)} 
           />
@@ -399,6 +403,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
 
 // ROOT APP COMPONENT
 export default function App() {
+  const { t } = useLanguage();
   const [auth, setAuth] = useState<any>(() => {
     const saved = localStorage.getItem("marq_auth");
     return saved ? JSON.parse(saved) : null;
@@ -450,9 +455,11 @@ export default function App() {
     };
   }, []);
 
-  const addLog = async (adminUser: any, action: string, target: string, detail: string, projectId: string | null = null) => {
+  const addLog = async (adminUser: any, action: string, target: any, detail: any, projectId: string | null = null) => {
     if (!adminUser) return;
-    const newLog = { id: uid("LOG"), adminId: adminUser.id, adminName: adminUser.name, action, target, detail: detail || "", projectId, ts: tsNow() };
+    const sTarget = typeof target === 'object' ? JSON.stringify(target) : String(target || "");
+    const sDetail = typeof detail === 'object' ? JSON.stringify(detail) : String(detail || "");
+    const newLog = { id: uid("LOG"), adminId: adminUser.id, adminName: adminUser.name, action, target: sTarget, detail: sDetail, projectId, ts: tsNow() };
     try {
       await setDoc(doc(db, "logs", newLog.id), newLog);
     } catch (e) {
@@ -611,7 +618,7 @@ export default function App() {
     try {
       await setDoc(doc(db, "instDefs", d.id), d);
       const prj = projects.find(p => p.id === d.projectId);
-      addLog(adminUser, "instdef_add", d.title, `${prj?.name || ""} · ৳${d.targetAmount}`, d.projectId);
+      addLog(adminUser, "instdef_add", d.title, dotJoin(prj?.name, `৳${d.targetAmount}`), d.projectId);
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, `instDefs/${d.id}`);
     }
@@ -781,7 +788,15 @@ export default function App() {
   const { role, user } = auth;
 
   const curProject = selProject ? projects.find(p => p.id === selProject) : null;
-  const PAGE_TITLES: Record<string, string> = { home: "প্রজেক্টসমূহ", log: "Activity Log", admins: "Admin ম্যানেজমেন্ট", profile: "প্রোফাইল", installments: "আমার কিস্তি", receipts: "রিসিপ্টসমূহ", expenses: "প্রজেক্ট ব্যয়" };
+  const PAGE_TITLES: Record<string, string> = { 
+    home: t("nav.projects"), 
+    log: t("nav.log"), 
+    admins: t("nav.admin_manage"), 
+    profile: t("nav.profile"), 
+    installments: t("nav.my_installments"), 
+    receipts: t("nav.receipts"), 
+    expenses: t("nav.expenses") 
+  };
   const topTitle = curProject ? curProject.name : (PAGE_TITLES[page] || "");
   const pendingCount = payments.filter((p: any) => p.status === "pending").length;
 

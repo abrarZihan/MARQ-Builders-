@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, Trash2, Home, ClipboardList, User, Shield, Receipt, Building2, LogOut, KeyRound, Droplets, Zap, Users, Package, Truck, FileText } from "lucide-react";
+import { Eye, EyeOff, Trash2, Home, ClipboardList, User, Shield, Receipt, Building2, LogOut, KeyRound, Droplets, Zap, Users, Package, Truck, FileText, Globe } from "lucide-react";
 import { cn, BDT, ac, initials } from "../lib/utils";
 import { STATUS, STATUS_LABEL } from "../lib/data";
 import { motion, AnimatePresence } from "motion/react";
+import { useLanguage } from "../lib/i18n";
 
 export const CategoryIcon = ({ category, className, size = 24 }: { category: string, className?: string, size?: number }) => {
   switch (category) {
@@ -29,16 +30,18 @@ export const CategoryColor = (category: string) => {
 };
 
 export function Badge({ status }: { status: string }) {
+  const { t } = useLanguage();
   const m = STATUS[status];
   return (
     <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold", m.bg, m.text)}>
       <span className={cn("w-1.5 h-1.5 rounded-full", m.dot)} />
-      {STATUS_LABEL[status]}
+      {t(`common.${status}`)}
     </span>
   );
 }
 
 export function PBar({ paid, target }: { paid: number; target: number }) {
+  const { t } = useLanguage();
   const pct = target > 0 ? Math.min(100, Math.round((paid / target) * 100)) : 0;
   const st = paid === 0 ? "unpaid" : paid >= target ? "paid" : "partial";
   const m = STATUS[st];
@@ -57,7 +60,7 @@ export function PBar({ paid, target }: { paid: number; target: number }) {
           className={cn("h-full rounded-full", m.bar)} 
         />
       </div>
-      <div className="text-[11px] text-slate-500 mt-1 font-medium">{pct}% পরিশোধিত</div>
+      <div className="text-[11px] text-slate-500 mt-1 font-medium">{pct}% {t("common.paid_pct")}</div>
     </div>
   );
 }
@@ -112,6 +115,7 @@ export function PassCell({ value }: { value: string }) {
 }
 
 export function ConfirmDelete({ message, onConfirm, onClose }: { message: React.ReactNode; onConfirm: () => void; onClose: () => void }) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 bg-slate-900/60 z-[300] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <motion.div 
@@ -125,12 +129,12 @@ export function ConfirmDelete({ message, onConfirm, onClose }: { message: React.
           <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Trash2 size={32} />
           </div>
-          <div className="text-xl font-extrabold text-slate-900 mb-2">মুছে ফেলবেন?</div>
+          <div className="text-xl font-extrabold text-slate-900 mb-2">{t("common.delete_confirm")}</div>
           <div className="text-sm text-slate-500">{message}</div>
         </div>
         <div className="flex gap-3">
-          <button className="flex-1 bg-rose-100 text-rose-700 font-bold py-3 rounded-xl hover:bg-rose-200 transition-colors" onClick={onConfirm}>হ্যাঁ, মুছুন</button>
-          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>বাতিল</button>
+          <button className="flex-1 bg-rose-100 text-rose-700 font-bold py-3 rounded-xl hover:bg-rose-200 transition-colors" onClick={onConfirm}>{t("common.yes_delete")}</button>
+          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>{t("common.cancel")}</button>
         </div>
       </motion.div>
     </div>
@@ -138,17 +142,18 @@ export function ConfirmDelete({ message, onConfirm, onClose }: { message: React.
 }
 
 export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isSuperAdmin, pendingCount }: any) {
+  const { t, lang, setLang } = useLanguage();
   const adminNav = [
-    { id: "home", label: "প্রজেক্টসমূহ", icon: Home },
-    { id: "log", label: "Activity Log", icon: ClipboardList },
-    { id: "profile", label: "প্রোফাইল", icon: User },
-    ...(isSuperAdmin ? [{ id: "admins", label: "Admin ম্যানেজ", icon: Shield }] : []),
+    { id: "home", label: t("nav.projects"), icon: Home },
+    { id: "log", label: t("nav.log"), icon: ClipboardList },
+    { id: "profile", label: t("nav.profile"), icon: User },
+    ...(isSuperAdmin ? [{ id: "admins", label: t("nav.admin_manage"), icon: Shield }] : []),
   ];
   const clientNav = [
-    { id: "installments", label: "আমার কিস্তি", icon: Receipt },
-    { id: "receipts", label: "রিসিপ্টসমূহ", icon: Receipt },
-    { id: "expenses", label: "প্রজেক্ট ব্যয়", icon: Building2 },
-    { id: "profile", label: "প্রোফাইল", icon: User }
+    { id: "installments", label: t("nav.my_installments"), icon: Receipt },
+    { id: "receipts", label: t("nav.receipts"), icon: Receipt },
+    { id: "expenses", label: t("nav.expenses"), icon: Building2 },
+    { id: "profile", label: t("nav.profile"), icon: User }
   ];
   const nav = (role === "admin" || role === "superadmin") ? adminNav : clientNav;
   const color = role === "client" ? ac(user?.id || "") : (isSuperAdmin ? "#f59e0b" : "#3b82f6");
@@ -184,7 +189,7 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
                 <div className="flex-1 min-w-0">
                   <div className="text-slate-200 font-bold text-sm truncate">{user?.name || "Admin"}</div>
                   <span style={{ backgroundColor: color + "22", color }} className="text-[10px] px-2 py-0.5 rounded-md font-bold inline-block mt-1">
-                    {isSuperAdmin ? "Super Admin" : role === "admin" ? "Admin" : "Client"}
+                    {isSuperAdmin ? t("common.super_admin") : role === "admin" ? t("common.admin") : t("common.client")}
                   </span>
                 </div>
               </div>
@@ -213,13 +218,20 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
                 );
               })}
             </div>
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-white/10 flex flex-col gap-2">
               <button 
-                onClick={() => { onLogout(); onClose(); }}
+                onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
                 className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors text-sm font-bold"
               >
+                <Globe size={16} />
+                {lang === 'bn' ? 'English' : 'বাংলা'}
+              </button>
+              <button 
+                onClick={() => { onLogout(); onClose(); }}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 transition-colors text-sm font-bold"
+              >
                 <LogOut size={16} />
-                লগআউট
+                {t("nav.logout")}
               </button>
             </div>
           </motion.div>
@@ -230,12 +242,13 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
 }
 
 export function BottomBar({ role, page, setPage }: any) {
+  const { t } = useLanguage();
   if (role === "admin" || role === "superadmin") return null;
   const tabs = [
-    { id: "installments", label: "কিস্তি", icon: Receipt },
-    { id: "receipts", label: "রিসিপ্ট", icon: Receipt },
-    { id: "expenses", label: "ব্যয়", icon: Building2 },
-    { id: "profile", label: "প্রোফাইল", icon: User }
+    { id: "installments", label: t("nav.my_installments"), icon: Receipt },
+    { id: "receipts", label: t("nav.receipts"), icon: Receipt },
+    { id: "expenses", label: t("nav.expenses"), icon: Building2 },
+    { id: "profile", label: t("nav.profile"), icon: User }
   ];
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex z-[100] pb-safe no-print">
@@ -259,6 +272,7 @@ export function BottomBar({ role, page, setPage }: any) {
 }
 
 export function Login({ onLogin }: any) {
+  const { t, lang, setLang } = useLanguage();
   const [role, setRole] = useState("admin");
   const [id, setId] = useState("");
   const [pass, setPass] = useState("");
@@ -267,7 +281,7 @@ export function Login({ onLogin }: any) {
   const [loading, setLoading] = useState(false);
 
   const attempt = async () => {
-    if (!id || !pass) return setErr("সব তথ্য দিন");
+    if (!id || !pass) return setErr(t("login.err_all_info"));
     setErr("");
     setLoading(true);
     const res = await onLogin(role, id, pass);
@@ -278,7 +292,14 @@ export function Login({ onLogin }: any) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 relative">
+      <button 
+        onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
+        className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-bold transition-colors"
+      >
+        <Globe size={14} />
+        {lang === 'bn' ? 'English' : 'বাংলা'}
+      </button>
       <div className="text-center mb-8">
         <div className="text-4xl font-black text-white tracking-tighter">MARQ</div>
         <div className="text-xs text-slate-400 tracking-[0.2em] font-bold">BUILDERS</div>
@@ -291,12 +312,12 @@ export function Login({ onLogin }: any) {
           <Building2 size={28} />
         </div>
         <div className="text-center mb-6">
-          <div className="text-2xl font-extrabold text-slate-900">স্বাগতম</div>
-          <div className="text-sm text-slate-500 mt-1">আপনার অ্যাকাউন্টে প্রবেশ করুন</div>
+          <div className="text-2xl font-extrabold text-slate-900">{t("login.welcome")}</div>
+          <div className="text-sm text-slate-500 mt-1">{t("login.enter_account")}</div>
         </div>
         
         <div className="flex bg-slate-100 p-1 rounded-xl mb-6">
-          {[["admin", "অ্যাডমিন"], ["client", "ক্লাইন্ট"]].map(([v, l]) => (
+          {[["admin", t("login.admin")], ["client", t("login.client")]].map(([v, l]) => (
             <button 
               key={v} 
               onClick={() => { setRole(v); setErr(""); }}
@@ -310,14 +331,14 @@ export function Login({ onLogin }: any) {
           ))}
         </div>
 
-        <FG label={role === "admin" ? "Username" : "Customer ID"}>
+        <FG label={role === "admin" ? t("login.username") : t("login.customer_id")}>
           <input 
             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
-            placeholder={role === "admin" ? "যেমন: admin" : "যেমন: C001"} 
+            placeholder={role === "admin" ? "admin" : "C001"} 
             value={id} onChange={e => setId(e.target.value)} 
           />
         </FG>
-        <FG label="পাসওয়ার্ড">
+        <FG label={t("login.password")}>
           <div className="relative">
             <input 
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all pr-12" 
@@ -348,13 +369,13 @@ export function Login({ onLogin }: any) {
           className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors mb-6 disabled:opacity-50" 
           onClick={attempt}
         >
-          {loading ? "লোডিং..." : "প্রবেশ করুন"}
+          {loading ? t("login.loading") : t("login.enter")}
         </button>
 
         <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs text-slate-500">
-          <div className="font-bold text-slate-400 text-[10px] mb-2 uppercase tracking-wider">সতর্কতা</div>
+          <div className="font-bold text-slate-400 text-[10px] mb-2 uppercase tracking-wider">{t("login.warning")}</div>
           <div className="text-slate-500 leading-relaxed">
-            আপনার সঠিক ইউজারনেম এবং পাসওয়ার্ড ব্যবহার করে লগইন করুন। কোনো সমস্যা হলে অ্যাডমিনের সাথে যোগাযোগ করুন।
+            {t("login.warning_text")}
           </div>
         </div>
       </motion.div>
@@ -363,14 +384,15 @@ export function Login({ onLogin }: any) {
 }
 
 export function ForceChangePw({ admin, onDone }: any) {
+  const { t } = useLanguage();
   const [newPw, setNewPw] = useState("");
   const [conf, setConf] = useState("");
   const [showN, setShowN] = useState(false);
   const [err, setErr] = useState("");
 
   const save = () => {
-    if (!newPw || newPw.length < 4) return setErr("কমপক্ষে ৪ অক্ষর");
-    if (newPw !== conf) return setErr("পাসওয়ার্ড মিলছে না");
+    if (!newPw || newPw.length < 4) return setErr(t("pw.min_4"));
+    if (newPw !== conf) return setErr(t("pw.mismatch"));
     onDone(newPw, true);
   };
 
@@ -384,11 +406,11 @@ export function ForceChangePw({ admin, onDone }: any) {
           <KeyRound size={28} />
         </div>
         <div className="text-center mb-8">
-          <div className="text-xl font-extrabold text-slate-900">স্বাগতম, {admin.name}!</div>
-          <div className="text-sm text-slate-500 mt-2">Temporary password দিয়ে login করেছেন। নিরাপত্তার স্বার্থে নতুন password সেট করুন।</div>
+          <div className="text-xl font-extrabold text-slate-900">{t("login.welcome")}, {admin.name}!</div>
+          <div className="text-sm text-slate-500 mt-2">{t("pw.temp_msg")}</div>
         </div>
         
-        <FG label="নতুন পাসওয়ার্ড">
+        <FG label={t("pw.new_pw")}>
           <div className="relative">
             <input 
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all pr-12" 
@@ -400,7 +422,7 @@ export function ForceChangePw({ admin, onDone }: any) {
             </button>
           </div>
         </FG>
-        <FG label="নিশ্চিত করুন">
+        <FG label={t("pw.confirm")}>
           <input 
             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
             type="password" 
@@ -417,10 +439,10 @@ export function ForceChangePw({ admin, onDone }: any) {
         </AnimatePresence>
 
         <button className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors mb-3" onClick={save}>
-          নতুন পাসওয়ার্ড সেট করুন
+          {t("pw.set_new")}
         </button>
         <button className="w-full bg-slate-100 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={() => onDone(admin.password, false)}>
-          Skip (এটাই রাখব)
+          {t("pw.skip")}
         </button>
       </motion.div>
     </div>
