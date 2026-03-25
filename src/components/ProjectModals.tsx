@@ -8,11 +8,13 @@ import { useLanguage } from "../lib/i18n";
 
 export function CellPaySheet({ client, instDef, payments, isSuperAdmin, onSave, onDelete, onClose }: any) {
   const { t } = useLanguage();
+  const shareCount = client.shareCount || 1;
+  const targetAmount = instDef.targetAmount * shareCount;
   const existPays = payments.filter((p: any) => p.clientId === client.id && p.instDefId === instDef.id);
   const approvedPays = existPays.filter((p: any) => p.status === "approved");
   const pendingPays = existPays.filter((p: any) => p.status === "pending");
   const paid = approvedPays.reduce((s: number, p: any) => s + p.amount, 0);
-  const rem = Math.max(0, instDef.targetAmount - paid);
+  const rem = Math.max(0, targetAmount - paid);
   
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(todayStr());
@@ -38,10 +40,10 @@ export function CellPaySheet({ client, instDef, payments, isSuperAdmin, onSave, 
       >
         <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
         <div className="text-xl font-black text-slate-900">{t("project_modals.payment_record")}</div>
-        <div className="text-xs font-bold text-slate-500 mt-1 mb-6">{dotJoin(client.name, client.plot, instDef.title)}</div>
+        <div className="text-xs font-bold text-slate-500 mt-1 mb-6">{dotJoin(client.name, client.plot, instDef.title)} {shareCount > 1 && <span className="text-blue-600">({shareCount} {t("client_info.shares")})</span>}</div>
         
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6">
-          <PBar paid={paid} target={instDef.targetAmount} />
+          <PBar paid={paid} target={targetAmount} />
           {rem > 0 && <div className="text-sm font-bold text-rose-600 mt-3">{t("project_modals.remaining", { amount: BDT(rem) })}</div>}
         </div>
         
@@ -244,7 +246,7 @@ export function ReceiptSheet({ payment, instDef, client, onClose }: any) {
           {[
             [t("project_modals.client"), client?.name], [t("project_modals.plot"), client?.plot], 
             [t("project_modals.date"), payment.date], [t("project_modals.installment"), instDef?.title], 
-            [t("project_modals.installment_price"), BDT(instDef?.targetAmount)]
+            [t("project_modals.installment_price"), BDT((instDef?.targetAmount || 0) * (client?.shareCount || 1))]
           ].map(([k, v]) => (
             <div key={k}>
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{k}</div>

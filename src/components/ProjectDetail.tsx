@@ -25,7 +25,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
   const prjLogs = [...logs].filter(l => l.projectId === project.id).sort((a, b) => b.ts.localeCompare(a.ts));
   
   const totalCollected = payments.filter((p: any) => p.status === "approved" && prjClients.find((c: any) => c.id === p.clientId)).reduce((s: number, p: any) => s + p.amount, 0);
-  const totalTarget = prjClients.length * prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0);
+  const totalTarget = prjClients.reduce((s: number, c: any) => s + (c.shareCount || 1) * prjDefs.reduce((ss: number, d: any) => ss + d.targetAmount, 0), 0);
   const totalDue = Math.max(0, totalTarget - totalCollected);
   
   const TABS = [
@@ -153,25 +153,27 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                 </thead>
                 <tbody>
                   {prjClients.map((client: any) => {
+                    const shareCount = client.shareCount || 1;
                     const rowTotal = prjDefs.reduce((s: number, d: any) => s + clientPaidForDef(client.id, d.id, payments), 0);
-                    const rowTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0);
+                    const rowTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
                     
                     return (
                       <tr key={client.id} className="group hover:bg-slate-50 transition-colors">
-                        <td className="sticky left-0 z-20 bg-white group-hover:bg-slate-50 border-r border-b border-slate-100 p-3 transition-colors shadow-[4px_0_8px_rgba(0,0,0,0.03)]">
+                        <td className="sticky left-0 z-20 bg-white group-hover:bg-slate-50 border-r border-b border-slate-100 p-3 transition-colors shadow-[4px_0_8_rgba(0,0,0,0.03)]">
                           <div className="flex items-center gap-3">
                             <ClientAvatar client={client} size={32} />
                             <div>
                               <div className="text-xs font-bold text-slate-900">{client.name}</div>
-                              <div className="text-[10px] text-slate-500 font-medium">{client.plot}</div>
+                              <div className="text-[10px] text-slate-500 font-medium">{client.plot} {shareCount > 1 && <span className="text-blue-600">({shareCount} {t("client_info.shares")})</span>}</div>
                             </div>
                           </div>
                         </td>
                         {prjDefs.map((d: any) => {
+                          const cellTarget = d.targetAmount * shareCount;
                           const paid = clientPaidForDef(client.id, d.id, payments);
                           const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
-                          const st = cellStatus(paid, d.targetAmount);
-                          const pct = Math.round((paid / d.targetAmount) * 100);
+                          const st = cellStatus(paid, cellTarget);
+                          const pct = Math.round((paid / cellTarget) * 100);
                           const m = STATUS[st];
                           
                           return (
@@ -184,7 +186,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                                   {paid > 0 ? BDTshort(paid) : "—"}
                                 </span>
                                 <span className="block text-[9px] text-slate-400 font-medium mt-0.5">
-                                  {BDTshort(d.targetAmount)}
+                                  {BDTshort(cellTarget)}
                                 </span>
                                 {pendingAmt > 0 && <span className="block text-[9px] text-amber-600 font-bold mt-1 flex items-center justify-center gap-0.5"><Clock size={10} /> {BDTshort(pendingAmt)}</span>}
                                 {paid > 0 && (
@@ -209,7 +211,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                     <td className="sticky left-0 z-20 bg-slate-50 border-r border-slate-200 p-3 text-slate-900 text-xs shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t("project_detail.total_col")}</td>
                     {prjDefs.map((d: any) => {
                       const ct = prjClients.reduce((s: number, c: any) => s + clientPaidForDef(c.id, d.id, payments), 0);
-                      const cT = prjClients.length * d.targetAmount;
+                      const cT = prjClients.reduce((s: number, c: any) => s + (c.shareCount || 1) * d.targetAmount, 0);
                       return (
                         <td key={d.id} className="p-3 border-r border-slate-100 text-center align-middle">
                           <div className="text-xs font-black text-slate-900">{BDTshort(ct)}</div>
@@ -244,8 +246,9 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
             </div>
           )}
           {prjClients.map((c: any) => {
+            const shareCount = c.shareCount || 1;
             const cPaid = payments.filter((p: any) => p.clientId === c.id && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
-            const cTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0);
+            const cTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
             return (
               <div key={c.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
                 <div className="flex items-center gap-4 mb-4">
@@ -262,10 +265,18 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                           </span>
                         </>
                       )}
+                      {shareCount > 1 && (
+                        <>
+                          {" · "}
+                          <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">
+                            {shareCount} {t("client_info.shares")}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
-                <PBar paid={cPaid} target={cTarget || c.totalAmount} />
+                <PBar paid={cPaid} target={cTarget || (c.totalAmount * shareCount)} />
               </div>
             );
           })}

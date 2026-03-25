@@ -28,8 +28,22 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
       const wb = XLSX.read(e.target?.result, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      
+      // Group identical rows
+      const grouped: { row: any; count: number; firstIndex: number }[] = [];
+      rows.forEach((r: any, i: number) => {
+        const existing = grouped.find(g => JSON.stringify(g.row) === JSON.stringify(r));
+        if (existing) {
+          existing.count++;
+        } else {
+          grouped.push({ row: r, count: 1, firstIndex: i });
+        }
+      });
+
       const importResults: any[] = [];
-      const mapped = rows.map((r: any, i: number) => {
+      const mapped = grouped.map((g: any) => {
+        const r = g.row;
+        const i = g.firstIndex;
         const usedKeys = new Set<string>();
         const get = (targetKeys: string[]) => {
           for (const k of targetKeys) {
@@ -58,6 +72,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
           nid: get(["nid", "nationalid", "national"]),
           plot: get(["plot", "flat", "unit", "apartment", "plotno", "flatno"]),
           totalAmount: parseFloat(get(["totalamount", "amount", "price", "total", "value"])) || 0,
+          shareCount: g.count,
           password: "1234",
           photo: "",
           projectId,
@@ -87,7 +102,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
 
   const newTpl = {
     __new: true, id: genClientId(allClients), name: "", fatherHusband: "", birthDate: "",
-    phone: "", email: "", nid: "", plot: "", totalAmount: "", photo: "", projectId, password: "1234", remarks: ""
+    phone: "", email: "", nid: "", plot: "", totalAmount: "", shareCount: 1, photo: "", projectId, password: "1234", remarks: ""
   };
 
   return (
@@ -141,6 +156,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
               <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.father_husband")}</th>
               <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.birth_date")}</th>
               <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.phone")}</th>
+              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.share_count")}</th>
               <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("common.password")}</th>
               <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.email")}</th>
               <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.nid")}</th>
@@ -164,6 +180,11 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
                     <span className="font-bold text-slate-900">{c.phone || "—"}</span>
                     <span className="text-[9px] text-slate-400 font-bold tracking-wider">USERNAME</span>
                   </div>
+                </td>
+                <td className="p-3">
+                  <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-bold text-[10px]">
+                    {c.shareCount || 1} {t("client_info.shares")}
+                  </span>
                 </td>
                 <td className="p-3"><PassCell value={c.password || "1234"} /></td>
                 <td className="p-3 text-blue-600 font-medium">{c.email || "—"}</td>
@@ -222,6 +243,7 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
             [t("client_info.customer_id"), client.id], [t("client_info.name"), client.name], [t("client_info.father_husband"), client.fatherHusband], 
             [t("client_info.birth_date"), client.birthDate], [t("client_info.phone"), client.phone], [t("client_info.email"), client.email], 
             [t("client_info.nid"), client.nid], [t("client_info.plot"), client.plot], [t("client_info.total_amount"), BDT(client.totalAmount)],
+            [t("client_info.share_count"), client.shareCount || 1],
             [t("client_info.remarks"), client.remarks]
           ].map(([l, v]) => (
             <div key={l as string} className="flex items-center py-2 border-b border-slate-100 last:border-0">
@@ -290,7 +312,7 @@ function ClientEditSheet({ client, allClients, onSave, onClose }: any) {
     if (!f.id) { alert(t("client_info.id_req")); return; }
     if (isNew && allClients.find((c: any) => c.id === f.id)) { alert(t("client_info.id_exists")); return; }
     if (!isNew && idChanged && allClients.find((c: any) => c.id === f.id && c.id !== originalId)) { alert(t("client_info.id_exists_other")); return; }
-    onSave({ ...f, totalAmount: parseFloat(f.totalAmount) || 0, password: f.password || "1234" }, originalId);
+    onSave({ ...f, totalAmount: parseFloat(f.totalAmount) || 0, shareCount: parseInt(f.shareCount) || 1, password: f.password || "1234" }, originalId);
   };
 
   return (
@@ -361,13 +383,15 @@ function ClientEditSheet({ client, allClients, onSave, onClose }: any) {
         
         <div className="grid grid-cols-2 gap-4">
           <FG label={t("client_info.total_amount_bdt")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={f.totalAmount || ""} onChange={e => s("totalAmount", e.target.value)} /></FG>
-          <FG label="Password">
-            <div className="relative">
-              <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all pr-10" type={showPass ? "text" : "password"} value={f.password || ""} onChange={e => s("password", e.target.value)} />
-              <button onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">{showPass ? "🙈" : "👁️"}</button>
-            </div>
-          </FG>
+          <FG label={t("client_info.share_count")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={f.shareCount || 1} onChange={e => s("shareCount", e.target.value)} /></FG>
         </div>
+        
+        <FG label="Password">
+          <div className="relative">
+            <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all pr-10" type={showPass ? "text" : "password"} value={f.password || ""} onChange={e => s("password", e.target.value)} />
+            <button onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">{showPass ? "🙈" : "👁️"}</button>
+          </div>
+        </FG>
         
         <div className="flex gap-3 mt-4">
           <button className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" onClick={submit}>{isNew ? "যোগ করুন" : "আপডেট করুন"}</button>
@@ -398,6 +422,7 @@ function ImportPreviewSheet({ data, onConfirm, onClose }: any) {
                 <th className="p-2 border-b border-slate-200">{t("client_info.row")}</th>
                 <th className="p-2 border-b border-slate-200">ID</th>
                 <th className="p-2 border-b border-slate-200">{t("client_info.name")}</th>
+                <th className="p-2 border-b border-slate-200">{t("client_info.share_count")}</th>
                 <th className="p-2 border-b border-slate-200">Phone</th>
                 <th className="p-2 border-b border-slate-200">{t("client_info.remarks_col")}</th>
               </tr>
@@ -408,6 +433,7 @@ function ImportPreviewSheet({ data, onConfirm, onClose }: any) {
                   <td className="p-2 text-slate-400 font-medium">{r._row}</td>
                   <td className="p-2"><span className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-[10px] font-bold text-slate-600">{r.id}</span></td>
                   <td className="p-2 font-bold text-slate-900">{r.name || <span className="text-rose-500">{t("client_info.empty")}</span>}</td>
+                  <td className="p-2 text-slate-500 font-bold">{r.shareCount || 1}</td>
                   <td className="p-2 text-slate-500 font-medium">{r.phone || "—"}</td>
                   <td className="p-2 text-[10px] text-slate-400 italic truncate max-w-[100px]">{r.remarks || "—"}</td>
                 </tr>

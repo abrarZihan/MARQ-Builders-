@@ -9,9 +9,11 @@ import { useLanguage } from "../lib/i18n";
 
 export function ClientInstallments({ client, instDefs, payments }: any) {
   const { t } = useLanguage();
+  const [viewMode, setViewMode] = useState<"combined" | "shares">("combined");
   const prjDefs = instDefs.filter((d: any) => d.projectId === client.projectId);
+  const shareCount = client.shareCount || 1;
   const totalPaid = payments.filter((p: any) => p.clientId === client.id && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
-  const totalTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0);
+  const totalTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
   const today = todayStr();
   const color = ac(client.id);
 
@@ -21,11 +23,11 @@ export function ClientInstallments({ client, instDefs, payments }: any) {
         <ClientAvatar client={client} size={56} />
         <div className="flex-1 min-w-0">
           <div className="text-lg font-black text-slate-900 truncate">{client.name}</div>
-          <div className="text-sm font-medium text-slate-500 mt-0.5">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span></div>
+          <div className="text-sm font-medium text-slate-500 mt-0.5">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span> {shareCount > 1 && <span className="text-blue-600 font-bold">({shareCount} {t('client_info.shares')})</span>}</div>
         </div>
         <div className="text-right shrink-0">
           <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t('common.total_price_label')}</div>
-          <div className="text-base font-black text-slate-900">{BDT(client.totalAmount)}</div>
+          <div className="text-base font-black text-slate-900">{BDT(client.totalAmount * shareCount)}</div>
         </div>
       </div>
 
@@ -42,49 +44,110 @@ export function ClientInstallments({ client, instDefs, payments }: any) {
         </div>
       </div>
 
+      {shareCount > 1 && (
+        <div className="flex bg-slate-200/50 p-1 rounded-xl mb-6">
+          <button 
+            className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "combined" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}
+            onClick={() => setViewMode("combined")}
+          >
+            {t('client.view_combined')}
+          </button>
+          <button 
+            className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "shares" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}
+            onClick={() => setViewMode("shares")}
+          >
+            {t('client.view_per_share')}
+          </button>
+        </div>
+      )}
+
       {prjDefs.length === 0 && (
         <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 font-bold text-sm">
           {t('common.no_installments')}
         </div>
       )}
 
-      <div className="space-y-3">
-        {prjDefs.map((d: any) => {
-          const paid = clientPaidForDef(client.id, d.id, payments);
-          const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
-          const st = cellStatus(paid, d.targetAmount);
-          const isDue = d.dueDate && d.dueDate < today && paid < d.targetAmount;
-          const m = STATUS[st];
+      <div className="space-y-6">
+        {viewMode === "combined" ? (
+          <div className="space-y-3">
+            {prjDefs.map((d: any) => {
+              const paid = clientPaidForDef(client.id, d.id, payments);
+              const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
+              const target = d.targetAmount * shareCount;
+              const st = cellStatus(paid, target);
+              const isDue = d.dueDate && d.dueDate < today && paid < target;
+              const m = STATUS[st];
 
-          return (
-            <div key={d.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm relative overflow-hidden">
-              <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", m.dot)} />
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="text-base font-black text-slate-900">{d.title}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-slate-500 font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
-                    {isDue && <span className="bg-rose-100 text-rose-600 rounded-md px-2 py-0.5 text-[10px] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Due</span>}
+              return (
+                <div key={d.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm relative overflow-hidden">
+                  <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", m.dot)} />
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <div className="text-base font-black text-slate-900">{d.title}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-slate-500 font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
+                        {isDue && <span className="bg-rose-100 text-rose-600 rounded-md px-2 py-0.5 text-[10px] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Due</span>}
+                      </div>
+                    </div>
+                    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider", m.bg, m.text)}>
+                      {st === "paid" ? t('common.status.paid') : st === "partial" ? t('common.status.partial') : t('common.status.unpaid')}
+                    </span>
                   </div>
+                  
+                  <PBar paid={paid} target={target} />
+                  
+                  {target - paid > 0 && (
+                    <div className="text-sm font-bold text-rose-600 mt-3">{t('common.due')}: {BDT(target - paid)}</div>
+                  )}
+                  {pendingAmt > 0 && (
+                    <div className="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-2.5 text-xs font-bold text-amber-700 flex items-center gap-1.5">
+                      <Clock size={14} /> {t('common.pending_approval_amount', { amount: BDT(pendingAmt) })}
+                    </div>
+                  )}
                 </div>
-                <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider", m.bg, m.text)}>
-                  {st === "paid" ? t('common.status.paid') : st === "partial" ? t('common.status.partial') : t('common.status.unpaid')}
-                </span>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {Array.from({ length: shareCount }).map((_, j) => (
+              <div key={j} className="space-y-3">
+                <div className="flex items-center gap-2 px-2">
+                  <div className="w-6 h-6 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[10px] font-black">{j + 1}</div>
+                  <div className="text-xs font-black text-slate-900 uppercase tracking-widest">{t('client_info.shares')} {j + 1}</div>
+                </div>
+                <div className="space-y-2">
+                  {prjDefs.map((d: any) => {
+                    const totalPaidForDef = clientPaidForDef(client.id, d.id, payments);
+                    const sharePaid = Math.min(d.targetAmount, Math.max(0, totalPaidForDef - j * d.targetAmount));
+                    const st = cellStatus(sharePaid, d.targetAmount);
+                    const m = STATUS[st];
+                    
+                    return (
+                      <div key={d.id} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex items-center gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-slate-900">{d.title}</div>
+                          <div className="text-[10px] text-slate-400 font-medium mt-0.5">{BDT(d.targetAmount)}</div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider", m.bg, m.text)}>
+                              {st === "paid" ? t('common.status.paid') : st === "partial" ? t('common.status.partial') : t('common.status.unpaid')}
+                            </span>
+                            <span className="text-xs font-black text-slate-900">{BDT(sharePaid)}</span>
+                          </div>
+                          <div className="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+                            <div className={cn("h-full rounded-full", m.bar)} style={{ width: `${(sharePaid / d.targetAmount) * 100}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              
-              <PBar paid={paid} target={d.targetAmount} />
-              
-              {d.targetAmount - paid > 0 && (
-                <div className="text-sm font-bold text-rose-600 mt-3">{t('common.due')}: {BDT(d.targetAmount - paid)}</div>
-              )}
-              {pendingAmt > 0 && (
-                <div className="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-2.5 text-xs font-bold text-amber-700 flex items-center gap-1.5">
-                  <Clock size={14} /> {t('common.pending_approval_amount', { amount: BDT(pendingAmt) })}
-                </div>
-              )}
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -245,7 +308,7 @@ export function ClientProfile({ client, onUpdateClient }: any) {
             [t('common.customer_id'), client.id], [t('common.phone'), client.phone || "—"], 
             [t('client.father_husband'), client.fatherHusband || "—"], [t('client.birth_date'), client.birthDate || "—"], 
             [t('client.email'), client.email || "—"], [t('client.nid'), client.nid || "—"], 
-            [t('common.total_price_label'), BDT(client.totalAmount)]
+            [t('common.total_price_label'), BDT(client.totalAmount * (client.shareCount || 1))]
           ].map(([l, v]) => (
             <div key={l} className="flex items-center py-2 border-b border-slate-100 last:border-0">
               <span className="text-xs font-bold text-slate-400 w-32 shrink-0">{l}</span>

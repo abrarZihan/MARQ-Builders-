@@ -40,6 +40,7 @@
         "nid": { "type": "string" },
         "plot": { "type": "string" },
         "totalAmount": { "type": "number" },
+        "shareCount": { "type": "number", "description": "Number of shares owned by the client" },
         "password": { "type": "string" },
         "photo": { "type": "string" },
         "remarks": { "type": "string" }
