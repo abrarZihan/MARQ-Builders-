@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { BDT, dotJoin, uid, todayStr } from "../lib/utils";
+import { BDT, dotJoin, uid, todayStr, numberToWords } from "../lib/utils";
 import { FG, ConfirmDelete, PBar } from "./Shared";
 import { EXP_CATS } from "../lib/data";
-import { Trash2, Clock, Printer } from "lucide-react";
+import { Trash2, Clock, Printer, FileText } from "lucide-react";
 import { useLanguage } from "../lib/i18n";
 
-export function CellPaySheet({ client, instDef, payments, isSuperAdmin, onSave, onDelete, onClose }: any) {
+export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin, onSave, onDelete, onClose }: any) {
   const { t } = useLanguage();
   const shareCount = client.shareCount || 1;
   const targetAmount = instDef.targetAmount * shareCount;
@@ -21,6 +21,7 @@ export function CellPaySheet({ client, instDef, payments, isSuperAdmin, onSave, 
   const [note, setNote] = useState("");
   const [err, setErr] = useState("");
   const [delPay, setDelPay] = useState<any>(null);
+  const [viewR, setViewR] = useState<any>(null);
 
   const submit = () => {
     const a = parseFloat(amount);
@@ -53,8 +54,9 @@ export function CellPaySheet({ client, instDef, payments, isSuperAdmin, onSave, 
             {approvedPays.map((p: any) => (
               <div key={p.id} className="flex justify-between items-center bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-2">
                 <span className="text-xs font-medium text-slate-700">{dotJoin(p.date, p.note)}</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-black text-emerald-700">{BDT(p.amount)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black text-emerald-700 mr-1">{BDT(p.amount)}</span>
+                  <button className="w-7 h-7 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-200 transition-colors" onClick={() => setViewR(p)}><FileText size={14} /></button>
                   {isSuperAdmin && (
                     <button className="w-7 h-7 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-200 transition-colors" onClick={() => setDelPay(p)}><Trash2 size={14} /></button>
                   )}
@@ -126,6 +128,9 @@ export function CellPaySheet({ client, instDef, payments, isSuperAdmin, onSave, 
               onConfirm={() => { onDelete(delPay.id); setDelPay(null); }} 
               onClose={() => setDelPay(null)} 
             />
+          )}
+          {viewR && (
+            <ReceiptSheet payment={viewR} instDef={instDef} client={client} project={project} onClose={() => setViewR(null)} />
           )}
         </AnimatePresence>
       </motion.div>
@@ -221,46 +226,108 @@ export function AddExpSheet({ projectId, onSave, onClose }: any) {
   );
 }
 
-export function ReceiptSheet({ payment, instDef, client, onClose }: any) {
+export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy, onClose }: any) {
   const { t } = useLanguage();
+  
+  const ReceiptContent = ({ type }: { type: string }) => (
+    <div className="relative p-8 bg-white text-slate-900 font-serif border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col justify-between">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-2xl text-white">🏗️</div>
+          <div>
+            <div className="text-2xl font-black tracking-tighter leading-none">MARQ BUILDERS</div>
+            <div className="text-[10px] font-bold text-slate-500 mt-1 uppercase">216/8, Baganbari, North Vasantek Dhaka Cantt, Dhaka- 1206</div>
+          </div>
+        </div>
+        <div className="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-md uppercase tracking-widest">
+          {type} Copy
+        </div>
+      </div>
+
+      {/* Sl No & Date */}
+      <div className="flex justify-between text-xs font-bold mb-8">
+        <div>Sl. No. <span className="border-b border-dotted border-slate-400 min-w-[80px] inline-block px-2">{payment.id.split('-')[1] || payment.id}</span></div>
+        <div>Date: <span className="border-b border-dotted border-slate-400 min-w-[120px] inline-block px-2">{payment.date}</span></div>
+      </div>
+
+      {/* Title */}
+      <div className="text-center mb-8">
+        <span className="bg-slate-900 text-white px-8 py-1.5 rounded-md font-black text-sm uppercase tracking-widest">Money Receipt</span>
+      </div>
+
+      {/* Fields */}
+      <div className="space-y-4 text-sm">
+        <div className="flex gap-4">
+          <div className="flex-1 flex items-end gap-2">
+            <span className="whitespace-nowrap font-bold">Name:</span>
+            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{client?.name}</span>
+          </div>
+          <div className="w-1/3 flex items-end gap-2">
+            <span className="whitespace-nowrap font-bold">Customer ID:</span>
+            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{client?.id}</span>
+          </div>
+        </div>
+
+        <div className="flex gap-4">
+          <div className="flex-1 flex items-end gap-2">
+            <span className="whitespace-nowrap font-bold">Project Name:</span>
+            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{project?.name || "N/A"}</span>
+          </div>
+          <div className="w-1/3 flex items-end gap-2">
+            <span className="whitespace-nowrap font-bold">Instalment No.:</span>
+            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{instDef?.title}</span>
+          </div>
+        </div>
+
+        <div className="flex items-end gap-2">
+          <span className="whitespace-nowrap font-bold">Amount =</span>
+          <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-black text-lg">{BDT(payment.amount)}/-</span>
+        </div>
+
+        <div className="flex items-end gap-2">
+          <span className="whitespace-nowrap font-bold">Amount in word:</span>
+          <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium italic">{numberToWords(payment.amount)} Taka Only</span>
+        </div>
+
+        <div className="flex items-end gap-2">
+          <span className="whitespace-nowrap font-bold">Deposit By:</span>
+          <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">Cash / Cheque / Bank</span>
+        </div>
+      </div>
+
+      {/* Footer Signatures */}
+      <div className="flex justify-between mt-16 pt-4 text-[10px] font-bold uppercase tracking-wider text-center">
+        <div className="w-32 border-t border-slate-900 pt-1">Prepared By</div>
+        <div className="w-32 border-t border-slate-900 pt-1">Accounts Officer</div>
+        <div className="w-32 border-t border-slate-900 pt-1">Authorised Signature</div>
+      </div>
+
+      {/* Watermark */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none -z-10">
+        <div className="text-[120px] font-black rotate-[-30deg]">MARQ</div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
       <motion.div 
-        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe" 
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden no-print" />
-        
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-2xl mx-auto mb-3">🏗️</div>
-          <div className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mb-1">MARQ BUILDERS</div>
-          <div className="text-xl font-black text-slate-900">{t("project_modals.payment_receipt")}</div>
-          <div className="text-xs text-slate-400 font-mono mt-1">{payment.id}</div>
+        <div className="max-h-[85vh] overflow-y-auto print:max-h-none print:overflow-visible">
+          <ReceiptContent type="Customer" />
+          {!hideOfficeCopy && (
+            <>
+              <div className="h-px border-b border-dashed border-slate-300 print:my-4" />
+              <ReceiptContent type="Office" />
+            </>
+          )}
         </div>
         
-        <div className="border-t-2 border-dashed border-slate-200 my-6" />
-        
-        <div className="grid grid-cols-2 gap-y-4 gap-x-6 mb-6">
-          {[
-            [t("project_modals.client"), client?.name], [t("project_modals.plot"), client?.plot], 
-            [t("project_modals.date"), payment.date], [t("project_modals.installment"), instDef?.title], 
-            [t("project_modals.installment_price"), BDT((instDef?.targetAmount || 0) * (client?.shareCount || 1))]
-          ].map(([k, v]) => (
-            <div key={k}>
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{k}</div>
-              <div className="text-sm font-bold text-slate-900">{v}</div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="bg-emerald-50 border-2 border-emerald-100 rounded-2xl p-5 text-center mb-6">
-          <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-1">{t("project_modals.paid_status")}</div>
-          <div className="text-3xl font-black text-emerald-700">{BDT(payment.amount)}</div>
-        </div>
-        
-        <div className="flex gap-3 no-print">
+        <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3 no-print">
           <button 
             className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2" 
             onClick={() => window.print()}
@@ -272,6 +339,20 @@ export function ReceiptSheet({ payment, instDef, client, onClose }: any) {
           </button>
         </div>
       </motion.div>
+
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .print\\:max-h-none, .print\\:max-h-none * { visibility: visible; }
+          .print\\:max-h-none {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .no-print { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 }

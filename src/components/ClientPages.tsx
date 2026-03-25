@@ -153,11 +153,12 @@ export function ClientInstallments({ client, instDefs, payments }: any) {
   );
 }
 
-export function ClientReceipts({ client, instDefs, payments }: any) {
+export function ClientReceipts({ client, instDefs, payments, projects }: any) {
   const { t } = useLanguage();
   const [viewR, setViewR] = useState<any>(null);
   const myPays = [...payments.filter((p: any) => p.clientId === client.id && p.status === "approved")].sort((a, b) => b.date.localeCompare(a.date));
   const pendingPays = payments.filter((p: any) => p.clientId === client.id && p.status === "pending");
+  const project = projects.find((p: any) => p.id === client.projectId);
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
@@ -214,7 +215,7 @@ export function ClientReceipts({ client, instDefs, payments }: any) {
       )}
 
       <AnimatePresence mode="wait">
-        {viewR && <ReceiptSheet payment={viewR} instDef={instDefs.find((d: any) => d.id === viewR.instDefId)} client={client} onClose={() => setViewR(null)} />}
+        {viewR && <ReceiptSheet payment={viewR} instDef={instDefs.find((d: any) => d.id === viewR.instDefId)} client={client} project={project} hideOfficeCopy={true} onClose={() => setViewR(null)} />}
       </AnimatePresence>
     </motion.div>
   );
