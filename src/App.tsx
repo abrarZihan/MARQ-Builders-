@@ -596,17 +596,29 @@ export default function App() {
   };
   const deleteProject = async (id: string) => {
     const prj = projects.find(p => p.id === id);
-    const ids = clients.filter(c => c.projectId === id).map(c => c.id);
-    
-    const batch = writeBatch(db);
-    batch.delete(doc(db, "projects", id));
-    clients.filter(c => c.projectId === id).forEach(c => batch.delete(doc(db, "clients", c.id)));
-    instDefs.filter(d => d.projectId === id).forEach(d => batch.delete(doc(db, "instDefs", d.id)));
-    expenses.filter(e => e.projectId === id).forEach(e => batch.delete(doc(db, "expenses", e.id)));
-    payments.filter(p => ids.includes(p.clientId)).forEach(p => batch.delete(doc(db, "payments", p.id)));
+    const prjClients = clients.filter(c => c.projectId === id);
+    const prjClientIds = prjClients.map(c => c.id);
+    const prjInstDefs = instDefs.filter(d => d.projectId === id);
+    const prjExpenses = expenses.filter(e => e.projectId === id);
+    const prjPayments = payments.filter(p => prjClientIds.includes(p.clientId));
+
+    const docsToDelete = [
+      doc(db, "projects", id),
+      ...prjClients.map(c => doc(db, "clients", c.id)),
+      ...prjInstDefs.map(d => doc(db, "instDefs", d.id)),
+      ...prjExpenses.map(e => doc(db, "expenses", e.id)),
+      ...prjPayments.map(p => doc(db, "payments", p.id))
+    ];
 
     try {
-      await batch.commit();
+      // Process in chunks of 500 to respect Firestore batch limits
+      for (let i = 0; i < docsToDelete.length; i += 500) {
+        const batch = writeBatch(db);
+        const chunk = docsToDelete.slice(i, i + 500);
+        chunk.forEach(d => batch.delete(d));
+        await batch.commit();
+      }
+      
       if (prj) addLog(adminUser, "project_delete", prj.name, "মুছে ফেলা হয়েছে");
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, `projects/${id}`);

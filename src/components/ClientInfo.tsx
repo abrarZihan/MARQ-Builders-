@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "motion/react";
 import { BDT, BDTshort, dotJoin, ac, initials, uid, todayStr, cn, genClientId } from "../lib/utils";
 import { FG, ConfirmDelete, ClientAvatar, PassCell } from "./Shared";
-import { Trash2, Eye, EyeOff, Edit2, Camera, Printer } from "lucide-react";
+import { Trash2, Eye, EyeOff, Edit2, Camera, Printer, FileUp } from "lucide-react";
 
 import { useLanguage } from "../lib/i18n";
 
@@ -105,10 +105,10 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
             <Printer size={14} /> {t("client_info.print")}
           </button>
           <button 
-            className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm" 
+            className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2" 
             onClick={() => fileRef.current?.click()}
           >
-            📥 {t("client_info.import")}
+            <FileUp size={14} /> {t("client_info.import")}
           </button>
           <button 
             className="bg-slate-900 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm" 
