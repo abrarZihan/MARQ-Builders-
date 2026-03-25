@@ -533,19 +533,20 @@ export default function App() {
   // Client CRUD
   const updateClient = async (c: any, oldId: string) => {
     try {
-      await setDoc(doc(db, "clients", c.id), c);
-      if (oldId && oldId !== c.id) {
+      const { __new, ...data } = c;
+      await setDoc(doc(db, "clients", data.id), data);
+      if (oldId && oldId !== data.id) {
         // Migrate payments
         const batch = writeBatch(db);
         const clientPayments = payments.filter(p => p.clientId === oldId);
         clientPayments.forEach(p => {
-          batch.update(doc(db, "payments", p.id), { clientId: c.id });
+          batch.update(doc(db, "payments", p.id), { clientId: data.id });
         });
         await batch.commit();
         await deleteDoc(doc(db, "clients", oldId));
-        addLog(adminUser, "client_id_change", `${oldId} → ${c.id}`, `${c.name} এর ID পরিবর্তন`, c.projectId);
+        addLog(adminUser, "client_id_change", `${oldId} → ${data.id}`, `${data.name} এর ID পরিবর্তন`, data.projectId);
       } else {
-        addLog(adminUser, "client_edit", `${c.id} - ${c.name}`, "তথ্য আপডেট", c.projectId);
+        addLog(adminUser, "client_edit", `${data.id} - ${data.name}`, "তথ্য আপডেট", data.projectId);
       }
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `clients/${c.id}`);
@@ -555,8 +556,9 @@ export default function App() {
   const addClient = async (c: any) => {
     if (clients.find(cl => cl.id === c.id)) { alert("এই ID আছে"); return; }
     try {
-      await setDoc(doc(db, "clients", c.id), c);
-      addLog(adminUser, "client_add", `${c.id} - ${c.name}`, "নতুন ক্লাইন্ট", c.projectId);
+      const { __new, ...data } = c;
+      await setDoc(doc(db, "clients", data.id), data);
+      addLog(adminUser, "client_add", `${data.id} - ${data.name}`, "নতুন ক্লাইন্ট", data.projectId);
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, `clients/${c.id}`);
     }
@@ -575,7 +577,8 @@ export default function App() {
   const addBulkClients = async (bulk: any[]) => {
     const batch = writeBatch(db);
     bulk.forEach(c => {
-      batch.set(doc(db, "clients", c.id), c);
+      const { __new, ...data } = c;
+      batch.set(doc(db, "clients", data.id), data);
     });
     try {
       await batch.commit();

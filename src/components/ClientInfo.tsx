@@ -211,7 +211,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
                 <td className="p-3 no-print">
                   <div className="flex gap-1.5 justify-center">
                     <button className="w-7 h-7 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center hover:bg-slate-200 transition-colors" onClick={() => setViewClient(c)}><Eye size={14} /></button>
-                    <button className="w-7 h-7 bg-slate-900 text-white rounded-lg flex items-center justify-center hover:bg-slate-800 transition-colors" onClick={() => setEditClient({ ...c })}><Edit2 size={14} /></button>
+                    <button className="w-7 h-7 bg-slate-900 text-white rounded-lg flex items-center justify-center hover:bg-slate-800 transition-colors" onClick={() => { const { __new, ...clean } = c; setEditClient(clean); }}><Edit2 size={14} /></button>
                     <button className="w-7 h-7 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-200 transition-colors" onClick={() => setDeleteTarget(c)}><Trash2 size={14} /></button>
                   </div>
                 </td>
@@ -413,8 +413,8 @@ function ClientEditSheet({ client, allClients, onSave, onClose }: any) {
         </FG>
         
         <div className="flex gap-3 mt-4">
-          <button className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" onClick={submit}>{isNew ? "যোগ করুন" : "আপডেট করুন"}</button>
-          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>বাতিল</button>
+          <button className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" onClick={submit}>{isNew ? t("client_info.add") : t("client_info.update")}</button>
+          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>{t("client_info.cancel")}</button>
         </div>
       </motion.div>
     </div>
