@@ -29,10 +29,28 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
       
-      // Group identical rows
+      // Group identical rows (ignoring common serial/index columns)
       const grouped: { row: any; count: number; firstIndex: number }[] = [];
       rows.forEach((r: any, i: number) => {
-        const existing = grouped.find(g => JSON.stringify(g.row) === JSON.stringify(r));
+        // Create a comparison object without common "index" keys
+        const compObj = { ...r };
+        const ignoreKeys = ["sl", "serial", "id", "no", "index", "row"];
+        Object.keys(compObj).forEach(k => {
+          if (ignoreKeys.includes(k.toLowerCase().replace(/[\s_]/g, ""))) {
+            delete compObj[k];
+          }
+        });
+
+        const existing = grouped.find(g => {
+          const gComp = { ...g.row };
+          Object.keys(gComp).forEach(k => {
+            if (ignoreKeys.includes(k.toLowerCase().replace(/[\s_]/g, ""))) {
+              delete gComp[k];
+            }
+          });
+          return JSON.stringify(gComp) === JSON.stringify(compObj);
+        });
+
         if (existing) {
           existing.count++;
         } else {
@@ -61,6 +79,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
 
         const phone = get(["phone", "mobile", "contact", "cell", "number"]);
         const id = get(["customerid", "clientid", "id", "sl", "serial"]) || phone || genClientId([...allClients, ...importResults]);
+        const shareCountFromCol = parseInt(get(["sharecount", "shares", "count", "share"])) || 0;
         
         const client: any = {
           id,
@@ -72,7 +91,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
           nid: get(["nid", "nationalid", "national"]),
           plot: get(["plot", "flat", "unit", "apartment", "plotno", "flatno"]),
           totalAmount: parseFloat(get(["totalamount", "amount", "price", "total", "value"])) || 0,
-          shareCount: g.count,
+          shareCount: shareCountFromCol || g.count,
           password: "1234",
           photo: "",
           projectId,
@@ -382,8 +401,8 @@ function ClientEditSheet({ client, allClients, onSave, onClose }: any) {
         </FG>
         
         <div className="grid grid-cols-2 gap-4">
-          <FG label={t("client_info.total_amount_bdt")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={f.totalAmount || ""} onChange={e => s("totalAmount", e.target.value)} /></FG>
-          <FG label={t("client_info.share_count")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={f.shareCount || 1} onChange={e => s("shareCount", e.target.value)} /></FG>
+          <FG label={t("client_info.total_amount_bdt")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={f.totalAmount} onChange={e => s("totalAmount", e.target.value)} /></FG>
+          <FG label={t("client_info.share_count")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={f.shareCount} onChange={e => s("shareCount", e.target.value)} /></FG>
         </div>
         
         <FG label="Password">
