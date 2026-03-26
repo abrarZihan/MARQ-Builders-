@@ -97,7 +97,25 @@ export function ClientInstallments({ client, instDefs, payments }: any) {
                   <PBar paid={paid} target={target} />
                   
                   {target - paid > 0 && (
-                    <div className="text-sm font-bold text-rose-600 mt-3">{t('common.due')}: {BDT(target - paid)}</div>
+                    <div className="flex justify-between items-center mt-3">
+                      <div className="text-sm font-bold text-rose-600">{t('common.due')}: {BDT(target - paid)}</div>
+                      <button 
+                        className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+                        onClick={async () => {
+                          const response = await fetch('/api/initiate-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ amount: target - paid, installmentId: d.id, clientId: client.id, clientName: client.name })
+                          });
+                          const data = await response.json();
+                          if (data.url) {
+                            window.location.href = data.url;
+                          }
+                        }}
+                      >
+                        {t('common.pay_now')}
+                      </button>
+                    </div>
                   )}
                   {pendingAmt > 0 && (
                     <div className="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-2.5 text-xs font-bold text-amber-700 flex items-center gap-1.5">
