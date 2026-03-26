@@ -9,15 +9,17 @@ export default async function handler(req, res) {
 
   try {
     const { installmentId, clientId, clientName, clientEmail, clientPhone, amount, installmentNumber } = req.body;
+    console.log("Initiating payment for:", { installmentId, clientId, amount });
 
     if (!installmentId || !clientId || !amount) {
+      console.error("Missing required fields");
       return res.status(400).json({ error: "Missing required fields (installmentId, clientId, amount)" });
     }
 
     const STORE_ID = "marqb69c56224e0f27";
     const STORE_PASSWORD = "marqb69c56224e0f27@ssl";
     const BASE_URL = "https://sandbox.sslcommerz.com";
-    const APP_URL = "https://marq-builders.vercel.app";
+    const APP_URL = process.env.APP_URL || "https://marq-builders.vercel.app";
     const transactionId = `TXN_${Date.now()}`;
 
     const params = new URLSearchParams();
@@ -26,9 +28,16 @@ export default async function handler(req, res) {
     params.append("total_amount", amount.toString());
     params.append("currency", "BDT");
     params.append("tran_id", transactionId);
-    params.append("success_url", `${APP_URL}/api/payment-success?installmentId=${installmentId}&clientId=${clientId}&amount=${amount}&installmentNumber=${installmentNumber}&clientName=${encodeURIComponent(clientName || "Client")}`);
-    params.append("fail_url", `${APP_URL}/api/payment-fail?clientId=${clientId}`);
-    params.append("cancel_url", `${APP_URL}/api/payment-fail?clientId=${clientId}`);
+    params.append("success_url", `${APP_URL}/api/payment-success`);
+    params.append("fail_url", `${APP_URL}/api/payment-fail`);
+    params.append("cancel_url", `${APP_URL}/api/payment-fail`);
+    
+    // Use value_a-d for extra data to keep URLs short and clean
+    params.append("value_a", installmentId);
+    params.append("value_b", clientId);
+    params.append("value_c", amount.toString());
+    params.append("value_d", installmentNumber || "General");
+    
     params.append("cus_name", clientName || "Client Name");
     params.append("cus_email", clientEmail || "test@test.com");
     params.append("cus_phone", clientPhone || "01700000000");
@@ -41,11 +50,23 @@ export default async function handler(req, res) {
     params.append("product_category", "Real Estate");
     params.append("product_profile", "general");
 
-    const response = await axios.post(`${BASE_URL}/gwprocess/v3/api.php`, params, {
+    console.log("Sending request to SSLCommerz with params:", params.toString());
+
+    const response = await axios.post(`${BASE_URL}/gwprocess/v4/api.php`, params, {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
 
+    console.log("SSLCommerz response status:", response.status);
+    
+    if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
+      console.error("SSLCommerz returned HTML instead of JSON. First 500 chars:", response.data.substring(0, 500));
+      return res.status(500).json({ error: "SSLCommerz returned an error page (HTML)", details: "Check server logs for the HTML content." });
+    }
+
+    console.log("SSLCommerz response data:", response.data);
+
     if (response.data && response.data.GatewayPageURL) {
+      console.log("Returning payment URL:", response.data.GatewayPageURL);
       return res.status(200).json({ url: response.data.GatewayPageURL });
     } else {
       console.error("SSLCommerz API error response:", response.data);

@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   const { clientId } = req.query;
-  const APP_URL = "https://marq-builders.vercel.app";
+  const APP_URL = process.env.APP_URL || "https://marq-builders.vercel.app";
 
   // SSLCommerz calls this on failure/cancel
   // Redirect client back with ?payment=failed

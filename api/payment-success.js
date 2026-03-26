@@ -15,17 +15,24 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { val_id, tran_id } = req.body;
-  const { installmentId, clientId, amount, installmentNumber, clientName } = req.query;
+  const { 
+    val_id, 
+    tran_id, 
+    value_a: installmentId, 
+    value_b: clientId, 
+    value_c: amount, 
+    value_d: installmentNumber 
+  } = req.body;
 
   if (!val_id) {
+    console.error("Missing val_id in callback body:", req.body);
     return res.status(400).json({ error: "Missing validation ID" });
   }
 
   const STORE_ID = "marqb69c56224e0f27";
   const STORE_PASSWORD = "marqb69c56224e0f27@ssl";
-  const VALIDATION_URL = "https://sandbox.sslcommerz.com/validator/api/validationserverphp.php";
-  const APP_URL = "https://marq-builders.vercel.app";
+  const VALIDATION_URL = "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php";
+  const APP_URL = process.env.APP_URL || "https://marq-builders.vercel.app";
 
   try {
     // Validate payment
