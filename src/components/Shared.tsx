@@ -302,7 +302,6 @@ export function Login({ onLogin }: any) {
         {lang === 'bn' ? 'English' : 'বাংলা'}
       </button>
       <div className="text-center mb-8">
-        <img src="https://storage.googleapis.com/test-media-api-v2.appspot.com/ais-dev-q2u7lcm54u6lcz6q7tqqyq-498594259434.asia-southeast1.run.app/1742880328114-1.png" alt="Logo" className="w-32 h-32 object-contain mx-auto mb-4" referrerPolicy="no-referrer" />
         <div className="text-3xl font-black text-white tracking-tighter">MARQ BUILDERS</div>
       </div>
       <motion.div 
