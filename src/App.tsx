@@ -14,7 +14,7 @@ import {
   Drawer, BottomBar, Login, ForceChangePw 
 } from "./components/Shared";
 import { AuditLogPage, LogRow } from "./components/Admin";
-import { AdminProfile, AdminManagePage } from "./components/AdminPages";
+import { AdminProfile, AdminManagePage, AdminPaymentsPage } from "./components/AdminPages";
 import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
 import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle } from "lucide-react";
@@ -442,13 +442,13 @@ export default function App() {
     };
     init();
 
-    const unsubProjects = onSnapshot(collection(db, "projects"), (s) => setProjects(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "projects"));
-    const unsubClients = onSnapshot(collection(db, "clients"), (s) => setClients(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
-    const unsubInstDefs = onSnapshot(collection(db, "instDefs"), (s) => setInstDefs(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "instDefs"));
-    const unsubPayments = onSnapshot(collection(db, "payments"), (s) => setPayments(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
-    const unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => setExpenses(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
-    const unsubAdmins = onSnapshot(collection(db, "admins"), (s) => setAdmins(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "admins"));
-    const unsubLogs = onSnapshot(query(collection(db, "logs"), orderBy("ts", "desc"), limit(100)), (s) => setLogs(s.docs.map(d => d.data())), (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
+    const unsubProjects = onSnapshot(collection(db, "projects"), (s) => setProjects(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "projects"));
+    const unsubClients = onSnapshot(collection(db, "clients"), (s) => setClients(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
+    const unsubInstDefs = onSnapshot(collection(db, "instDefs"), (s) => setInstDefs(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "instDefs"));
+    const unsubPayments = onSnapshot(collection(db, "payments"), (s) => setPayments(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
+    const unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
+    const unsubAdmins = onSnapshot(collection(db, "admins"), (s) => setAdmins(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "admins"));
+    const unsubLogs = onSnapshot(query(collection(db, "logs"), orderBy("ts", "desc"), limit(100)), (s) => setLogs(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
 
     return () => {
       unsubProjects(); unsubClients(); unsubInstDefs(); unsubPayments(); unsubExpenses(); unsubAdmins(); unsubLogs();
@@ -870,6 +870,7 @@ export default function App() {
         )}
         
         {(role === "admin" || role === "superadmin") && !selProject && page === "profile" && <AdminProfile admin={adminUser} onUpdate={changeMyPw} />}
+        {(role === "admin" || role === "superadmin") && !selProject && page === "payments" && <AdminPaymentsPage payments={payments} clients={clients} instDefs={instDefs} projects={projects} />}
         {(role === "admin" || role === "superadmin") && !selProject && page === "admins" && isSuperAdmin && <AdminManagePage admins={admins} onAdd={addAdmin} onUpdate={addAdmin} onDelete={removeAdmin} onResetPw={resetAdminPw} currentAdminId={adminUser.id} />}
         {(role === "admin" || role === "superadmin") && selProject && curProject && (
           <ProjectDetail 

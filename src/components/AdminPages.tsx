@@ -164,19 +164,16 @@ export function AdminPaymentsPage({ payments, clients, instDefs, projects }: any
           return (
             <div key={p.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-extrabold text-slate-900 truncate">{c?.name || p.clientId}</span>
-                  <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase">{prj?.name}</span>
-                </div>
-                <div className="text-xs font-bold text-slate-400 truncate">{d?.title} · {p.date}</div>
+                <div className="text-sm font-extrabold text-slate-900">{c?.name || p.clientId}</div>
+                <div className="text-xs font-bold text-slate-400">{p.date}</div>
               </div>
               <div className="text-right shrink-0">
-                <div className="text-sm font-black text-emerald-600 mb-1">{BDT(p.amount)}</div>
                 <button 
-                  className="text-[10px] font-black text-blue-600 hover:text-blue-700 underline uppercase tracking-wider"
+                  className="flex items-center gap-1.5 text-xs font-black text-blue-600 hover:text-blue-700 underline uppercase tracking-wider"
                   onClick={() => setSelPay(p)}
                 >
-                  {t('project_modals.receipt')}
+                  <Receipt size={14} />
+                  {t('modal.receipt') || 'রসিদ'}
                 </button>
               </div>
             </div>
