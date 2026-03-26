@@ -825,7 +825,12 @@ export default function App() {
             className="h-8 w-auto object-contain brightness-0 invert"
             referrerPolicy="no-referrer"
             onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
+              const target = e.target as HTMLImageElement;
+              if (target.src.includes('raw.githubusercontent.com')) {
+                target.style.display = 'none';
+              } else {
+                target.src = "https://raw.githubusercontent.com/abrarZihan/MARQ-Builders-/main/public/logo.png";
+              }
             }}
           />
           <div>
