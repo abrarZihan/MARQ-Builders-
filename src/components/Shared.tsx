@@ -145,6 +145,7 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
   const { t, lang, setLang } = useLanguage();
   const adminNav = [
     { id: "home", label: t("nav.projects"), icon: Home },
+    { id: "payments", label: t("nav.payments"), icon: Receipt },
     { id: "log", label: t("nav.log"), icon: ClipboardList },
     { id: "profile", label: t("nav.profile"), icon: User },
     ...(isSuperAdmin ? [{ id: "admins", label: t("nav.admin_manage"), icon: Shield }] : []),
@@ -301,8 +302,8 @@ export function Login({ onLogin }: any) {
         {lang === 'bn' ? 'English' : 'বাংলা'}
       </button>
       <div className="text-center mb-8">
-        <div className="text-4xl font-black text-white tracking-tighter">MARQ</div>
-        <div className="text-xs text-slate-400 tracking-[0.2em] font-bold">BUILDERS</div>
+        <img src="https://storage.googleapis.com/test-media-api-v2.appspot.com/ais-dev-q2u7lcm54u6lcz6q7tqqyq-498594259434.asia-southeast1.run.app/1742880328114-1.png" alt="Logo" className="w-32 h-32 object-contain mx-auto mb-4" referrerPolicy="no-referrer" />
+        <div className="text-3xl font-black text-white tracking-tighter">MARQ BUILDERS</div>
       </div>
       <motion.div 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}

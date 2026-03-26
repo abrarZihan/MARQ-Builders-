@@ -4,7 +4,7 @@ import { BDT, ac, initials, todayStr, clientPaidForDef, cellStatus, cn } from ".
 import { FG, ClientAvatar, PBar, CategoryIcon, CategoryColor } from "./Shared";
 import { STATUS } from "../lib/data";
 import { ReceiptSheet } from "./ProjectModals";
-import { Eye, EyeOff, Building2, CheckCircle2, Clock, KeyRound } from "lucide-react";
+import { Eye, EyeOff, Building2, CheckCircle2, Clock, KeyRound, FileText, ChevronRight } from "lucide-react";
 import { useLanguage } from "../lib/i18n";
 
 export function ClientInstallments({ client, instDefs, payments }: any) {
@@ -185,27 +185,37 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
             const def = instDefs.find((d: any) => d.id === p.instDefId);
             return (
               <motion.div 
-                whileHover={{ scale: 0.98 }} whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 0.98, y: -2 }} whileTap={{ scale: 0.95 }}
                 key={p.id} 
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm relative overflow-hidden cursor-pointer"
+                className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden cursor-pointer group"
                 onClick={() => setViewR(p)}
               >
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500" />
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-mono font-bold tracking-wider mb-0.5">{p.id}</div>
-                    <div className="text-base font-black text-slate-900">{def?.title || t('common.installment')}</div>
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500 group-hover:w-2 transition-all" />
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
+                      <FileText size={20} />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-mono font-bold tracking-widest uppercase mb-0.5">{p.id.split('-')[1] || p.id}</div>
+                      <div className="text-base font-black text-slate-900 leading-tight">{def?.title || t('common.installment')}</div>
+                    </div>
                   </div>
-                  <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     {t('common.approved')}
                   </span>
                 </div>
                 <div className="flex justify-between items-end">
-                  <div className="text-2xl font-black text-emerald-600">{BDT(p.amount)}</div>
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">{t('common.amount_paid')}</div>
+                    <div className="text-2xl font-black text-slate-900 tracking-tighter">{BDT(p.amount)}</div>
+                  </div>
                   <div className="text-right">
-                    <div className="text-xs text-slate-500 font-medium mb-1">{p.date}</div>
-                    <div className="text-xs text-blue-600 font-bold">{t('common.receipt_link')}</div>
+                    <div className="text-xs text-slate-500 font-bold mb-2">{p.date}</div>
+                    <div className="inline-flex items-center gap-1.5 text-xs text-blue-600 font-black uppercase tracking-wider group-hover:gap-2 transition-all">
+                      {t('common.receipt_link')} <ChevronRight size={14} />
+                    </div>
                   </div>
                 </div>
               </motion.div>

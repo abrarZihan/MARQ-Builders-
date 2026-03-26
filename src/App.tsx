@@ -83,7 +83,7 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
   const pendingPays = payments.filter((p: any) => p.status === "pending");
   const totalExpected = clients.reduce((s: number, c: any) => {
     const defs = instDefs.filter((d: any) => d.projectId === c.projectId);
-    return s + defs.reduce((ds: number, d: any) => ds + d.targetAmount, 0);
+    return s + (defs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (c.shareCount || 1));
   }, 0);
   const totalCollected = approvedPays.reduce((s: number, p: any) => s + p.amount, 0);
   const totalExpenses = expenses.reduce((s: number, e: any) => s + e.amount, 0);
@@ -162,7 +162,7 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
         const prjExpenses = expenses.filter((e: any) => e.projectId === prj.id);
         const prjPays = approvedPays.filter((p: any) => prjClients.find((c: any) => c.id === p.clientId));
         
-        const expected = prjClients.reduce((s: number, c: any) => s + prjDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0), 0);
+        const expected = prjClients.reduce((s: number, c: any) => s + (prjDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (c.shareCount || 1)), 0);
         const collected = prjPays.reduce((s: number, p: any) => s + p.amount, 0);
         const spent = prjExpenses.reduce((s: number, e: any) => s + e.amount, 0);
         const due = Math.max(0, expected - collected);
@@ -818,9 +818,25 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="fixed top-0 left-0 right-0 h-16 bg-slate-900 flex items-center px-4 gap-3 z-[100] shadow-md no-print">
-        <div className="flex-1 min-w-0">
-          <div className="font-black text-lg text-white tracking-tight">MARQ <span className="text-slate-400 font-bold">Builders</span></div>
-          <div className="text-[11px] text-slate-400 font-bold tracking-wider uppercase truncate">{topTitle}</div>
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="h-8 w-auto object-contain brightness-0 invert"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src.includes('raw.githubusercontent.com')) {
+                target.style.display = 'none';
+              } else {
+                target.src = "https://raw.githubusercontent.com/abrarZihan/MARQ-Builders-/main/public/logo.png";
+              }
+            }}
+          />
+          <div>
+            <div className="font-black text-lg text-white tracking-tight">MARQ <span className="text-slate-400 font-bold">Builders</span></div>
+            <div className="text-[11px] text-slate-400 font-bold tracking-wider uppercase truncate">{topTitle}</div>
+          </div>
         </div>
         {isSuperAdmin && pendingCount > 0 && (
           <div className="bg-rose-500 text-white rounded-full px-3 py-1 text-xs font-black shadow-sm flex items-center gap-1.5">

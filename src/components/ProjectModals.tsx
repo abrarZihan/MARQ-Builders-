@@ -230,18 +230,37 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const { t } = useLanguage();
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="relative p-8 bg-white text-slate-900 font-serif border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col justify-between">
+    <div className="relative p-8 bg-white text-slate-900 font-serif border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col justify-between min-w-[800px] print:min-w-0">
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-2xl text-white">🏗️</div>
+      <div className="flex justify-between items-start mb-8">
+        <div className="flex items-center gap-6">
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="h-20 w-auto object-contain"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src.includes('raw.githubusercontent.com')) {
+                target.style.display = 'none';
+              } else {
+                target.src = "https://raw.githubusercontent.com/abrarZihan/MARQ-Builders-/main/public/logo.png";
+              }
+            }}
+          />
           <div>
-            <div className="text-2xl font-black tracking-tighter leading-none">MARQ BUILDERS</div>
-            <div className="text-[10px] font-bold text-slate-500 mt-1 uppercase">216/8, Baganbari, North Vasantek Dhaka Cantt, Dhaka- 1206</div>
+            <div className="text-3xl font-black text-slate-900 tracking-tighter leading-none">MARQ <span className="text-slate-400 font-bold">Builders</span></div>
+            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1.5">Official Money Receipt</div>
+            <div className="text-[10px] text-slate-400 leading-tight mt-2 font-medium">
+              216/8, Baganbari, North Vasantek<br />
+              Dhaka Cantt, Dhaka- 1206
+            </div>
           </div>
         </div>
-        <div className="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-md uppercase tracking-widest">
-          {type} Copy
+        <div className="flex flex-col items-end gap-2">
+          <div className="bg-slate-900 text-white text-[10px] font-black px-4 py-1.5 rounded-sm uppercase tracking-widest">
+            {type} Copy
+          </div>
         </div>
       </div>
 
@@ -305,7 +324,23 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
 
       {/* Watermark */}
       <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none -z-10">
-        <div className="text-[120px] font-black rotate-[-30deg]">MARQ</div>
+        <div className="flex flex-col items-center gap-4 rotate-[-30deg]">
+          <img 
+            src="/logo.png" 
+            alt="" 
+            className="w-[300px] h-auto object-contain grayscale" 
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src.includes('raw.githubusercontent.com')) {
+                target.style.display = 'none';
+              } else {
+                target.src = "https://raw.githubusercontent.com/abrarZihan/MARQ-Builders-/main/public/logo.png";
+              }
+            }}
+          />
+          <div className="text-[100px] font-black whitespace-nowrap">MARQ BUILDERS</div>
+        </div>
       </div>
     </div>
   );
@@ -314,10 +349,10 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
     <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none" 
+        className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="max-h-[85vh] overflow-y-auto print:max-h-none print:overflow-visible">
+        <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible">
           <ReceiptContent type="Customer" />
           {!hideOfficeCopy && (
             <>
