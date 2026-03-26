@@ -102,14 +102,23 @@ export function ClientInstallments({ client, instDefs, payments }: any) {
                       <button 
                         className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
                         onClick={async () => {
-                          const response = await fetch('/api/initiate-payment', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ amount: target - paid, installmentId: d.id, clientId: client.id, clientName: client.name })
-                          });
-                          const data = await response.json();
-                          if (data.url) {
-                            window.location.href = data.url;
+                          console.log('Pay Now clicked');
+                          try {
+                            const response = await fetch('/api/initiate-payment', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ amount: target - paid, installmentId: d.id, clientId: client.id, clientName: client.name })
+                            });
+                            console.log('Response status:', response.status);
+                            const data = await response.json();
+                            console.log('Response data:', data);
+                            if (data.url) {
+                              window.location.href = data.url;
+                            } else {
+                              console.error('No URL in response');
+                            }
+                          } catch (error) {
+                            console.error('Fetch error:', error);
                           }
                         }}
                       >

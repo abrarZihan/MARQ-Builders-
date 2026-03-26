@@ -19,33 +19,35 @@ async function startServer() {
 
   // API routes
   app.post("/api/initiate-payment", async (req, res) => {
+    console.log('Received initiate-payment request:', req.body);
     const { amount, installmentId, clientId, clientName } = req.body;
     const transactionId = `TXN_${Date.now()}`;
 
-    const payload = {
-      store_id: STORE_ID,
-      store_passwd: STORE_PASSWORD,
-      total_amount: amount,
-      currency: "BDT",
-      tran_id: transactionId,
-      success_url: `${process.env.APP_URL}/api/payment-success?installmentId=${installmentId}&clientId=${clientId}`,
-      fail_url: `${process.env.APP_URL}/api/payment-fail`,
-      cancel_url: `${process.env.APP_URL}/api/payment-fail`,
-      cus_name: clientName,
-      cus_email: "test@test.com",
-      shipping_method: "NO",
-      product_name: "Installment Payment",
-      product_category: "Real Estate",
-      product_profile: "general",
-    };
+    const params = new URLSearchParams();
+    params.append('store_id', STORE_ID!);
+    params.append('store_passwd', STORE_PASSWORD!);
+    params.append('total_amount', amount.toString());
+    params.append('currency', 'BDT');
+    params.append('tran_id', transactionId);
+    params.append('success_url', `${process.env.APP_URL}/api/payment-success?installmentId=${installmentId}&clientId=${clientId}`);
+    params.append('fail_url', `${process.env.APP_URL}/api/payment-fail`);
+    params.append('cancel_url', `${process.env.APP_URL}/api/payment-fail`);
+    params.append('cus_name', clientName);
+    params.append('cus_email', 'test@test.com');
+    params.append('shipping_method', 'NO');
+    params.append('product_name', 'Installment Payment');
+    params.append('product_category', 'Real Estate');
+    params.append('product_profile', 'general');
 
     try {
-      const response = await axios.post(`${BASE_URL}/gwprocess/v3/api.php`, payload, {
+      const response = await axios.post(`${BASE_URL}/gwprocess/v3/api.php`, params, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
+      console.log('SSLCommerz response:', response.data);
       res.json({ url: response.data.GatewayPageURL, transactionId });
     } catch (error) {
-      res.status(500).json({ error: "Failed to initiate payment" });
+      console.error('SSLCommerz API error:', error.response ? error.response.data : error.message);
+      res.status(500).json({ error: "Failed to initiate payment", details: error.message });
     }
   });
 
