@@ -2,7 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import axios from "axios";
-import { db } from "./src/firebase"; // Assuming firebase is initialized in src/firebase.ts
+import { db } from "./src/firebase.js"; // Assuming firebase is initialized in src/firebase.ts
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 async function startServer() {
