@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { BDT, dotJoin, uid, todayStr, numberToWords } from "../lib/utils";
+import { BDT, dotJoin, uid, todayStr, numberToWords, cn } from "../lib/utils";
 import { FG, ConfirmDelete, PBar } from "./Shared";
 import { EXP_CATS } from "../lib/data";
-import { Trash2, Clock, Printer, FileText } from "lucide-react";
+import { Trash2, Clock, Printer, FileText, CheckCircle2, X } from "lucide-react";
 import { useLanguage } from "../lib/i18n";
 
 export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin, onSave, onDelete, onClose }: any) {
@@ -52,13 +52,32 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
           <div className="mb-4">
             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">{t("project_modals.approved")}</div>
             {approvedPays.map((p: any) => (
-              <div key={p.id} className="flex justify-between items-center bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-2">
-                <span className="text-xs font-medium text-slate-700">{dotJoin(p.date, p.note)}</span>
+              <div key={p.id} className="flex justify-between items-center bg-white border border-slate-100 rounded-2xl p-4 mb-3 shadow-sm hover:border-emerald-200 transition-all group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                    <CheckCircle2 size={18} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-slate-900">{BDT(p.amount)}</div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{p.date}</div>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-emerald-700 mr-1">{BDT(p.amount)}</span>
-                  <button className="w-7 h-7 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-200 transition-colors" onClick={() => setViewR(p)}><FileText size={14} /></button>
+                  <button 
+                    className="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm" 
+                    onClick={() => setViewR(p)}
+                    title={t('common.view_receipt')}
+                  >
+                    <FileText size={16} />
+                  </button>
                   {isSuperAdmin && (
-                    <button className="w-7 h-7 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-200 transition-colors" onClick={() => setDelPay(p)}><Trash2 size={14} /></button>
+                    <button 
+                      className="w-9 h-9 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm" 
+                      onClick={() => setDelPay(p)}
+                      title={t('common.delete')}
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   )}
                 </div>
               </div>
@@ -229,112 +248,195 @@ export function AddExpSheet({ projectId, onSave, onClose }: any) {
 export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy, onClose }: any) {
   const { t } = useLanguage();
   
+  const DigitalReceipt = () => (
+    <div className="p-6 bg-white sm:p-8">
+      <div className="flex flex-col items-center text-center mb-8">
+        <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-xl shadow-slate-200">🏗️</div>
+        <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">MARQ BUILDERS</h2>
+        <div className="h-1 w-12 bg-blue-600 rounded-full mt-2 mb-1" />
+        <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.2em]">{t('modal.receipt')}</p>
+      </div>
+
+      <div className="bg-slate-50 rounded-[2.5rem] p-8 mb-8 border border-slate-100 text-center relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-emerald-500" />
+        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">{t('common.amount_paid')}</div>
+        <div className="text-4xl font-black text-slate-900 tracking-tighter mb-4">{BDT(payment.amount)}</div>
+        <div className="flex justify-center">
+          <span className="bg-emerald-100 text-emerald-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-emerald-600" /> {t('common.approved')}
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        {[
+          [t('common.receipt_id'), payment.id.split('-')[1] || payment.id, true],
+          [t('common.date'), payment.date],
+          [t('common.customer'), client?.name],
+          [t('nav.projects'), project?.name],
+          [t('common.installment'), instDef?.title]
+        ].map(([l, v, mono]: any) => (
+          <div key={l} className="flex justify-between items-center py-4 border-b border-slate-50 last:border-0">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{l}</span>
+            <span className={cn("text-sm font-bold text-slate-900", mono && "font-mono")}>{v}</span>
+          </div>
+        ))}
+      </div>
+
+      {payment.note && (
+        <div className="mt-8 p-5 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+          <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-2">Note</p>
+          <p className="text-xs text-blue-900/80 font-medium leading-relaxed italic">"{payment.note}"</p>
+        </div>
+      )}
+
+      <div className="mt-10 pt-8 border-t border-slate-100 text-center">
+        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Thank you for your payment</p>
+        <p className="text-[9px] text-slate-300 font-medium">This is a digitally generated receipt.</p>
+      </div>
+    </div>
+  );
+
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="relative p-8 bg-white text-slate-900 font-serif border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col justify-between">
+    <div className="relative p-10 bg-white text-slate-900 font-serif border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col justify-between min-h-[600px]">
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-2xl text-white">🏗️</div>
+      <div className="flex justify-between items-start mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center text-3xl text-white shadow-lg">🏗️</div>
           <div>
-            <div className="text-2xl font-black tracking-tighter leading-none">MARQ BUILDERS</div>
-            <div className="text-[10px] font-bold text-slate-500 mt-1 uppercase">216/8, Baganbari, North Vasantek Dhaka Cantt, Dhaka- 1206</div>
+            <div className="text-3xl font-black tracking-tighter leading-none mb-1">MARQ BUILDERS</div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">216/8, Baganbari, North Vasantek Dhaka Cantt, Dhaka- 1206</div>
+            <div className="text-[9px] font-medium text-slate-400 mt-0.5">Contact: +880 1XXX-XXXXXX | Email: info@marqbuilders.com</div>
           </div>
         </div>
-        <div className="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-md uppercase tracking-widest">
-          {type} Copy
+        <div className="flex flex-col items-end gap-2">
+          <div className="bg-slate-900 text-white text-[10px] font-black px-4 py-1.5 rounded-md uppercase tracking-[0.2em]">
+            {type} Copy
+          </div>
+          <div className="text-[10px] font-bold text-slate-400">ID: {payment.id}</div>
         </div>
       </div>
 
       {/* Sl No & Date */}
-      <div className="flex justify-between text-xs font-bold mb-8">
-        <div>Sl. No. <span className="border-b border-dotted border-slate-400 min-w-[80px] inline-block px-2">{payment.id.split('-')[1] || payment.id}</span></div>
-        <div>Date: <span className="border-b border-dotted border-slate-400 min-w-[120px] inline-block px-2">{payment.date}</span></div>
+      <div className="flex justify-between text-xs font-bold mb-10">
+        <div className="flex items-end gap-2">
+          <span className="text-slate-500 uppercase tracking-widest text-[10px]">Sl. No.</span>
+          <span className="border-b-2 border-slate-900 min-w-[100px] inline-block px-2 text-sm">{payment.id.split('-')[1] || payment.id}</span>
+        </div>
+        <div className="flex items-end gap-2">
+          <span className="text-slate-500 uppercase tracking-widest text-[10px]">Date</span>
+          <span className="border-b-2 border-slate-900 min-w-[140px] inline-block px-2 text-sm">{payment.date}</span>
+        </div>
       </div>
 
       {/* Title */}
-      <div className="text-center mb-8">
-        <span className="bg-slate-900 text-white px-8 py-1.5 rounded-md font-black text-sm uppercase tracking-widest">Money Receipt</span>
+      <div className="text-center mb-12">
+        <div className="inline-block relative">
+          <span className="relative z-10 bg-white px-10 py-2 border-2 border-slate-900 font-black text-base uppercase tracking-[0.3em]">Money Receipt</span>
+          <div className="absolute -inset-1 bg-slate-100 -z-10 translate-x-1 translate-y-1" />
+        </div>
       </div>
 
       {/* Fields */}
-      <div className="space-y-4 text-sm">
-        <div className="flex gap-4">
-          <div className="flex-1 flex items-end gap-2">
-            <span className="whitespace-nowrap font-bold">Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{client?.name}</span>
+      <div className="space-y-6 text-sm">
+        <div className="flex gap-6">
+          <div className="flex-1 flex items-end gap-3">
+            <span className="whitespace-nowrap font-bold text-slate-500 uppercase text-[10px] tracking-widest">Name</span>
+            <span className="flex-1 border-b border-slate-200 px-2 font-bold text-slate-900 pb-1">{client?.name}</span>
           </div>
-          <div className="w-1/3 flex items-end gap-2">
-            <span className="whitespace-nowrap font-bold">Customer ID:</span>
-            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{client?.id}</span>
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <div className="flex-1 flex items-end gap-2">
-            <span className="whitespace-nowrap font-bold">Project Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{project?.name || "N/A"}</span>
-          </div>
-          <div className="w-1/3 flex items-end gap-2">
-            <span className="whitespace-nowrap font-bold">Instalment No.:</span>
-            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{instDef?.title}</span>
+          <div className="w-1/3 flex items-end gap-3">
+            <span className="whitespace-nowrap font-bold text-slate-500 uppercase text-[10px] tracking-widest">Customer ID</span>
+            <span className="flex-1 border-b border-slate-200 px-2 font-bold text-slate-900 pb-1">{client?.id}</span>
           </div>
         </div>
 
-        <div className="flex items-end gap-2">
-          <span className="whitespace-nowrap font-bold">Amount =</span>
-          <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-black text-lg">{BDT(payment.amount)}/-</span>
+        <div className="flex gap-6">
+          <div className="flex-1 flex items-end gap-3">
+            <span className="whitespace-nowrap font-bold text-slate-500 uppercase text-[10px] tracking-widest">Project Name</span>
+            <span className="flex-1 border-b border-slate-200 px-2 font-bold text-slate-900 pb-1">{project?.name || "N/A"}</span>
+          </div>
+          <div className="w-1/3 flex items-end gap-3">
+            <span className="whitespace-nowrap font-bold text-slate-500 uppercase text-[10px] tracking-widest">Instalment</span>
+            <span className="flex-1 border-b border-slate-200 px-2 font-bold text-slate-900 pb-1">{instDef?.title}</span>
+          </div>
         </div>
 
-        <div className="flex items-end gap-2">
-          <span className="whitespace-nowrap font-bold">Amount in word:</span>
-          <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium italic">{numberToWords(payment.amount)} Taka Only</span>
+        <div className="flex items-end gap-3 py-2">
+          <span className="whitespace-nowrap font-bold text-slate-500 uppercase text-[10px] tracking-widest">Amount</span>
+          <div className="flex-1 bg-slate-50 border-2 border-slate-900 px-4 py-2 font-black text-2xl flex items-center justify-between">
+            <span>{BDT(payment.amount)}/-</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Taka Only</span>
+          </div>
         </div>
 
-        <div className="flex items-end gap-2">
-          <span className="whitespace-nowrap font-bold">Deposit By:</span>
-          <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">Cash / Cheque / Bank</span>
+        <div className="flex items-end gap-3">
+          <span className="whitespace-nowrap font-bold text-slate-500 uppercase text-[10px] tracking-widest">In Words</span>
+          <span className="flex-1 border-b border-slate-200 px-2 font-bold text-slate-900 pb-1 italic capitalize">{numberToWords(payment.amount)} Taka Only</span>
+        </div>
+
+        <div className="flex items-end gap-3">
+          <span className="whitespace-nowrap font-bold text-slate-500 uppercase text-[10px] tracking-widest">Method</span>
+          <span className="flex-1 border-b border-slate-200 px-2 font-bold text-slate-900 pb-1">Cash / Cheque / Bank Transfer</span>
         </div>
       </div>
 
       {/* Footer Signatures */}
-      <div className="flex justify-between mt-16 pt-4 text-[10px] font-bold uppercase tracking-wider text-center">
-        <div className="w-32 border-t border-slate-900 pt-1">Prepared By</div>
-        <div className="w-32 border-t border-slate-900 pt-1">Accounts Officer</div>
-        <div className="w-32 border-t border-slate-900 pt-1">Authorised Signature</div>
+      <div className="flex justify-between mt-20 pt-6 text-[9px] font-black uppercase tracking-[0.15em] text-center">
+        <div className="w-40 border-t-2 border-slate-900 pt-2">Prepared By</div>
+        <div className="w-40 border-t-2 border-slate-900 pt-2">Accounts Officer</div>
+        <div className="w-40 border-t-2 border-slate-900 pt-2">Authorised Signature</div>
       </div>
 
       {/* Watermark */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none -z-10">
-        <div className="text-[120px] font-black rotate-[-30deg]">MARQ</div>
+      <div className="absolute inset-0 flex items-center justify-center opacity-[0.02] pointer-events-none -z-10">
+        <div className="text-[150px] font-black rotate-[-25deg] tracking-tighter">MARQ</div>
       </div>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-900/80 z-[500] flex items-center justify-center backdrop-blur-md p-0 sm:p-4 overflow-y-auto" onClick={onClose}>
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none" 
+        initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}
+        className="bg-white w-full max-w-2xl sm:rounded-3xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none relative" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="max-h-[85vh] overflow-y-auto print:max-h-none print:overflow-visible">
-          <ReceiptContent type="Customer" />
-          {!hideOfficeCopy && (
-            <>
-              <div className="h-px border-b border-dashed border-slate-300 print:my-4" />
-              <ReceiptContent type="Office" />
-            </>
-          )}
+        <button 
+          onClick={onClose}
+          className="absolute right-4 top-4 w-10 h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors z-10 no-print sm:flex hidden"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="max-h-[90vh] overflow-y-auto print:max-h-none print:overflow-visible custom-scrollbar">
+          {/* Mobile/Screen View */}
+          <div className="no-print">
+            <DigitalReceipt />
+          </div>
+
+          {/* Print View (Hidden on screen, shown on print) */}
+          <div className="hidden print:block">
+            <ReceiptContent type="Customer" />
+            {!hideOfficeCopy && (
+              <>
+                <div className="h-px border-b-2 border-dashed border-slate-200 my-8" />
+                <ReceiptContent type="Office" />
+              </>
+            )}
+          </div>
         </div>
         
-        <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3 no-print">
+        <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3 no-print sticky bottom-0">
           <button 
-            className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2" 
+            className="flex-1 bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-200 active:scale-[0.98]" 
             onClick={() => window.print()}
           >
             <Printer size={18} /> {t("project_modals.print")}
           </button>
-          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>
+          <button 
+            className="flex-1 bg-white text-slate-700 font-bold py-4 rounded-2xl border border-slate-200 hover:bg-slate-50 transition-all active:scale-[0.98]" 
+            onClick={onClose}
+          >
             {t("project_modals.close")}
           </button>
         </div>
@@ -343,14 +445,24 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
       <style>{`
         @media print {
           body * { visibility: hidden; }
-          .print\\:max-h-none, .print\\:max-h-none * { visibility: visible; }
-          .print\\:max-h-none {
+          .print\\:block, .print\\:block * { visibility: visible; }
+          .print\\:block {
             position: absolute;
             left: 0;
             top: 0;
             width: 100%;
           }
           .no-print { display: none !important; }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 10px;
         }
       `}</style>
     </div>
