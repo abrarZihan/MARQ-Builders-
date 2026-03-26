@@ -14,10 +14,10 @@ import {
   Drawer, BottomBar, Login, ForceChangePw 
 } from "./components/Shared";
 import { AuditLogPage, LogRow } from "./components/Admin";
-import { AdminProfile, AdminManagePage, AdminPaymentsPage } from "./components/AdminPages";
+import { AdminProfile, AdminManagePage } from "./components/AdminPages";
 import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
-import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle, Receipt } from "lucide-react";
+import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { CategoryIcon, CategoryColor } from "./components/Shared";
 import { useLanguage } from "./lib/i18n";
 
@@ -402,9 +402,6 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
 }
 
 // ROOT APP COMPONENT
-const LOGO_URL = "https://storage.googleapis.com/test-media-api-v2.appspot.com/ais-dev-q2u7lcm54u6lcz6q7tqqyq-498594259434.asia-southeast1.run.app/1742880327931-0.png";
-const LOGO_DARK_URL = "https://storage.googleapis.com/test-media-api-v2.appspot.com/ais-dev-q2u7lcm54u6lcz6q7tqqyq-498594259434.asia-southeast1.run.app/1742880328114-1.png";
-
 export default function App() {
   const { t } = useLanguage();
   const [auth, setAuth] = useState<any>(() => {
@@ -808,7 +805,6 @@ export default function App() {
   const curProject = selProject ? projects.find(p => p.id === selProject) : null;
   const PAGE_TITLES: Record<string, string> = { 
     home: t("nav.projects"), 
-    payments: t("nav.payments"),
     log: t("nav.log"), 
     admins: t("nav.admin_manage"), 
     profile: t("nav.profile"), 
@@ -822,12 +818,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="fixed top-0 left-0 right-0 h-16 bg-slate-900 flex items-center px-4 gap-3 z-[100] shadow-md no-print">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <img src={LOGO_DARK_URL} alt="Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
-          <div className="flex-1 min-w-0">
-            <div className="font-black text-lg text-white tracking-tight leading-none">MARQ BUILDERS</div>
-            <div className="text-[10px] text-slate-400 font-bold tracking-wider uppercase truncate mt-1">{topTitle}</div>
-          </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-black text-lg text-white tracking-tight">MARQ <span className="text-slate-400 font-bold">Builders</span></div>
+          <div className="text-[11px] text-slate-400 font-bold tracking-wider uppercase truncate">{topTitle}</div>
         </div>
         {isSuperAdmin && pendingCount > 0 && (
           <div className="bg-rose-500 text-white rounded-full px-3 py-1 text-xs font-black shadow-sm flex items-center gap-1.5">
@@ -856,11 +849,6 @@ export default function App() {
             projects={projects} clients={clients} payments={payments} instDefs={instDefs} expenses={expenses} 
             onSelect={(id: string) => setSelProject(id)} onAddProject={addProject} onDeleteProject={deleteProject} 
             isSuperAdmin={isSuperAdmin} onApprovePayment={approvePayment} onRejectPayment={rejectPayment} 
-          />
-        )}
-        {(role === "admin" || role === "superadmin") && !selProject && page === "payments" && (
-          <AdminPaymentsPage 
-            payments={payments} clients={clients} instDefs={instDefs} projects={projects}
           />
         )}
         {(role === "admin" || role === "superadmin") && !selProject && page === "log" && (

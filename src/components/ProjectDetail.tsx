@@ -5,8 +5,8 @@ import { FG, ConfirmDelete, ClientAvatar, PassCell, PBar, CategoryIcon, Category
 import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
 import { ClientInfoPage } from "./ClientInfo";
-import { CellPaySheet, AddDefSheet, AddExpSheet, ReceiptSheet } from "./ProjectModals";
-import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText } from "lucide-react";
+import { CellPaySheet, AddDefSheet, AddExpSheet } from "./ProjectModals";
+import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer } from "lucide-react";
 
 import { useLanguage } from "../lib/i18n";
 
@@ -14,7 +14,6 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
   const { t } = useLanguage();
   const [tab, setTab] = useState("sheet");
   const [cellModal, setCellModal] = useState<any>(null);
-  const [viewR, setViewR] = useState<any>(null);
   const [addDefModal, setAddDefModal] = useState(false);
   const [addExpModal, setAddExpModal] = useState(false);
   const [delExp, setDelExp] = useState<any>(null);
@@ -32,8 +31,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
   const TABS = [
     ["sheet", <span className="flex items-center gap-1.5"><Table size={14} /> {t("project_detail.tab_sheet")}</span>], 
     ["clientinfo", <span className="flex items-center gap-1.5"><Users size={14} /> {t("project_detail.tab_client")}</span>], 
-    ["payments", <span className="flex items-center gap-1.5"><CreditCard size={14} /> {t("nav.payments")}</span>],
-    ["kistisum", <span className="flex items-center gap-1.5"><ClipboardList size={14} /> {t("project_detail.tab_summary")}</span>], 
+    ["kistisum", <span className="flex items-center gap-1.5"><CreditCard size={14} /> {t("project_detail.tab_summary")}</span>], 
     ["expenses", <span className="flex items-center gap-1.5"><Building2 size={14} /> {t("project_detail.tab_expense")}</span>], 
     ["log", <span className="flex items-center gap-1.5"><ClipboardList size={14} /> {t("project_detail.tab_log")}</span>]
   ];
@@ -285,49 +283,6 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
         </div>
       )}
 
-      {tab === "payments" && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 flex items-center gap-5 mb-6 shadow-sm">
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
-              <CreditCard size={32} />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t("project_detail.total_collected")}</div>
-              <div className="text-3xl font-black text-slate-900 tracking-tight">{BDT(totalCollected)}</div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {payments.filter((p: any) => prjClients.find((c: any) => c.id === p.clientId)).sort((a: any, b: any) => b.date.localeCompare(a.date)).map((p: any) => {
-              const client = prjClients.find((c: any) => c.id === p.clientId);
-              const def = prjDefs.find((d: any) => d.id === p.instDefId);
-              return (
-                <div key={p.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center gap-4">
-                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", p.status === "approved" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
-                    {p.status === "approved" ? <CheckCircle2 size={20} /> : <Clock size={20} />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-slate-900">{client?.name}</div>
-                    <div className="text-[10px] text-slate-500 font-medium mt-0.5">{def?.title} · {p.date}</div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="text-sm font-black text-slate-900">{BDT(p.amount)}</div>
-                    {p.status === "approved" && (
-                      <button 
-                        onClick={() => setViewR({ payment: p, client, instDef: def })}
-                        className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                      >
-                        <FileText size={12} /> {t("project_modals.receipt")}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {tab === "expenses" && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center gap-5 mb-6 shadow-sm">
@@ -397,7 +352,6 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
       )}
 
       <AnimatePresence mode="wait">
-        {viewR && <ReceiptSheet payment={viewR.payment} instDef={viewR.instDef} client={viewR.client} project={project} onClose={() => setViewR(null)} />}
         {cellModal && <CellPaySheet client={cellModal.client} instDef={cellModal.instDef} payments={payments} project={project} isSuperAdmin={isSuperAdmin} onSave={(p: any) => { onAddPayment(p); setCellModal(null); }} onDelete={(id: string) => onDeletePayment(id)} onClose={() => setCellModal(null)} />}
         {addDefModal && <AddDefSheet projectId={project.id} onSave={(d: any) => { onAddDef(d); setAddDefModal(false); }} onClose={() => setAddDefModal(false)} />}
         {addExpModal && <AddExpSheet projectId={project.id} onSave={(e: any) => { onAddExpense(e); setAddExpModal(false); }} onClose={() => setAddExpModal(false)} />}
