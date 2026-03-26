@@ -7,10 +7,10 @@ import { LanguageProvider } from './lib/i18n.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary>
-      <LanguageProvider>
+    <LanguageProvider>
+      <ErrorBoundary>
         <App />
-      </LanguageProvider>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </LanguageProvider>
   </StrictMode>,
 );

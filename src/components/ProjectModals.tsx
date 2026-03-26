@@ -261,7 +261,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
 
       {/* Sl No & Date */}
       <div className="flex justify-between text-xs font-bold mb-8">
-        <div>Sl. No. <span className="border-b border-dotted border-slate-400 min-w-[80px] inline-block px-2">{payment.id.split('-')[1] || payment.id}</span></div>
+        <div>Sl. No. <span className="border-b border-dotted border-slate-400 min-w-[80px] inline-block px-2">{payment?.id ? (payment.id.split('-')[1] || payment.id) : ""}</span></div>
         <div>Date: <span className="border-b border-dotted border-slate-400 min-w-[120px] inline-block px-2">{payment.date}</span></div>
       </div>
 

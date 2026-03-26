@@ -27,14 +27,14 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
     const transactionId = params.get("transactionId");
     const amount = params.get("amount");
     const installmentNumber = params.get("installmentNumber");
-    const clientName = params.get("clientName");
+    const installmentId = params.get("installmentId");
 
     if (payment === "success" && transactionId) {
       setPaymentResult({
         id: transactionId,
         amount: parseFloat(amount || "0"),
         date: todayStr(),
-        instDefId: params.get("installmentId"),
+        instDefId: installmentId,
         clientId: client.id,
         status: "approved",
         note: `Online Payment - Installment ${installmentNumber}`
@@ -208,7 +208,7 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
                     const m = STATUS[st];
                     
                     return (
-                      <div key={d.id} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex items-center gap-4">
+                      <div key={`${d.id}-${j}`} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex items-center gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-bold text-slate-900">{d.title}</div>
                           <div className="text-[10px] text-slate-400 font-medium mt-0.5">{BDT(d.targetAmount)}</div>
@@ -290,12 +290,12 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
         </div>
       ) : (
         <div className="space-y-3">
-          {myPays.map((p: any) => {
+          {myPays.map((p: any, i: number) => {
             const def = instDefs.find((d: any) => d.id === p.instDefId);
             return (
               <motion.div 
                 whileHover={{ scale: 0.98, y: -2 }} whileTap={{ scale: 0.95 }}
-                key={p.id} 
+                key={`${p.id}-${i}`} 
                 className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden cursor-pointer group"
                 onClick={() => setViewR(p)}
               >
@@ -306,7 +306,7 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
                       <FileText size={20} />
                     </div>
                     <div>
-                      <div className="text-[10px] text-slate-400 font-mono font-bold tracking-widest uppercase mb-0.5">{p.id.split('-')[1] || p.id}</div>
+                      <div className="text-[10px] text-slate-400 font-mono font-bold tracking-widest uppercase mb-0.5">{p.id ? (p.id.split('-')[1] || p.id) : ""}</div>
                       <div className="text-base font-black text-slate-900 leading-tight">{def?.title || t('common.installment')}</div>
                     </div>
                   </div>

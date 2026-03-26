@@ -292,23 +292,23 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
               <CreditCard size={32} />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t("project_detail.total_collected")}</div>
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 truncate">{t("project_detail.total_collected")}</div>
               <div className="text-3xl font-black text-slate-900 tracking-tight">{BDT(totalCollected)}</div>
             </div>
           </div>
 
           <div className="space-y-3">
-            {payments.filter((p: any) => prjClients.find((c: any) => c.id === p.clientId)).sort((a: any, b: any) => b.date.localeCompare(a.date)).map((p: any) => {
+            {payments && payments.filter((p: any) => prjClients.find((c: any) => c.id === p.clientId)).sort((a: any, b: any) => b.date.localeCompare(a.date)).map((p: any, i: number) => {
               const client = prjClients.find((c: any) => c.id === p.clientId);
               const def = prjDefs.find((d: any) => d.id === p.instDefId);
               return (
-                <div key={p.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center gap-4">
+                <div key={`${p.id}-${i}`} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center gap-4">
                   <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", p.status === "approved" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
                     {p.status === "approved" ? <CheckCircle2 size={20} /> : <Clock size={20} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-slate-900">{client?.name}</div>
-                    <div className="text-[10px] text-slate-500 font-medium mt-0.5">{def?.title} · {p.date}</div>
+                    <div className="text-sm font-bold text-slate-900 truncate">{client?.name}</div>
+                    <div className="text-[10px] text-slate-500 font-medium mt-0.5 truncate">{def?.title} · {p.date}</div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <div className="text-sm font-black text-slate-900">{BDT(p.amount)}</div>
@@ -317,7 +317,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                         onClick={() => setViewR({ payment: p, client, instDef: def })}
                         className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
                       >
-                        <FileText size={12} /> {t("project_modals.receipt")}
+                        <FileText size={12} /> {t("modal.receipt")}
                       </button>
                     )}
                   </div>
@@ -358,7 +358,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
             <div className="space-y-3">
               {[...prjExpenses].sort((a, b) => b.date.localeCompare(a.date)).map((e: any, i: number) => {
                 return (
-                  <div key={e.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center gap-4">
+                  <div key={`${e.id}-${i}`} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center gap-4">
                     <div 
                       className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0", CategoryColor(e.category))}
                     >
@@ -391,7 +391,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
           {prjLogs.length === 0 ? (
             <div className="text-center py-10 text-slate-400 font-medium">{t("project_detail.no_activity")}</div>
           ) : (
-            prjLogs.map(l => <LogRow key={l.id} log={l} projects={[project]} />)
+            prjLogs.map((l, i) => <LogRow key={`${l.id}-${i}`} log={l} projects={[project]} />)
           )}
         </div>
       )}

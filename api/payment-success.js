@@ -63,7 +63,7 @@ export default async function handler(req, res) {
       await addDoc(collection(db, "payments"), paymentData);
 
       // Redirect back to client page with success params
-      return res.redirect(302, `${APP_URL}?payment=success&transactionId=${tran_id}&amount=${amount}&installmentNumber=${installmentNumber}&clientName=${clientName}`);
+      return res.redirect(302, `${APP_URL}?payment=success&transactionId=${tran_id}&amount=${amount}&installmentNumber=${installmentNumber}&installmentId=${installmentId}`);
     } else {
       console.error("SSLCommerz Validation failed:", validationResponse.data);
       return res.redirect(302, `${APP_URL}?payment=failed&error=validation_failed`);

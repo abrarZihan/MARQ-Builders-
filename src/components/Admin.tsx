@@ -118,7 +118,7 @@ export function AuditLogPage({ logs, projects, isSuperAdmin, onClearLogs }: any)
         {filtered.length === 0 ? (
           <div className="text-center py-10 text-slate-400 font-medium">{t('common.no_records')}</div>
         ) : (
-          filtered.map(l => <LogRow key={l.id} log={l} projects={projects} />)
+          filtered.map((l, i) => <LogRow key={`${l.id}-${i}`} log={l} projects={projects} />)
         )}
       </div>
 
