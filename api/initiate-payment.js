@@ -1,0 +1,59 @@
+import axios from "axios";
+
+export default async function handler(req, res) {
+  res.setHeader("Content-Type", "application/json");
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    const { installmentId, clientId, clientName, clientEmail, clientPhone, amount, installmentNumber } = req.body;
+
+    if (!installmentId || !clientId || !amount) {
+      return res.status(400).json({ error: "Missing required fields (installmentId, clientId, amount)" });
+    }
+
+    const STORE_ID = "marqb69c56224e0f27";
+    const STORE_PASSWORD = "marqb69c56224e0f27@ssl";
+    const BASE_URL = "https://sandbox.sslcommerz.com";
+    const APP_URL = "https://marq-builders.vercel.app";
+    const transactionId = `TXN_${Date.now()}`;
+
+    const params = new URLSearchParams();
+    params.append("store_id", STORE_ID);
+    params.append("store_passwd", STORE_PASSWORD);
+    params.append("total_amount", amount.toString());
+    params.append("currency", "BDT");
+    params.append("tran_id", transactionId);
+    params.append("success_url", `${APP_URL}/api/payment-success?installmentId=${installmentId}&clientId=${clientId}&amount=${amount}&installmentNumber=${installmentNumber}&clientName=${encodeURIComponent(clientName || "Client")}`);
+    params.append("fail_url", `${APP_URL}/api/payment-fail?clientId=${clientId}`);
+    params.append("cancel_url", `${APP_URL}/api/payment-fail?clientId=${clientId}`);
+    params.append("cus_name", clientName || "Client Name");
+    params.append("cus_email", clientEmail || "test@test.com");
+    params.append("cus_phone", clientPhone || "01700000000");
+    params.append("cus_add1", "Dhaka");
+    params.append("cus_city", "Dhaka");
+    params.append("cus_postcode", "1000");
+    params.append("cus_country", "Bangladesh");
+    params.append("shipping_method", "NO");
+    params.append("product_name", `Installment Payment - ${installmentNumber || "General"}`);
+    params.append("product_category", "Real Estate");
+    params.append("product_profile", "general");
+
+    const response = await axios.post(`${BASE_URL}/gwprocess/v3/api.php`, params, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+
+    if (response.data && response.data.GatewayPageURL) {
+      return res.status(200).json({ url: response.data.GatewayPageURL });
+    } else {
+      console.error("SSLCommerz API error response:", response.data);
+      return res.status(500).json({ error: "Failed to get payment URL", details: response.data });
+    }
+  } catch (error) {
+    const errorData = error.response ? error.response.data : error.message;
+    console.error("SSLCommerz API error:", errorData);
+    return res.status(500).json({ error: "Failed to initiate payment", details: errorData });
+  }
+}

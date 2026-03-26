@@ -1,21 +1,96 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { BDT, ac, initials, todayStr, clientPaidForDef, cellStatus, cn } from "../lib/utils";
+import { BDT, ac, initials, todayStr, clientPaidForDef, cellStatus, cn, tsNow } from "../lib/utils";
 import { FG, ClientAvatar, PBar, CategoryIcon, CategoryColor } from "./Shared";
 import { STATUS } from "../lib/data";
 import { ReceiptSheet } from "./ProjectModals";
-import { Eye, EyeOff, Building2, CheckCircle2, Clock, KeyRound, FileText, ChevronRight } from "lucide-react";
+import { Eye, EyeOff, Building2, CheckCircle2, Clock, KeyRound, FileText, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { useLanguage } from "../lib/i18n";
 
-export function ClientInstallments({ client, instDefs, payments }: any) {
+export function ClientInstallments({ client, instDefs, payments, projects }: any) {
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<"combined" | "shares">("combined");
+  const [loading, setLoading] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<any>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const prjDefs = instDefs.filter((d: any) => d.projectId === client.projectId);
   const shareCount = client.shareCount || 1;
   const totalPaid = payments.filter((p: any) => p.clientId === client.id && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
   const totalTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
   const today = todayStr();
   const color = ac(client.id);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    const transactionId = params.get("transactionId");
+    const amount = params.get("amount");
+    const installmentNumber = params.get("installmentNumber");
+    const clientName = params.get("clientName");
+
+    if (payment === "success" && transactionId) {
+      setPaymentResult({
+        id: transactionId,
+        amount: parseFloat(amount || "0"),
+        date: todayStr(),
+        instDefId: params.get("installmentId"),
+        clientId: client.id,
+        status: "approved",
+        note: `Online Payment - Installment ${installmentNumber}`
+      });
+      // Clear URL params without refreshing
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (payment === "failed") {
+      setErrorMsg(t('common.payment_failed_msg') || "Payment failed or was cancelled. Please try again.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setTimeout(() => setErrorMsg(null), 5000);
+    }
+  }, [client.id, t]);
+
+  const handlePayment = async (d: any, amount: number) => {
+    setLoading(true);
+    try {
+      console.log('Initiating payment for installment:', d.id, 'amount:', amount);
+      const response = await fetch('/api/initiate-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          amount, 
+          installmentId: d.id, 
+          clientId: client.id, 
+          clientName: client.name,
+          clientEmail: client.email,
+          clientPhone: client.phone,
+          installmentNumber: d.title
+        })
+      });
+      
+      console.log('Payment initiation response status:', response.status);
+      const text = await response.text();
+      console.log('Payment initiation response text:', text);
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("Failed to parse JSON. Response text:", text);
+        throw new Error(`Invalid server response: ${text.substring(0, 100)}`);
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error('Payment initiation failed:', data);
+        setErrorMsg(t('common.payment_init_error') || "Failed to initiate payment. Please try again later.");
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Payment initiation error:', error);
+      setErrorMsg(t('common.payment_init_error') || "Failed to initiate payment. Please try again later.");
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
@@ -100,29 +175,11 @@ export function ClientInstallments({ client, instDefs, payments }: any) {
                     <div className="flex justify-between items-center mt-3">
                       <div className="text-sm font-bold text-rose-600">{t('common.due')}: {BDT(target - paid)}</div>
                       <button 
-                        className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
-                        onClick={async () => {
-                          console.log('Pay Now clicked');
-                          try {
-                            const response = await fetch('/api/initiate-payment', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ amount: target - paid, installmentId: d.id, clientId: client.id, clientName: client.name })
-                            });
-                            console.log('Response status:', response.status);
-                            const data = await response.json();
-                            console.log('Response data:', data);
-                            if (data.url) {
-                              window.location.href = data.url;
-                            } else {
-                              console.error('No URL in response');
-                            }
-                          } catch (error) {
-                            console.error('Fetch error:', error);
-                          }
-                        }}
+                        disabled={loading}
+                        className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-50"
+                        onClick={() => handlePayment(d, target - paid)}
                       >
-                        {t('common.pay_now')}
+                        {loading ? <Loader2 size={14} className="animate-spin" /> : t('common.pay_now')}
                       </button>
                     </div>
                   )}
@@ -176,6 +233,31 @@ export function ClientInstallments({ client, instDefs, payments }: any) {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {errorMsg && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 left-4 right-4 z-[500] bg-rose-50 border border-rose-200 p-4 rounded-2xl shadow-lg flex items-center gap-3 text-rose-700 font-bold text-sm"
+          >
+            <AlertCircle size={20} />
+            {errorMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {paymentResult && (
+          <ReceiptSheet 
+            payment={paymentResult} 
+            instDef={instDefs.find((d: any) => d.id === paymentResult.instDefId)} 
+            client={client} 
+            project={projects.find((p: any) => p.id === client.projectId)} 
+            hideOfficeCopy={true} 
+            onClose={() => setPaymentResult(null)} 
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
