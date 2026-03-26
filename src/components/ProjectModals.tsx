@@ -240,12 +240,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
             className="h-20 w-auto object-contain"
             referrerPolicy="no-referrer"
             onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              if (target.src.includes('raw.githubusercontent.com')) {
-                target.style.display = 'none';
-              } else {
-                target.src = "https://raw.githubusercontent.com/abrarZihan/MARQ-Builders-/main/public/logo.png";
-              }
+              (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
           <div>
@@ -331,12 +326,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
             className="w-[300px] h-auto object-contain grayscale" 
             referrerPolicy="no-referrer"
             onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              if (target.src.includes('raw.githubusercontent.com')) {
-                target.style.display = 'none';
-              } else {
-                target.src = "https://raw.githubusercontent.com/abrarZihan/MARQ-Builders-/main/public/logo.png";
-              }
+              (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
           <div className="text-[100px] font-black whitespace-nowrap">MARQ BUILDERS</div>
