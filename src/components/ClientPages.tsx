@@ -21,6 +21,8 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
   const today = todayStr();
   const color = ac(client.id);
 
+  const isProcessingPayment = paymentResult && (!instDefs.find((d: any) => d.id === paymentResult.instDefId) || !projects.find((p: any) => p.id === client.projectId));
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const payment = params.get("payment");
@@ -47,6 +49,15 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
       setTimeout(() => setErrorMsg(null), 5000);
     }
   }, [client.id, t]);
+
+  if (isProcessingPayment) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <Loader2 className="w-10 h-10 text-slate-400 animate-spin" />
+        <div className="text-slate-500 font-bold">{t('common.loading_payment_data') || "Processing payment details..."}</div>
+      </div>
+    );
+  }
 
   const handlePayment = async (d: any, amount: number) => {
     setLoading(true);

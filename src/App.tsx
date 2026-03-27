@@ -413,7 +413,14 @@ export default function App() {
     if (auth) localStorage.setItem("marq_auth", JSON.stringify(auth));
     else localStorage.removeItem("marq_auth");
   }, [auth]);
-  const [page, setPage] = useState("home");
+  const [page, setPage] = useState(() => {
+    const saved = localStorage.getItem("marq_auth");
+    if (saved) {
+      const authData = JSON.parse(saved);
+      return authData.role === "client" ? "installments" : "home";
+    }
+    return "home";
+  });
   const [projects, setProjects] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [instDefs, setInstDefs] = useState<any[]>([]);
@@ -425,6 +432,15 @@ export default function App() {
   const [selProject, setSelProject] = useState<string | null>(null);
   const [forceChangePw, setForceChangePw] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState({
+    projects: false,
+    clients: false,
+    instDefs: false,
+    payments: false,
+    expenses: false,
+    admins: false,
+    logs: false
+  });
 
   // Firestore Real-time Listeners
   useEffect(() => {
@@ -436,24 +452,66 @@ export default function App() {
         await setDoc(doc(db, "admins", "superadmin"), superAdmin);
       } catch (e) {
         console.error("Init error:", e);
-      } finally {
-        setLoading(false);
       }
     };
     init();
 
-    const unsubProjects = onSnapshot(collection(db, "projects"), (s) => setProjects(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "projects"));
-    const unsubClients = onSnapshot(collection(db, "clients"), (s) => setClients(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
-    const unsubInstDefs = onSnapshot(collection(db, "instDefs"), (s) => setInstDefs(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "instDefs"));
-    const unsubPayments = onSnapshot(collection(db, "payments"), (s) => setPayments(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
-    const unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
-    const unsubAdmins = onSnapshot(collection(db, "admins"), (s) => setAdmins(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "admins"));
-    const unsubLogs = onSnapshot(query(collection(db, "logs"), orderBy("ts", "desc"), limit(100)), (s) => setLogs(s.docs.map(d => ({ ...d.data(), id: d.id }))), (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
+    const unsubProjects = onSnapshot(collection(db, "projects"), (s) => {
+      setProjects(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setDataLoaded(prev => ({ ...prev, projects: true }));
+    }, (e) => handleFirestoreError(e, OperationType.LIST, "projects"));
+
+    const unsubClients = onSnapshot(collection(db, "clients"), (s) => {
+      setClients(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setDataLoaded(prev => ({ ...prev, clients: true }));
+    }, (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
+
+    const unsubInstDefs = onSnapshot(collection(db, "instDefs"), (s) => {
+      setInstDefs(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setDataLoaded(prev => ({ ...prev, instDefs: true }));
+    }, (e) => handleFirestoreError(e, OperationType.LIST, "instDefs"));
+
+    const unsubPayments = onSnapshot(collection(db, "payments"), (s) => {
+      setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setDataLoaded(prev => ({ ...prev, payments: true }));
+    }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
+
+    const unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => {
+      setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setDataLoaded(prev => ({ ...prev, expenses: true }));
+    }, (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
+
+    const unsubAdmins = onSnapshot(collection(db, "admins"), (s) => {
+      setAdmins(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setDataLoaded(prev => ({ ...prev, admins: true }));
+    }, (e) => handleFirestoreError(e, OperationType.LIST, "admins"));
+
+    const unsubLogs = onSnapshot(query(collection(db, "logs"), orderBy("ts", "desc"), limit(100)), (s) => {
+      setLogs(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setDataLoaded(prev => ({ ...prev, logs: true }));
+    }, (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
 
     return () => {
       unsubProjects(); unsubClients(); unsubInstDefs(); unsubPayments(); unsubExpenses(); unsubAdmins(); unsubLogs();
     };
   }, []);
+
+  // Set loading to false only when essential data is loaded
+  useEffect(() => {
+    if (dataLoaded.projects && dataLoaded.clients && dataLoaded.instDefs && dataLoaded.payments) {
+      setLoading(false);
+    }
+  }, [dataLoaded]);
+
+  // Keep client auth user in sync with clients collection
+  useEffect(() => {
+    if (auth?.role === "client" && auth?.user?.id && clients.length > 0) {
+      const updatedUser = clients.find(c => c.id === auth.user.id);
+      if (updatedUser && JSON.stringify(updatedUser) !== JSON.stringify(auth.user)) {
+        setAuth({ ...auth, user: updatedUser });
+      }
+    }
+  }, [clients, auth]);
 
   const addLog = async (adminUser: any, action: string, target: any, detail: any, projectId: string | null = null) => {
     if (!adminUser) return;
@@ -886,7 +944,7 @@ export default function App() {
           />
         )}
         
-        {role === "client" && page === "installments" && <ClientInstallments client={auth.user} instDefs={instDefs} payments={payments} />}
+        {role === "client" && page === "installments" && <ClientInstallments client={auth.user} instDefs={instDefs} payments={payments} projects={projects} />}
         {role === "client" && page === "receipts" && <ClientReceipts client={auth.user} instDefs={instDefs} payments={payments} projects={projects} />}
         {role === "client" && page === "expenses" && <ClientExpenses client={auth.user} expenses={expenses} />}
         {role === "client" && page === "profile" && <ClientProfile client={auth.user} onUpdateClient={(c: any) => { updateClient(c, c.id); setAuth({ ...auth, user: c }); }} />}
