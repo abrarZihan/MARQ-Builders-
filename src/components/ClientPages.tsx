@@ -10,7 +10,9 @@ import { useLanguage } from "../lib/i18n";
 export function ClientInstallments({ client, instDefs, payments, projects }: any) {
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<"combined" | "shares">("combined");
-  const [loading, setLoading] = useState(false);
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
+  const [customAmount, setCustomAmount] = useState<string>("");
   const [paymentResult, setPaymentResult] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -60,7 +62,7 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
   }
 
   const handlePayment = async (d: any, amount: number) => {
-    setLoading(true);
+    setPayingId(d.id);
     try {
       console.log('Initiating payment for installment:', d.id, 'amount:', amount);
       const response = await fetch('/api/initiate-payment', {
@@ -94,12 +96,12 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
       } else {
         console.error('Payment initiation failed:', data);
         setErrorMsg(t('common.payment_init_error') || "Failed to initiate payment. Please try again later.");
-        setLoading(false);
+        setPayingId(null);
       }
     } catch (error) {
       console.error('Payment initiation error:', error);
       setErrorMsg(t('common.payment_init_error') || "Failed to initiate payment. Please try again later.");
-      setLoading(false);
+      setPayingId(null);
     }
   };
 
@@ -183,15 +185,69 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
                   <PBar paid={paid} target={target} />
                   
                   {target - paid > 0 && (
-                    <div className="flex justify-between items-center mt-3">
-                      <div className="text-sm font-bold text-rose-600">{t('common.due')}: {BDT(target - paid)}</div>
-                      <button 
-                        disabled={loading}
-                        className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-50"
-                        onClick={() => handlePayment(d, target - paid)}
-                      >
-                        {loading ? <Loader2 size={14} className="animate-spin" /> : t('common.pay_now')}
-                      </button>
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                      {activePaymentId === d.id ? (
+                        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('common.payment_amount')}</span>
+                            <button 
+                              onClick={() => setActivePaymentId(null)}
+                              className="text-xs text-slate-400 hover:text-slate-600 underline"
+                            >
+                              {t('common.cancel')}
+                            </button>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="relative flex-1">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
+                              <input
+                                type="number"
+                                value={customAmount}
+                                onChange={(e) => setCustomAmount(e.target.value)}
+                                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all"
+                                placeholder="0.00"
+                                autoFocus
+                              />
+                            </div>
+                            <button 
+                              disabled={!!payingId || !customAmount || parseFloat(customAmount) <= 0}
+                              className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
+                              onClick={() => handlePayment(d, parseFloat(customAmount))}
+                            >
+                              {payingId === d.id ? <Loader2 size={14} className="animate-spin" /> : t('common.confirm_pay')}
+                            </button>
+                          </div>
+                          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                            {[0.25, 0.5, 1].map(ratio => {
+                              const amt = Math.round((target - paid) * ratio);
+                              if (amt <= 0) return null;
+                              return (
+                                <button
+                                  key={ratio}
+                                  onClick={() => setCustomAmount(amt.toString())}
+                                  className="text-[10px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors whitespace-nowrap"
+                                >
+                                  {ratio === 1 ? t('common.full_pay') : `${ratio * 100}%`} ({BDT(amt)})
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm font-bold text-rose-600">{t('common.due')}: {BDT(target - paid)}</div>
+                          <button 
+                            disabled={!!payingId}
+                            className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-50"
+                            onClick={() => {
+                              setActivePaymentId(d.id);
+                              setCustomAmount((target - paid).toString());
+                            }}
+                          >
+                            {t('common.pay_now')}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                   {pendingAmt > 0 && (
