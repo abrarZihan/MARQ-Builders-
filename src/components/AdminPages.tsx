@@ -172,7 +172,7 @@ export function AdminPaymentsPage({ payments, clients, instDefs, projects }: any
                   className="flex items-center gap-1.5 text-xs font-black text-blue-600 hover:text-blue-700 underline uppercase tracking-wider"
                   onClick={() => setSelPay(p)}
                 >
-                  <Receipt size={14} />
+                  <span className="text-sm">🧾</span>
                   {t('modal.receipt') || 'রসিদ'}
                 </button>
               </div>

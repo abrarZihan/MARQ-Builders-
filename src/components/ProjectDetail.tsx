@@ -291,7 +291,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
             <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
               <CreditCard size={32} />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 truncate">{t("project_detail.total_collected")}</div>
               <div className="text-3xl font-black text-slate-900 tracking-tight">{BDT(totalCollected)}</div>
             </div>
