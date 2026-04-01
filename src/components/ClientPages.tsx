@@ -409,6 +409,7 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
 
 export function ClientExpenses({ client, expenses }: any) {
   const { t } = useLanguage();
+  const [selExp, setSelExp] = useState<any>(null);
   const prjExpenses = expenses.filter((e: any) => e.projectId === client.projectId);
   const total = prjExpenses.reduce((s: number, e: any) => s + e.amount, 0);
 
@@ -436,7 +437,12 @@ export function ClientExpenses({ client, expenses }: any) {
         <div className="space-y-3">
           {[...prjExpenses].sort((a, b) => b.date.localeCompare(a.date)).map((e: any, i: number) => {
             return (
-              <div key={e.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center gap-4">
+              <motion.div 
+                whileTap={{ scale: 0.98 }}
+                key={e.id} 
+                className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                onClick={() => setSelExp(e)}
+              >
                 <div 
                   className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0", CategoryColor(e.category))}
                 >
@@ -448,11 +454,57 @@ export function ClientExpenses({ client, expenses }: any) {
                   <div className="text-[10px] text-slate-400 mt-1">{e.date}</div>
                 </div>
                 <div className="text-base font-black shrink-0 text-slate-900">{BDT(e.amount)}</div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       )}
+
+      <AnimatePresence>
+        {selExp && (
+          <div className="fixed inset-0 bg-slate-900/60 z-[500] flex items-end sm:items-center justify-center backdrop-blur-sm p-4" onClick={() => setSelExp(null)}>
+            <motion.div 
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md p-8 pb-safe" 
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8 sm:hidden" />
+              
+              <div className="flex items-center gap-5 mb-8">
+                <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-sm", CategoryColor(selExp.category))}>
+                  <CategoryIcon category={selExp.category} size={32} />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{selExp.category}</div>
+                  <div className="text-2xl font-black text-slate-900 leading-tight">{BDT(selExp.amount)}</div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">{t('common.details')}</div>
+                  <div className="text-sm font-bold text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-100 leading-relaxed">
+                    {selExp.description || "—"}
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between py-4 border-t border-slate-100">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('modal.date')}</span>
+                  <span className="text-sm font-black text-slate-900">{selExp.date}</span>
+                </div>
+              </div>
+
+              <button 
+                className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-colors mt-8 shadow-lg shadow-slate-900/10" 
+                onClick={() => setSelExp(null)}
+              >
+                {t('project_modals.close')}
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

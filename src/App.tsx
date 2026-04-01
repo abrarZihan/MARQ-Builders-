@@ -17,7 +17,7 @@ import { AuditLogPage, LogRow } from "./components/Admin";
 import { AdminProfile, AdminManagePage, AdminPaymentsPage } from "./components/AdminPages";
 import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
-import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle, MoreVertical, Edit2 } from "lucide-react";
 import { CategoryIcon, CategoryColor } from "./components/Shared";
 import { useLanguage } from "./lib/i18n";
 
@@ -233,13 +233,18 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
   );
 }
 
-function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, onAddProject, onDeleteProject, isSuperAdmin, onApprovePayment, onRejectPayment }: any) {
+function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, onAddProject, onUpdateProject, onDeleteProject, isSuperAdmin, onApprovePayment, onRejectPayment }: any) {
   const { t } = useLanguage();
   const [addModal, setAddModal] = useState(false);
+  const [editModal, setEditModal] = useState<any>(null);
   const [delProject, setDelProject] = useState<any>(null);
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [view, setView] = useState("projects");
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
   
   const allCollected = payments.filter((p: any) => p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
   const pendingCount = payments.filter((p: any) => p.status === "pending").length;
@@ -334,12 +339,51 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
                       <span className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ backgroundColor: color + "15", color }}>{prjClients.length}জন</span>
                       <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700">{BDTshort(prjPaid)}</span>
                     </div>
-                    <button 
-                      className="text-rose-500 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5" 
-                      onClick={e => { e.stopPropagation(); setDelProject(prj); }}
-                    >
-                      <Trash2 size={14} /> {t("project_detail.delete")}
-                    </button>
+                    
+                    <div className="relative">
+                      <button 
+                        className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"
+                        onClick={e => { e.stopPropagation(); setMenuOpen(menuOpen === prj.id ? null : prj.id); }}
+                      >
+                        <MoreVertical size={20} />
+                      </button>
+                      
+                      <AnimatePresence>
+                        {menuOpen === prj.id && (
+                          <>
+                            <div className="fixed inset-0 z-[100]" onClick={e => { e.stopPropagation(); setMenuOpen(null); }} />
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                              className="absolute right-0 bottom-full mb-2 w-36 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-[110] overflow-hidden"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <button 
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                onClick={() => {
+                                  setEditModal(prj);
+                                  setEditName(prj.name);
+                                  setEditDesc(prj.description || "");
+                                  setMenuOpen(null);
+                                }}
+                              >
+                                <Edit2 size={16} className="text-blue-500" /> {t("common.edit")}
+                              </button>
+                              <button 
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+                                onClick={() => {
+                                  setDelProject(prj);
+                                  setMenuOpen(null);
+                                }}
+                              >
+                                <Trash2 size={16} /> {t("project_detail.delete")}
+                              </button>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 </motion.div>
               );
@@ -382,6 +426,45 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
                 }}
               >
                 {t("admin_home.add_btn")}
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editModal && (
+          <div className="fixed inset-0 bg-slate-900/60 z-[300] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={() => setEditModal(null)}>
+            <motion.div 
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe" 
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
+              <div className="text-xl font-black text-slate-900 mb-6">{t("common.edit")} {t("admin_home.projects_tab")}</div>
+              <FG label={t("admin_home.project_name")}>
+                <input 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
+                  value={editName} onChange={e => setEditName(e.target.value)} 
+                />
+              </FG>
+              <FG label={t("admin_home.project_desc")}>
+                <input 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
+                  value={editDesc} onChange={e => setEditDesc(e.target.value)} 
+                />
+              </FG>
+              <button 
+                className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors mt-2" 
+                onClick={() => {
+                  if (editName.trim()) {
+                    onUpdateProject({ ...editModal, name: editName.trim(), description: editDesc.trim() });
+                    setEditModal(null);
+                  }
+                }}
+              >
+                {t("common.save")}
               </button>
             </motion.div>
           </div>
@@ -655,6 +738,14 @@ export default function App() {
       handleFirestoreError(e, OperationType.CREATE, `projects/${p.id}`);
     }
   };
+  const updateProject = async (p: any) => {
+    try {
+      await updateDoc(doc(db, "projects", p.id), p);
+      addLog(adminUser, "project_edit", p.name, "প্রজেক্ট তথ্য আপডেট");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `projects/${p.id}`);
+    }
+  };
   const deleteProject = async (id: string) => {
     const prj = projects.find(p => p.id === id);
     const prjClients = clients.filter(c => c.projectId === id);
@@ -765,6 +856,14 @@ export default function App() {
       addLog(adminUser, "expense_add", e.category, `${BDT(e.amount)} — ${e.description}`, e.projectId);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, `expenses/${e.id}`);
+    }
+  };
+  const updateExpense = async (e: any) => {
+    try {
+      await updateDoc(doc(db, "expenses", e.id), e);
+      addLog(adminUser, "expense_edit", e.category, `${BDT(e.amount)} — ${e.description}`, e.projectId);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `expenses/${e.id}`);
     }
   };
   const deleteExpense = async (id: string) => {
@@ -916,7 +1015,7 @@ export default function App() {
         {(role === "admin" || role === "superadmin") && !selProject && page === "home" && (
           <AdminHome 
             projects={projects} clients={clients} payments={payments} instDefs={instDefs} expenses={expenses} 
-            onSelect={(id: string) => setSelProject(id)} onAddProject={addProject} onDeleteProject={deleteProject} 
+            onSelect={(id: string) => setSelProject(id)} onAddProject={addProject} onUpdateProject={updateProject} onDeleteProject={deleteProject} 
             isSuperAdmin={isSuperAdmin} onApprovePayment={approvePayment} onRejectPayment={rejectPayment} 
           />
         )}
@@ -939,6 +1038,7 @@ export default function App() {
             onAddPayment={addPayment}
             onDeletePayment={deletePayment}
             onAddExpense={addExpense}
+            onUpdateExpense={updateExpense}
             onDeleteExpense={deleteExpense}
             onUpdateClient={updateClient} onAddBulkClients={addBulkClients} onAddClient={addClient} onDeleteClient={deleteClient}
           />

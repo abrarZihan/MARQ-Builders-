@@ -6,17 +6,18 @@ import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
 import { ClientInfoPage } from "./ClientInfo";
 import { CellPaySheet, AddDefSheet, AddExpSheet, ReceiptSheet } from "./ProjectModals";
-import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText } from "lucide-react";
+import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText, Edit2 } from "lucide-react";
 
 import { useLanguage } from "../lib/i18n";
 
-export function ProjectDetail({ project, clients, allClients, instDefs, payments, expenses, logs, isSuperAdmin, onBack, onAddDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
+export function ProjectDetail({ project, clients, allClients, instDefs, payments, expenses, logs, isSuperAdmin, onBack, onAddDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
   const { t } = useLanguage();
   const [tab, setTab] = useState("sheet");
   const [cellModal, setCellModal] = useState<any>(null);
   const [viewR, setViewR] = useState<any>(null);
   const [addDefModal, setAddDefModal] = useState(false);
   const [addExpModal, setAddExpModal] = useState(false);
+  const [editExpModal, setEditExpModal] = useState<any>(null);
   const [delExp, setDelExp] = useState<any>(null);
   const [defTaps, setDefTaps] = useState<any>({});
 
@@ -371,12 +372,20 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                     </div>
                     <div className="flex flex-col items-end gap-2 shrink-0">
                       <div className="text-base font-black text-slate-900">{BDT(e.amount)}</div>
-                      <button 
-                        className="w-8 h-8 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-100 transition-colors" 
-                        onClick={() => setDelExp(e)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="flex gap-2">
+                        <button 
+                          className="w-8 h-8 bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-colors" 
+                          onClick={() => setEditExpModal(e)}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          className="w-8 h-8 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-100 transition-colors" 
+                          onClick={() => setDelExp(e)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -401,6 +410,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
         {cellModal && <CellPaySheet client={cellModal.client} instDef={cellModal.instDef} payments={payments} project={project} isSuperAdmin={isSuperAdmin} onSave={(p: any) => { onAddPayment(p); setCellModal(null); }} onDelete={(id: string) => onDeletePayment(id)} onClose={() => setCellModal(null)} />}
         {addDefModal && <AddDefSheet projectId={project.id} onSave={(d: any) => { onAddDef(d); setAddDefModal(false); }} onClose={() => setAddDefModal(false)} />}
         {addExpModal && <AddExpSheet projectId={project.id} onSave={(e: any) => { onAddExpense(e); setAddExpModal(false); }} onClose={() => setAddExpModal(false)} />}
+        {editExpModal && <AddExpSheet projectId={project.id} expense={editExpModal} onSave={(e: any) => { onUpdateExpense(e); setEditExpModal(null); }} onClose={() => setEditExpModal(null)} />}
         {delExp && <ConfirmDelete message={<><b>{delExp.category}</b> — {BDT(delExp.amount)}{t("project_detail.will_be_deleted")}</>} onConfirm={() => { onDeleteExpense(delExp.id); setDelExp(null); }} onClose={() => setDelExp(null)} />}
       </AnimatePresence>
     </motion.div>

@@ -180,9 +180,9 @@ export function AddDefSheet({ projectId, onSave, onClose }: any) {
   );
 }
 
-export function AddExpSheet({ projectId, onSave, onClose }: any) {
+export function AddExpSheet({ projectId, expense, onSave, onClose }: any) {
   const { t } = useLanguage();
-  const [f, setF] = useState({ category: "", description: "", amount: "", date: todayStr() });
+  const [f, setF] = useState(expense ? { ...expense } : { category: "", description: "", amount: expense?.amount?.toString() || "", date: todayStr() });
   const s = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
   
   return (
@@ -194,7 +194,7 @@ export function AddExpSheet({ projectId, onSave, onClose }: any) {
         onClick={e => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-        <div className="text-xl font-black text-slate-900 mb-6">{t("project_modals.expense_add")}</div>
+        <div className="text-xl font-black text-slate-900 mb-6">{expense ? t("modal.edit_expense") : t("project_modals.expense_add")}</div>
         
         <FG label={t("project_modals.category")}>
           <select className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all font-bold appearance-none" value={f.category} onChange={e => s("category", e.target.value)}>
@@ -213,11 +213,11 @@ export function AddExpSheet({ projectId, onSave, onClose }: any) {
             className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" 
             onClick={() => {
               if (!f.category || !f.amount) { alert(t("project_modals.expense_add_err")); return; }
-              onSave({ id: uid("EX-"), projectId, ...f, amount: parseFloat(f.amount) });
+              onSave({ id: expense?.id || uid("EX-"), projectId, ...f, amount: parseFloat(f.amount) });
               onClose();
             }}
           >
-            {t("project_modals.add")}
+            {expense ? t("modal.update") : t("project_modals.add")}
           </button>
           <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>{t("project_modals.cancel")}</button>
         </div>
