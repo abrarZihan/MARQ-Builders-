@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BDT, dotJoin, uid, todayStr, numberToWords } from "../lib/utils";
 import { FG, ConfirmDelete, PBar } from "./Shared";
-import { EXP_CATS } from "../lib/data";
+import { EXP_CATS, LOGO_URL } from "../lib/data";
 import { Trash2, Clock, Printer, FileText } from "lucide-react";
 import { useLanguage } from "../lib/i18n";
 
@@ -230,106 +230,112 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const { t } = useLanguage();
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="relative p-8 bg-white text-slate-900 font-serif border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col justify-between min-w-[800px] print:min-w-0">
+    <div className="relative p-10 bg-white text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
-        <div className="flex items-center gap-6">
-          <img 
-            src="/logo.png" 
-            alt="Logo" 
-            className="h-20 w-auto object-contain"
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-          <div>
-            <div className="text-3xl font-black text-slate-900 tracking-tighter leading-none">MARQ <span className="text-slate-400 font-bold">Builders</span></div>
-            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1.5">Official Money Receipt</div>
-            <div className="text-[10px] text-slate-400 leading-tight mt-2 font-medium">
-              216/8, Baganbari, North Vasantek<br />
-              Dhaka Cantt, Dhaka- 1206
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="bg-slate-900 text-white text-[10px] font-black px-4 py-1.5 rounded-sm uppercase tracking-widest">
-            {type} Copy
-          </div>
-        </div>
+      {/* Logo in top-left corner */}
+      <div className="absolute top-6 left-10">
+        <img 
+          src={LOGO_URL} 
+          alt="Logo" 
+          className="h-20 w-auto object-contain"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+
+      <div className="flex flex-col items-center mb-6 w-full">
+        <h1 className="text-3xl font-black text-[#0f172a] tracking-tight">MARQ BUILDERS</h1>
+        <p className="text-[11px] font-bold text-slate-800 mt-2 text-center w-full">
+          216/8, Baganbari, North Vasantek Dhaka Cantt, Dhaka- 1206
+        </p>
+      </div>
+
+      {/* Copy Badge */}
+      <div className="absolute top-8 right-8">
+        <span className="bg-[#5c5fc8] text-white text-[10px] font-bold px-4 py-1 rounded-md shadow-sm">
+          {type} Copy
+        </span>
       </div>
 
       {/* Sl No & Date */}
-      <div className="flex justify-between text-xs font-bold mb-8">
-        <div>Sl. No. <span className="border-b border-dotted border-slate-400 min-w-[80px] inline-block px-2">{payment?.id ? (payment.id.split('-')[1] || payment.id) : ""}</span></div>
-        <div>Date: <span className="border-b border-dotted border-slate-400 min-w-[120px] inline-block px-2">{payment.date}</span></div>
+      <div className="flex justify-between text-[13px] font-bold mb-6 px-2">
+        <div className="flex items-baseline gap-1">
+          <span>Sl. No.</span>
+          <span className="border-b border-dotted border-slate-900 min-w-[120px] px-2 text-center">
+            {payment?.id ? (payment.id.split('-')[1] || payment.id) : ""}
+          </span>
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span>Date:</span>
+          <span className="border-b border-dotted border-slate-900 min-w-[180px] px-2 text-center">
+            {payment.date}
+          </span>
+        </div>
       </div>
 
       {/* Title */}
       <div className="text-center mb-8">
-        <span className="bg-slate-900 text-white px-8 py-1.5 rounded-md font-black text-sm uppercase tracking-widest">Money Receipt</span>
+        <span className="bg-[#5c5fc8] text-white px-12 py-2 rounded-lg font-bold text-sm uppercase tracking-wider shadow-sm">
+          Money Receipt
+        </span>
       </div>
 
       {/* Fields */}
-      <div className="space-y-4 text-sm">
-        <div className="flex gap-4">
-          <div className="flex-1 flex items-end gap-2">
+      <div className="space-y-5 text-[13px] px-2">
+        <div className="flex gap-8">
+          <div className="flex-1 flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{client?.name}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{client?.name}</span>
           </div>
-          <div className="w-1/3 flex items-end gap-2">
+          <div className="w-[280px] flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Customer ID:</span>
-            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{client?.id}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{client?.id}</span>
           </div>
         </div>
 
-        <div className="flex gap-4">
-          <div className="flex-1 flex items-end gap-2">
+        <div className="flex gap-8">
+          <div className="flex-1 flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Project Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{project?.name || "N/A"}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{project?.name || "N/A"}</span>
           </div>
-          <div className="w-1/3 flex items-end gap-2">
+          <div className="w-[280px] flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Instalment No.:</span>
-            <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">{instDef?.title}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{instDef?.title}</span>
           </div>
         </div>
 
-        <div className="flex items-end gap-2">
+        <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Amount =</span>
-          <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-black text-lg">{BDT(payment.amount)}/-</span>
+          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-black text-base">{payment.amount.toLocaleString()}/-</span>
         </div>
 
-        <div className="flex items-end gap-2">
+        <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Amount in word:</span>
-          <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium italic">{numberToWords(payment.amount)} Taka Only</span>
+          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{numberToWords(payment.amount)} TK</span>
         </div>
 
-        <div className="flex items-end gap-2">
+        <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Deposit By:</span>
-          <span className="flex-1 border-b border-dotted border-slate-400 px-2 font-medium">Cash / Cheque / Bank</span>
+          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">Cash/Cheque/Bank</span>
         </div>
       </div>
 
       {/* Footer Signatures */}
-      <div className="flex justify-between mt-16 pt-4 text-[10px] font-bold uppercase tracking-wider text-center">
-        <div className="w-32 border-t border-slate-900 pt-1">Prepared By</div>
-        <div className="w-32 border-t border-slate-900 pt-1">Accounts Officer</div>
-        <div className="w-32 border-t border-slate-900 pt-1">Authorised Signature</div>
+      <div className="flex justify-between mt-24 px-4 text-[11px] font-bold text-center">
+        <div className="w-48 border-t border-slate-900 pt-1.5">Prepared By</div>
+        <div className="w-48 border-t border-slate-900 pt-1.5">Accounts Officer</div>
+        <div className="w-48 border-t border-slate-900 pt-1.5">Authorised Signature</div>
       </div>
 
       {/* Watermark */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none -z-10">
-        <div className="flex flex-col items-center gap-4 rotate-[-30deg]">
+      <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none -z-10">
+        <div className="flex flex-col items-center gap-4 rotate-[-15deg]">
           <img 
-            src="/logo.png" 
+            src={LOGO_URL} 
             alt="" 
-            className="w-[300px] h-auto object-contain grayscale" 
+            className="w-[350px] h-auto object-contain grayscale" 
             referrerPolicy="no-referrer"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
           />
-          <div className="text-[100px] font-black whitespace-nowrap">MARQ BUILDERS</div>
+          <div className="text-[80px] font-black whitespace-nowrap">MARQ BUILDERS</div>
         </div>
       </div>
     </div>

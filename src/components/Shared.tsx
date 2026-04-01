@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Trash2, Home, ClipboardList, User, Shield, Receipt, Building2, LogOut, KeyRound, Droplets, Zap, Users, Package, Truck, FileText, Globe } from "lucide-react";
 import { cn, BDT, ac, initials } from "../lib/utils";
-import { STATUS, STATUS_LABEL } from "../lib/data";
+import { STATUS, STATUS_LABEL, LOGO_URL } from "../lib/data";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "../lib/i18n";
 
@@ -175,8 +175,8 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
           >
             <div className="p-6 border-b border-white/10">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-900">
-                  <Building2 size={24} />
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer" />
                 </div>
                 <div>
                   <div className="text-white font-black text-lg leading-tight">MARQ</div>
@@ -308,8 +308,8 @@ export function Login({ onLogin }: any) {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl"
       >
-        <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-white mx-auto mb-6">
-          <Building2 size={28} />
+        <div className="w-32 h-32 flex items-center justify-center overflow-hidden mx-auto mb-2">
+          <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
         </div>
         <div className="text-center mb-6">
           <div className="text-2xl font-extrabold text-slate-900">{t("login.welcome")}</div>

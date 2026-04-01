@@ -77,6 +77,8 @@ export const INIT_LOGS = [
   { id:"LOG-008", adminId:"superadmin", adminName:"Super Admin", action:"admin_reset_pw", target:"রহিম উদ্দিন",            detail:"Temporary password সেট",  projectId:null,    ts:"2024-06-01T09:00:00" },
 ];
 
+export const LOGO_URL = "https://i.ibb.co/23dTx0Gf/16953-fotor-bg-remover-2026040118142.png";
+
 export const STATUS: Record<string, any> = {
   paid:    { bg: "bg-emerald-100", text: "text-emerald-700", dot: "bg-emerald-500", bar: "bg-emerald-500" },
   partial: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500", bar: "bg-amber-500" },
