@@ -291,7 +291,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
                 <Building2 size={20} />
               </div>
               <div className="text-xs text-slate-500 font-bold mb-1">{t("admin_home.total_projects")}</div>
-              <div className="text-xl font-black text-slate-900">{projects.length}{t("admin_home.count_suffix")}</div>
+              <div className="text-xl font-black text-slate-900">{projects.length}</div>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-center">
               <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-3">
@@ -336,7 +336,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex gap-2">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ backgroundColor: color + "15", color }}>{prjClients.length}জন</span>
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ backgroundColor: color + "15", color }}>{prjClients.length} জন</span>
                       <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700">{BDTshort(prjPaid)}</span>
                     </div>
                     
@@ -723,7 +723,7 @@ export default function App() {
     });
     try {
       await batch.commit();
-      addLog(adminUser, "client_add", `${bulk.length}জন ক্লাইন্ট`, "Bulk import");
+      addLog(adminUser, "client_add", `${bulk.length} জন ক্লাইন্ট`, "Bulk import");
     } catch (e) {
       handleFirestoreError(e, OperationType.WRITE, "clients (bulk)");
     }
