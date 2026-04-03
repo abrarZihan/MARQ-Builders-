@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Component } from "react";
 import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -17,7 +17,7 @@ import { AuditLogPage, LogRow } from "./components/Admin";
 import { AdminProfile, AdminManagePage, AdminPaymentsPage } from "./components/AdminPages";
 import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
-import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle, MoreVertical, Edit2 } from "lucide-react";
+import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle, MoreVertical, Edit2, AlertCircle } from "lucide-react";
 import { CategoryIcon, CategoryColor } from "./components/Shared";
 import { useLanguage } from "./lib/i18n";
 
@@ -77,13 +77,26 @@ function PendingApprovals({ payments, clients, instDefs, projects, onApprove, on
   );
 }
 
-function FinancialSummary({ projects, clients, instDefs, payments, expenses }: any) {
+function FinancialSummary({ projects, clients, instDefs, payments, expenses, plans }: any) {
   const { t } = useLanguage();
   const approvedPays = payments.filter((p: any) => p.status === "approved");
   const pendingPays = payments.filter((p: any) => p.status === "pending");
   const totalExpected = clients.reduce((s: number, c: any) => {
-    const defs = instDefs.filter((d: any) => d.projectId === c.projectId);
-    return s + (defs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (c.shareCount || 1));
+    const prjPlans = plans.filter((p: any) => p.projectId === c.projectId);
+    // If client has assignments, use them. Otherwise use the first plan found for the project.
+    const assignments = c.planAssignments || [];
+    if (assignments.length > 0) {
+      return s + assignments.reduce((as: number, pa: any) => {
+        const pDefs = instDefs.filter((d: any) => d.planId === pa.planId);
+        return as + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * pa.shareCount);
+      }, 0);
+    } else {
+      // Fallback to first plan if no assignment
+      const firstPlan = prjPlans[0];
+      if (!firstPlan) return s;
+      const pDefs = instDefs.filter((d: any) => d.planId === firstPlan.id);
+      return s + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (c.shareCount || 1));
+    }
   }, 0);
   const totalCollected = approvedPays.reduce((s: number, p: any) => s + p.amount, 0);
   const totalExpenses = expenses.reduce((s: number, e: any) => s + e.amount, 0);
@@ -162,7 +175,21 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
         const prjExpenses = expenses.filter((e: any) => e.projectId === prj.id);
         const prjPays = approvedPays.filter((p: any) => prjClients.find((c: any) => c.id === p.clientId));
         
-        const expected = prjClients.reduce((s: number, c: any) => s + (prjDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (c.shareCount || 1)), 0);
+        const expected = prjClients.reduce((s: number, c: any) => {
+          const assignments = c.planAssignments || [];
+          if (assignments.length > 0) {
+            return s + assignments.reduce((as: number, pa: any) => {
+              const pDefs = instDefs.filter((d: any) => d.planId === pa.planId);
+              return as + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * pa.shareCount);
+            }, 0);
+          } else {
+            const prjPlans = plans.filter((p: any) => p.projectId === prj.id);
+            const firstPlan = prjPlans[0];
+            if (!firstPlan) return s;
+            const pDefs = instDefs.filter((d: any) => d.planId === firstPlan.id);
+            return s + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (c.shareCount || 1));
+          }
+        }, 0);
         const collected = prjPays.reduce((s: number, p: any) => s + p.amount, 0);
         const spent = prjExpenses.reduce((s: number, e: any) => s + e.amount, 0);
         const due = Math.max(0, expected - collected);
@@ -233,7 +260,7 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses }: a
   );
 }
 
-function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, onAddProject, onUpdateProject, onDeleteProject, isSuperAdmin, onApprovePayment, onRejectPayment }: any) {
+function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onSelect, onAddProject, onUpdateProject, onDeleteProject, isSuperAdmin, onApprovePayment, onRejectPayment }: any) {
   const { t } = useLanguage();
   const [addModal, setAddModal] = useState(false);
   const [editModal, setEditModal] = useState<any>(null);
@@ -279,7 +306,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
         </button>
       </div>
       
-      {view === "financial" && <FinancialSummary projects={projects} clients={clients} instDefs={instDefs} payments={payments} expenses={expenses} />}
+      {view === "financial" && <FinancialSummary projects={projects} clients={clients} instDefs={instDefs} payments={payments} expenses={expenses} plans={plans} />}
       
       {view === "projects" && (
         <>
@@ -484,6 +511,64 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, onSelect, 
   );
 }
 
+// Error Boundary Component
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: any;
+}
+class ErrorBoundary extends (Component as any) {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      let errorInfo = { error: String(this.state.error) };
+      try {
+        if (this.state.error && typeof this.state.error === 'object' && 'message' in this.state.error) {
+          errorInfo = JSON.parse(this.state.error.message);
+        }
+      } catch (e) {}
+      
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl border border-slate-200 p-8 max-w-md w-full shadow-xl">
+            <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-6">
+              <AlertCircle size={32} />
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 mb-2">Something went wrong</h1>
+            <p className="text-slate-500 font-medium mb-6">The application encountered an unexpected error. Please try refreshing the page.</p>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-6 overflow-auto max-h-40">
+              <pre className="text-[10px] font-mono text-rose-600 whitespace-pre-wrap">
+                {JSON.stringify(errorInfo, null, 2)}
+              </pre>
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ROOT APP COMPONENT
 export default function App() {
   const { t } = useLanguage();
@@ -505,6 +590,7 @@ export default function App() {
     return "home";
   });
   const [projects, setProjects] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [instDefs, setInstDefs] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -517,6 +603,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState({
     projects: false,
+    plans: false,
     clients: false,
     instDefs: false,
     payments: false,
@@ -524,6 +611,30 @@ export default function App() {
     admins: false,
     logs: false
   });
+
+  const [toast, setToast] = useState<{ m: string, t: 's' | 'e' } | null>(null);
+
+  const showToast = (m: string, t: 's' | 'e' = 's') => {
+    setToast({ m, t });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Helper to sanitize data before Firestore
+  const sanitize = (data: any, allowedFields: string[]) => {
+    const clean: any = {};
+    allowedFields.forEach(f => {
+      if (data[f] !== undefined) clean[f] = data[f];
+    });
+    return clean;
+  };
+
+  const CLIENT_FIELDS = ['id', 'projectId', 'name', 'fatherHusband', 'birthDate', 'phone', 'email', 'nid', 'plot', 'totalAmount', 'shareCount', 'password', 'photo', 'remarks', 'planAssignments', '_row'];
+  const PROJECT_FIELDS = ['id', 'name', 'description'];
+  const PLAN_FIELDS = ['id', 'projectId', 'name'];
+  const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount'];
+  const PAYMENT_FIELDS = ['id', 'clientId', 'instDefId', 'amount', 'date', 'status', 'note', 'method', 'trxId', 'approvedBy'];
+  const EXPENSE_FIELDS = ['id', 'projectId', 'category', 'amount', 'date', 'description'];
+  const ADMIN_FIELDS = ['id', 'name', 'username', 'password', 'role', 'isTemp'];
 
   // Firestore Real-time Listeners
   useEffect(() => {
@@ -543,6 +654,11 @@ export default function App() {
       setProjects(s.docs.map(d => ({ ...d.data(), id: d.id })));
       setDataLoaded(prev => ({ ...prev, projects: true }));
     }, (e) => handleFirestoreError(e, OperationType.LIST, "projects"));
+
+    const unsubPlans = onSnapshot(collection(db, "plans"), (s) => {
+      setPlans(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setDataLoaded(prev => ({ ...prev, plans: true }));
+    }, (e) => handleFirestoreError(e, OperationType.LIST, "plans"));
 
     const unsubClients = onSnapshot(collection(db, "clients"), (s) => {
       setClients(s.docs.map(d => ({ ...d.data(), id: d.id })));
@@ -575,13 +691,13 @@ export default function App() {
     }, (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
 
     return () => {
-      unsubProjects(); unsubClients(); unsubInstDefs(); unsubPayments(); unsubExpenses(); unsubAdmins(); unsubLogs();
+      unsubProjects(); unsubPlans(); unsubClients(); unsubInstDefs(); unsubPayments(); unsubExpenses(); unsubAdmins(); unsubLogs();
     };
   }, []);
 
   // Set loading to false only when essential data is loaded
   useEffect(() => {
-    if (dataLoaded.projects && dataLoaded.clients && dataLoaded.instDefs && dataLoaded.payments) {
+    if (dataLoaded.projects && dataLoaded.plans && dataLoaded.clients && dataLoaded.instDefs && dataLoaded.payments) {
       setLoading(false);
     }
   }, [dataLoaded]);
@@ -595,6 +711,22 @@ export default function App() {
       }
     }
   }, [clients, auth]);
+
+  // Migration: Assign instDefs to a default plan if planId is missing
+  useEffect(() => {
+    if (dataLoaded.plans && dataLoaded.instDefs) {
+      instDefs.forEach(async (d: any) => {
+        if (!d.planId && d.projectId) {
+          let plan = plans.find(p => p.projectId === d.projectId && p.name === "Default Plan");
+          if (!plan) {
+            plan = { id: uid("PLN-"), projectId: d.projectId, name: "Default Plan" };
+            await setDoc(doc(db, "plans", plan.id), plan);
+          }
+          await updateDoc(doc(db, "instDefs", d.id), { planId: plan.id });
+        }
+      });
+    }
+  }, [dataLoaded, plans, instDefs]);
 
   const addLog = async (adminUser: any, action: string, target: any, detail: any, projectId: string | null = null) => {
     if (!adminUser) return;
@@ -674,34 +806,38 @@ export default function App() {
   // Client CRUD
   const updateClient = async (c: any, oldId: string) => {
     try {
-      const { __new, ...data } = c;
-      await setDoc(doc(db, "clients", data.id), data);
-      if (oldId && oldId !== data.id) {
+      const clean = sanitize(c, CLIENT_FIELDS);
+      await setDoc(doc(db, "clients", clean.id), clean);
+      if (oldId && oldId !== clean.id) {
         // Migrate payments
         const batch = writeBatch(db);
         const clientPayments = payments.filter(p => p.clientId === oldId);
         clientPayments.forEach(p => {
-          batch.update(doc(db, "payments", p.id), { clientId: data.id });
+          batch.update(doc(db, "payments", p.id), { clientId: clean.id });
         });
         await batch.commit();
         await deleteDoc(doc(db, "clients", oldId));
-        addLog(adminUser, "client_id_change", `${oldId} → ${data.id}`, `${data.name} এর ID পরিবর্তন`, data.projectId);
+        addLog(adminUser, "client_id_change", `${oldId} → ${clean.id}`, `${clean.name} এর ID পরিবর্তন`, clean.projectId);
       } else {
-        addLog(adminUser, "client_edit", `${data.id} - ${data.name}`, "তথ্য আপডেট", data.projectId);
+        addLog(adminUser, "client_edit", `${clean.id} - ${clean.name}`, "তথ্য আপডেট", clean.projectId);
       }
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `clients/${c.id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   
   const addClient = async (c: any) => {
     if (clients.find(cl => cl.id === c.id)) { alert("এই ID আছে"); return; }
     try {
-      const { __new, ...data } = c;
-      await setDoc(doc(db, "clients", data.id), data);
-      addLog(adminUser, "client_add", `${data.id} - ${data.name}`, "নতুন ক্লাইন্ট", data.projectId);
+      const clean = sanitize(c, CLIENT_FIELDS);
+      await setDoc(doc(db, "clients", clean.id), clean);
+      addLog(adminUser, "client_add", `${clean.id} - ${clean.name}`, "নতুন ক্লাইন্ট", clean.projectId);
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, `clients/${c.id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   
@@ -710,8 +846,10 @@ export default function App() {
     try {
       await deleteDoc(doc(db, "clients", id));
       if (c) addLog(adminUser, "client_delete", `${c.id} - ${c.name}`, "মুছে ফেলা হয়েছে", c.projectId);
+      showToast(t("common.success_deleted"));
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, `clients/${id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   
@@ -732,81 +870,162 @@ export default function App() {
   // Project CRUD
   const addProject = async (p: any) => { 
     try {
-      await setDoc(doc(db, "projects", p.id), p);
-      addLog(adminUser, "project_add", p.name, "নতুন প্রজেক্ট"); 
+      const clean = sanitize(p, PROJECT_FIELDS);
+      await setDoc(doc(db, "projects", clean.id), clean);
+      const defaultPlan = { id: uid("PLN-"), projectId: clean.id, name: "Default Plan" };
+      await setDoc(doc(db, "plans", defaultPlan.id), defaultPlan);
+      addLog(adminUser, "project_add", clean.name, "নতুন প্রজেক্ট ও ডিফল্ট প্ল্যান"); 
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, `projects/${p.id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   const updateProject = async (p: any) => {
     try {
-      await updateDoc(doc(db, "projects", p.id), p);
-      addLog(adminUser, "project_edit", p.name, "প্রজেক্ট তথ্য আপডেট");
+      const clean = sanitize(p, PROJECT_FIELDS);
+      await updateDoc(doc(db, "projects", clean.id), clean);
+      addLog(adminUser, "project_edit", clean.name, "প্রজেক্ট তথ্য আপডেট");
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `projects/${p.id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   const deleteProject = async (id: string) => {
     const prj = projects.find(p => p.id === id);
     const prjClients = clients.filter(c => c.projectId === id);
     const prjClientIds = prjClients.map(c => c.id);
-    const prjInstDefs = instDefs.filter(d => d.projectId === id);
+    const prjPlans = plans.filter(pl => pl.projectId === id);
+    const prjPlanIds = prjPlans.map(pl => pl.id);
+    const prjInstDefs = instDefs.filter(d => prjPlanIds.includes(d.planId));
     const prjExpenses = expenses.filter(e => e.projectId === id);
     const prjPayments = payments.filter(p => prjClientIds.includes(p.clientId));
 
     const docsToDelete = [
       doc(db, "projects", id),
       ...prjClients.map(c => doc(db, "clients", c.id)),
+      ...prjPlans.map(pl => doc(db, "plans", pl.id)),
       ...prjInstDefs.map(d => doc(db, "instDefs", d.id)),
       ...prjExpenses.map(e => doc(db, "expenses", e.id)),
       ...prjPayments.map(p => doc(db, "payments", p.id))
     ];
 
     try {
-      // Process in chunks of 500 to respect Firestore batch limits
       for (let i = 0; i < docsToDelete.length; i += 500) {
         const batch = writeBatch(db);
         const chunk = docsToDelete.slice(i, i + 500);
         chunk.forEach(d => batch.delete(d));
         await batch.commit();
       }
-      
       if (prj) addLog(adminUser, "project_delete", prj.name, "মুছে ফেলা হয়েছে");
+      showToast(t("common.success_deleted"));
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, `projects/${id}`);
+      showToast(t("common.error_occurred"), 'e');
+    }
+  };
+
+  const addPlan = async (p: any) => {
+    try {
+      const clean = sanitize(p, PLAN_FIELDS);
+      await setDoc(doc(db, "plans", clean.id), clean);
+      addLog(adminUser, "plan_add", clean.name, "নতুন প্ল্যান", clean.projectId);
+      showToast(t("common.success_saved"));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, `plans/${p.id}`);
+      showToast(t("common.error_occurred"), 'e');
+    }
+  };
+
+  const updatePlan = async (p: any) => {
+    try {
+      const clean = sanitize(p, PLAN_FIELDS);
+      await updateDoc(doc(db, "plans", clean.id), clean);
+      addLog(adminUser, "plan_edit", clean.name, "প্ল্যান আপডেট", clean.projectId);
+      showToast(t("common.success_saved"));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `plans/${p.id}`);
+      showToast(t("common.error_occurred"), 'e');
+    }
+  };
+
+  const deletePlan = async (id: string) => {
+    const p = plans.find(x => x.id === id);
+    const defsToDelete = instDefs.filter((d: any) => d.planId === id);
+    try {
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "plans", id));
+      defsToDelete.forEach((d: any) => batch.delete(doc(db, "instDefs", d.id)));
+      await batch.commit();
+      if (p) addLog(adminUser, "plan_delete", p.name, "প্ল্যান মুছে ফেলা হয়েছে", p.projectId);
+      showToast(t("common.success_deleted"));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `plans/${id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
 
   // InstDef CRUD
   const addInstDef = async (d: any) => {
     try {
-      await setDoc(doc(db, "instDefs", d.id), d);
-      const prj = projects.find(p => p.id === d.projectId);
-      addLog(adminUser, "instdef_add", d.title, dotJoin(prj?.name, `৳${d.targetAmount}`), d.projectId);
+      const clean = sanitize(d, INST_DEF_FIELDS);
+      await setDoc(doc(db, "instDefs", clean.id), clean);
+      const plan = plans.find(pl => pl.id === clean.planId);
+      const prj = projects.find(p => p.id === plan?.projectId);
+      addLog(adminUser, "instdef_add", clean.title, dotJoin(prj?.name, plan?.name, `৳${clean.targetAmount}`), prj?.id || null);
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, `instDefs/${d.id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
-  const deleteInstDef = async (id: string, projectId: string) => {
+  const updateInstDef = async (d: any) => {
+    try {
+      const clean = sanitize(d, INST_DEF_FIELDS);
+      await updateDoc(doc(db, "instDefs", clean.id), clean);
+      showToast(t("common.success_saved"));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `instDefs/${d.id}`);
+      showToast(t("common.error_occurred"), 'e');
+    }
+  };
+  const deleteInstDef = async (id: string, planId: string) => {
     const d = instDefs.find(x => x.id === id);
     try {
       await deleteDoc(doc(db, "instDefs", id));
-      if (d) addLog(adminUser, "instdef_delete", d.title, "কিস্তি কলাম মুছে ফেলা হয়েছে", projectId);
+      const plan = plans.find(pl => pl.id === planId);
+      if (d) addLog(adminUser, "instdef_delete", d.title, "কিস্তি কলাম মুছে ফেলা হয়েছে", plan?.projectId || null);
+      showToast(t("common.success_deleted"));
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, `instDefs/${id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
 
   // Payment CRUD
   const addPayment = async (p: any) => {
     try {
-      await setDoc(doc(db, "payments", p.id), p);
-      const c = clients.find(cl => cl.id === p.clientId);
-      const d = instDefs.find(di => di.id === p.instDefId);
-      const action = p.status === "approved" ? "payment_add" : "payment_pending";
-      addLog(adminUser, action, `${c?.id} - ${c?.name}`, `${BDT(p.amount)} — ${d?.title}${p.status === "pending" ? " (pending)" : ""}`, c?.projectId);
+      const clean = sanitize(p, PAYMENT_FIELDS);
+      await setDoc(doc(db, "payments", clean.id), clean);
+      const c = clients.find(cl => cl.id === clean.clientId);
+      const d = instDefs.find(di => di.id === clean.instDefId);
+      const action = clean.status === "approved" ? "payment_add" : "payment_pending";
+      addLog(adminUser, action, `${c?.id} - ${c?.name}`, `${BDT(clean.amount)} — ${d?.title}${clean.status === "pending" ? " (pending)" : ""}`, c?.projectId);
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, `payments/${p.id}`);
+      showToast(t("common.error_occurred"), 'e');
+    }
+  };
+  const updatePayment = async (p: any) => {
+    try {
+      const clean = sanitize(p, PAYMENT_FIELDS);
+      await updateDoc(doc(db, "payments", clean.id), clean);
+      showToast(t("common.success_saved"));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `payments/${p.id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   const deletePayment = async (id: string) => {
@@ -818,8 +1037,10 @@ export default function App() {
         const d = instDefs.find(di => di.id === p.instDefId);
         addLog(adminUser, "payment_delete", `${c?.name || p.clientId}`, `${BDT(p.amount)} — ${d?.title}`, c?.projectId);
       }
+      showToast(t("common.success_deleted"));
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, `payments/${id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   const approvePayment = async (id: string) => {
@@ -831,8 +1052,10 @@ export default function App() {
         const d = instDefs.find(di => di.id === p.instDefId);
         addLog(adminUser, "payment_approved", `${c?.id} - ${c?.name}`, `${BDT(p.amount)} — ${d?.title}`, c?.projectId);
       }
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `payments/${id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   const rejectPayment = async (id: string) => {
@@ -844,26 +1067,34 @@ export default function App() {
         const d = instDefs.find(di => di.id === p.instDefId);
         addLog(adminUser, "payment_rejected", `${c?.id} - ${c?.name}`, `${BDT(p.amount)} — ${d?.title}`, c?.projectId);
       }
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `payments/${id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
 
   // Expense CRUD
   const addExpense = async (e: any) => {
     try {
-      await setDoc(doc(db, "expenses", e.id), e);
-      addLog(adminUser, "expense_add", e.category, `${BDT(e.amount)} — ${e.description}`, e.projectId);
+      const clean = sanitize(e, EXPENSE_FIELDS);
+      await setDoc(doc(db, "expenses", clean.id), clean);
+      addLog(adminUser, "expense_add", clean.category, `${BDT(clean.amount)} — ${clean.description}`, clean.projectId);
+      showToast(t("common.success_saved"));
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, `expenses/${e.id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   const updateExpense = async (e: any) => {
     try {
-      await updateDoc(doc(db, "expenses", e.id), e);
-      addLog(adminUser, "expense_edit", e.category, `${BDT(e.amount)} — ${e.description}`, e.projectId);
+      const clean = sanitize(e, EXPENSE_FIELDS);
+      await updateDoc(doc(db, "expenses", clean.id), clean);
+      addLog(adminUser, "expense_edit", clean.category, `${BDT(clean.amount)} — ${clean.description}`, clean.projectId);
+      showToast(t("common.success_saved"));
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `expenses/${e.id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   const deleteExpense = async (id: string) => {
@@ -871,18 +1102,33 @@ export default function App() {
     try {
       await deleteDoc(doc(db, "expenses", id));
       if (e) addLog(adminUser, "expense_delete", e.category, `${BDT(e.amount)} — ${e.description}`, e.projectId);
+      showToast(t("common.success_deleted"));
     } catch (err) {
       handleFirestoreError(err, OperationType.DELETE, `expenses/${id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
 
   // Admin CRUD
   const addAdmin = async (a: any) => {
     try {
-      await setDoc(doc(db, "admins", a.id), a);
-      addLog(adminUser, "admin_add", a.name, a.role);
+      const clean = sanitize(a, ADMIN_FIELDS);
+      await setDoc(doc(db, "admins", clean.id), clean);
+      addLog(adminUser, "admin_add", clean.name, clean.role);
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, `admins/${a.id}`);
+      showToast(t("common.error_occurred"), 'e');
+    }
+  };
+  const updateAdmin = async (a: any) => {
+    try {
+      const clean = sanitize(a, ADMIN_FIELDS);
+      await updateDoc(doc(db, "admins", clean.id), clean);
+      showToast(t("common.success_saved"));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `admins/${a.id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   const removeAdmin = async (id: string) => {
@@ -890,8 +1136,10 @@ export default function App() {
     try {
       await deleteDoc(doc(db, "admins", id));
       if (a) addLog(adminUser, "admin_remove", a.name, a.role);
+      showToast(t("common.success_deleted"));
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, `admins/${id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
   const resetAdminPw = async (id: string, newPw: string) => {
@@ -899,8 +1147,10 @@ export default function App() {
       await updateDoc(doc(db, "admins", id), { password: newPw, isTemp: true });
       const a = admins.find(x => x.id === id);
       if (a) addLog(adminUser, "admin_reset_pw", a.name, "Temporary password সেট");
+      showToast(t("common.success_saved"));
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `admins/${id}`);
+      showToast(t("common.error_occurred"), 'e');
     }
   };
 
@@ -1014,7 +1264,7 @@ export default function App() {
       <main className="pt-20 px-4 pb-24 max-w-4xl mx-auto">
         {(role === "admin" || role === "superadmin") && !selProject && page === "home" && (
           <AdminHome 
-            projects={projects} clients={clients} payments={payments} instDefs={instDefs} expenses={expenses} 
+            projects={projects} clients={clients} payments={payments} instDefs={instDefs} expenses={expenses} plans={plans}
             onSelect={(id: string) => setSelProject(id)} onAddProject={addProject} onUpdateProject={updateProject} onDeleteProject={deleteProject} 
             isSuperAdmin={isSuperAdmin} onApprovePayment={approvePayment} onRejectPayment={rejectPayment} 
           />
@@ -1031,8 +1281,11 @@ export default function App() {
         {(role === "admin" || role === "superadmin") && !selProject && page === "admins" && isSuperAdmin && <AdminManagePage admins={admins} onAdd={addAdmin} onUpdate={addAdmin} onDelete={removeAdmin} onResetPw={resetAdminPw} currentAdminId={adminUser.id} />}
         {(role === "admin" || role === "superadmin") && selProject && curProject && (
           <ProjectDetail 
-            project={curProject} clients={clients} allClients={clients} instDefs={instDefs} payments={payments} expenses={expenses} logs={logs} isSuperAdmin={isSuperAdmin}
+            project={curProject} clients={clients} allClients={clients} instDefs={instDefs} plans={plans} payments={payments} expenses={expenses} logs={logs} isSuperAdmin={isSuperAdmin}
             onBack={() => setSelProject(null)}
+            onAddPlan={addPlan}
+            onUpdatePlan={updatePlan}
+            onDeletePlan={deletePlan}
             onAddDef={addInstDef}
             onDeleteInstDef={deleteInstDef}
             onAddPayment={addPayment}
@@ -1044,7 +1297,7 @@ export default function App() {
           />
         )}
         
-        {role === "client" && page === "installments" && <ClientInstallments client={auth.user} instDefs={instDefs} payments={payments} projects={projects} />}
+        {role === "client" && page === "installments" && <ClientInstallments client={auth.user} instDefs={instDefs} payments={payments} projects={projects} plans={plans} />}
         {role === "client" && page === "receipts" && <ClientReceipts client={auth.user} instDefs={instDefs} payments={payments} projects={projects} />}
         {role === "client" && page === "expenses" && <ClientExpenses client={auth.user} expenses={expenses} />}
         {role === "client" && page === "profile" && <ClientProfile client={auth.user} onUpdateClient={(c: any) => { updateClient(c, c.id); setAuth({ ...auth, user: c }); }} />}

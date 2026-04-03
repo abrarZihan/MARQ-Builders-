@@ -7,26 +7,30 @@ export const SP = [
   { id:"PRJ-1", name:"MARQ Height",     description:"মিরপুর-১০, ঢাকা · ১২ তলা আবাসিক প্রজেক্ট" },
   { id:"PRJ-2", name:"MARQ Twin Tower", description:"উত্তরা, ঢাকা · টুইন টাওয়ার কমার্শিয়াল" },
 ];
+export const INIT_SCHEDULES = [
+  { id: "SCH-1-1", projectId: "PRJ-1", name: "1300 sqft" },
+  { id: "SCH-2-1", projectId: "PRJ-2", name: "Standard" },
+];
 export const SC = [
-  { id:"C001", projectId:"PRJ-1", name:"রাহেলা বেগম",      fatherHusband:"আব্দুল করিম",     birthDate:"1985-06-12", phone:"01711-111111", email:"rahela@gmail.com",  nid:"1234567890", plot:"A-4B",  totalAmount:2500000, password:"1234", photo:"" },
-  { id:"C002", projectId:"PRJ-1", name:"মোহাম্মদ শফিকুল",  fatherHusband:"নুরুল ইসলাম",     birthDate:"1978-03-22", phone:"01822-222222", email:"shafiq@gmail.com",  nid:"2345678901", plot:"B-7C",  totalAmount:2800000, password:"1234", photo:"" },
-  { id:"C003", projectId:"PRJ-1", name:"সালমা আক্তার",     fatherHusband:"জাহাঙ্গীর হোসেন", birthDate:"1990-11-05", phone:"01933-333333", email:"salma@gmail.com",   nid:"3456789012", plot:"C-2A",  totalAmount:2600000, password:"1234", photo:"" },
-  { id:"C004", projectId:"PRJ-1", name:"আব্দুল্লাহ মামুন", fatherHusband:"মোজাম্মেল হক",    birthDate:"1982-07-18", phone:"01644-444444", email:"mamun@gmail.com",   nid:"4567890123", plot:"D-1F",  totalAmount:3000000, password:"1234", photo:"" },
-  { id:"C005", projectId:"PRJ-1", name:"নাসরিন সুলতানা",   fatherHusband:"রফিকুল ইসলাম",    birthDate:"1992-04-09", phone:"01555-555555", email:"nasrin@gmail.com",  nid:"5678901234", plot:"E-3B",  totalAmount:2700000, password:"1234", photo:"" },
-  { id:"C006", projectId:"PRJ-2", name:"করিম উদ্দিন",      fatherHusband:"আলী আহমেদ",       birthDate:"1975-09-25", phone:"01666-666666", email:"karim2@gmail.com",  nid:"6789012345", plot:"T1-3F", totalAmount:5500000, password:"1234", photo:"" },
-  { id:"C007", projectId:"PRJ-2", name:"ফারহানা ইয়াসমিন", fatherHusband:"তানভীর আহমেদ",    birthDate:"1980-12-14", phone:"01777-777777", email:"farhana@gmail.com", nid:"7890123456", plot:"T2-5G", totalAmount:6000000, password:"1234", photo:"" },
-  { id:"C008", projectId:"PRJ-2", name:"মাহবুবুর রহমান",   fatherHusband:"সিরাজুল ইসলাম",   birthDate:"1971-02-28", phone:"01888-888888", email:"mahbub@gmail.com",  nid:"8901234567", plot:"T1-8A", totalAmount:5800000, password:"1234", photo:"" },
+  { id:"C001", projectId:"PRJ-1", name:"রাহেলা বেগম",      fatherHusband:"আব্দুল করিম",     birthDate:"1985-06-12", phone:"01711-111111", email:"rahela@gmail.com",  nid:"1234567890", plot:"A-4B",  totalAmount:2500000, password:"1234", photo:"", schedules: { "SCH-1-1": 1 } },
+  { id:"C002", projectId:"PRJ-1", name:"মোহাম্মদ শফিকুল",  fatherHusband:"নুরুল ইসলাম",     birthDate:"1978-03-22", phone:"01822-222222", email:"shafiq@gmail.com",  nid:"2345678901", plot:"B-7C",  totalAmount:2800000, password:"1234", photo:"", schedules: { "SCH-1-1": 1 } },
+  { id:"C003", projectId:"PRJ-1", name:"সালমা আক্তার",     fatherHusband:"জাহাঙ্গীর হোসেন", birthDate:"1990-11-05", phone:"01933-333333", email:"salma@gmail.com",   nid:"3456789012", plot:"C-2A",  totalAmount:2600000, password:"1234", photo:"", schedules: { "SCH-1-1": 1 } },
+  { id:"C004", projectId:"PRJ-1", name:"আব্দুল্লাহ মামুন", fatherHusband:"মোজাম্মেল হক",    birthDate:"1982-07-18", phone:"01644-444444", email:"mamun@gmail.com",   nid:"4567890123", plot:"D-1F",  totalAmount:3000000, password:"1234", photo:"", schedules: { "SCH-1-1": 1 } },
+  { id:"C005", projectId:"PRJ-1", name:"নাসরিন সুলতানা",   fatherHusband:"রফিকুল ইসলাম",    birthDate:"1992-04-09", phone:"01555-555555", email:"nasrin@gmail.com",  nid:"5678901234", plot:"E-3B",  totalAmount:2700000, password:"1234", photo:"", schedules: { "SCH-1-1": 1 } },
+  { id:"C006", projectId:"PRJ-2", name:"করিম উদ্দিন",      fatherHusband:"আলী আহমেদ",       birthDate:"1975-09-25", phone:"01666-666666", email:"karim2@gmail.com",  nid:"6789012345", plot:"T1-3F", totalAmount:5500000, password:"1234", photo:"", schedules: { "SCH-2-1": 1 } },
+  { id:"C007", projectId:"PRJ-2", name:"ফারহানা ইয়াসমিন", fatherHusband:"তানভীর আহমেদ",    birthDate:"1980-12-14", phone:"01777-777777", email:"farhana@gmail.com", nid:"7890123456", plot:"T2-5G", totalAmount:6000000, password:"1234", photo:"", schedules: { "SCH-2-1": 1 } },
+  { id:"C008", projectId:"PRJ-2", name:"মাহবুবুর রহমান",   fatherHusband:"সিরাজুল ইসলাম",   birthDate:"1971-02-28", phone:"01888-888888", email:"mahbub@gmail.com",  nid:"8901234567", plot:"T1-8A", totalAmount:5800000, password:"1234", photo:"", schedules: { "SCH-2-1": 1 } },
 ];
 export const SD = [
-  { id:"D001", projectId:"PRJ-1", title:"বুকিং মানি", dueDate:"2024-01-15", targetAmount:300000  },
-  { id:"D002", projectId:"PRJ-1", title:"১ম কিস্তি",  dueDate:"2024-04-01", targetAmount:500000  },
-  { id:"D003", projectId:"PRJ-1", title:"২য় কিস্তি",  dueDate:"2024-07-01", targetAmount:500000  },
-  { id:"D004", projectId:"PRJ-1", title:"৩য় কিস্তি",  dueDate:"2024-10-01", targetAmount:500000  },
-  { id:"D005", projectId:"PRJ-1", title:"৪র্থ কিস্তি", dueDate:"2025-01-01", targetAmount:500000  },
-  { id:"D006", projectId:"PRJ-2", title:"বুকিং মানি", dueDate:"2024-02-01", targetAmount:600000  },
-  { id:"D007", projectId:"PRJ-2", title:"১ম কিস্তি",  dueDate:"2024-05-01", targetAmount:1000000 },
-  { id:"D008", projectId:"PRJ-2", title:"২য় কিস্তি",  dueDate:"2024-08-01", targetAmount:1000000 },
-  { id:"D009", projectId:"PRJ-2", title:"৩য় কিস্তি",  dueDate:"2024-11-01", targetAmount:1000000 },
+  { id:"D001", projectId:"PRJ-1", scheduleId: "SCH-1-1", title:"বুকিং মানি", dueDate:"2024-01-15", targetAmount:300000  },
+  { id:"D002", projectId:"PRJ-1", scheduleId: "SCH-1-1", title:"১ম কিস্তি",  dueDate:"2024-04-01", targetAmount:500000  },
+  { id:"D003", projectId:"PRJ-1", scheduleId: "SCH-1-1", title:"২য় কিস্তি",  dueDate:"2024-07-01", targetAmount:500000  },
+  { id:"D004", projectId:"PRJ-1", scheduleId: "SCH-1-1", title:"৩য় কিস্তি",  dueDate:"2024-10-01", targetAmount:500000  },
+  { id:"D005", projectId:"PRJ-1", scheduleId: "SCH-1-1", title:"৪র্থ কিস্তি", dueDate:"2025-01-01", targetAmount:500000  },
+  { id:"D006", projectId:"PRJ-2", scheduleId: "SCH-2-1", title:"বুকিং মানি", dueDate:"2024-02-01", targetAmount:600000  },
+  { id:"D007", projectId:"PRJ-2", scheduleId: "SCH-2-1", title:"১ম কিস্তি",  dueDate:"2024-05-01", targetAmount:1000000 },
+  { id:"D008", projectId:"PRJ-2", scheduleId: "SCH-2-1", title:"২য় কিস্তি",  dueDate:"2024-08-01", targetAmount:1000000 },
+  { id:"D009", projectId:"PRJ-2", scheduleId: "SCH-2-1", title:"৩য় কিস্তি",  dueDate:"2024-11-01", targetAmount:1000000 },
 ];
 export const SPA = [
   { id:"PAY-001", clientId:"C001", instDefId:"D001", amount:300000,  date:"2024-01-13", note:"", status:"approved", approvedBy:null },

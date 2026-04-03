@@ -7,8 +7,9 @@ import { ReceiptSheet } from "./ProjectModals";
 import { Eye, EyeOff, Building2, CheckCircle2, Clock, KeyRound, FileText, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { useLanguage } from "../lib/i18n";
 
-export function ClientInstallments({ client, instDefs, payments, projects }: any) {
+export function ClientInstallments({ client, instDefs, payments, projects, plans }: any) {
   const { t } = useLanguage();
+  const [activePlanId, setActivePlanId] = useState<string>(client.planAssignments?.[0]?.planId || "");
   const [viewMode, setViewMode] = useState<"combined" | "shares">("combined");
   const [payingId, setPayingId] = useState<string | null>(null);
   const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
@@ -16,14 +17,28 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
   const [paymentResult, setPaymentResult] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const prjDefs = instDefs.filter((d: any) => d.projectId === client.projectId);
-  const shareCount = client.shareCount || 1;
-  const totalPaid = payments.filter((p: any) => p.clientId === client.id && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
-  const totalTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
+  const clientPlans = (client.planAssignments || []).map((pa: any) => plans.find((p: any) => p.id === pa.planId)).filter(Boolean);
+  
+  const activePlan = activePlanId === "all" ? null : plans.find((p: any) => p.id === activePlanId);
+  const prjDefs = activePlanId === "all" 
+    ? (client.planAssignments || []).flatMap((pa: any) => instDefs.filter((d: any) => d.planId === pa.planId).map(d => ({ ...d, _shareCount: pa.shareCount || 1 })))
+    : instDefs.filter((d: any) => d.planId === activePlanId).map(d => ({ ...d, _shareCount: client.planAssignments?.find((pa: any) => pa.planId === activePlanId)?.shareCount || client.shareCount || 1 }));
+
+  const totalPaid = payments.filter((p: any) => p.clientId === client.id && prjDefs.find((d: any) => d.id === p.instDefId) && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
+  const totalTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount * (d._shareCount || 1), 0);
+  const currentShareCount = activePlanId === "all"
+    ? Math.max(1, ...(client.planAssignments || []).map((pa: any) => pa.shareCount || 1))
+    : (prjDefs[0]?._shareCount || 1);
   const today = todayStr();
   const color = ac(client.id);
 
-  const isProcessingPayment = paymentResult && (!instDefs.find((d: any) => d.id === paymentResult.instDefId) || !projects.find((p: any) => p.id === client.projectId));
+  const isProcessingPayment = paymentResult && (!instDefs.find((d: any) => d.id === paymentResult.instDefId) || !projects.find((p: any) => p.id === activePlan?.projectId));
+
+  useEffect(() => {
+    if (!activePlanId && clientPlans.length > 0) {
+      setActivePlanId(clientPlans[0].id);
+    }
+  }, [clientPlans, activePlanId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -107,32 +122,92 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
+      {/* Client Info Card */}
       <div className="bg-white rounded-3xl border border-slate-200 p-5 flex items-center gap-4 mb-4 shadow-sm">
         <ClientAvatar client={client} size={56} />
         <div className="flex-1 min-w-0">
           <div className="text-lg font-black text-slate-900 truncate">{client.name}</div>
-          <div className="text-sm font-medium text-slate-500 mt-0.5">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span> {shareCount > 1 && <span className="text-blue-600 font-bold">({shareCount} {t('client_info.shares')})</span>}</div>
+          <div className="text-sm font-medium text-slate-500 mt-0.5">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span> {activePlanId !== "all" && (prjDefs[0]?._shareCount || 1) > 1 && <span className="text-blue-600 font-bold">({prjDefs[0]._shareCount} {t('client_info.shares')})</span>}</div>
         </div>
         <div className="text-right shrink-0">
           <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t('common.total_price_label')}</div>
-          <div className="text-base font-black text-slate-900">{BDT(client.totalAmount * shareCount)}</div>
+          <div className="text-base font-black text-slate-900">{BDT(totalTarget)}</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-4 flex flex-col justify-center">
-          <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mb-2"><CheckCircle2 size={16} /></div>
-          <div className="text-[10px] text-emerald-600/80 font-bold uppercase tracking-wider mb-0.5">{t('common.paid')}</div>
-          <div className="text-lg font-black text-emerald-700">{BDT(totalPaid)}</div>
-        </div>
-        <div className="bg-amber-50 rounded-2xl border border-amber-100 p-4 flex flex-col justify-center">
-          <div className="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mb-2"><Clock size={16} /></div>
-          <div className="text-[10px] text-amber-600/80 font-bold uppercase tracking-wider mb-0.5">{t('common.due')}</div>
-          <div className="text-lg font-black text-amber-700">{BDT(Math.max(0, totalTarget - totalPaid))}</div>
+      {/* Plan Selection Tabs */}
+      <div className="flex bg-slate-200/50 p-1 rounded-xl mb-6 overflow-x-auto scrollbar-hide">
+        <button 
+          className={cn(
+            "py-2.5 px-4 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1", 
+            activePlanId === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+          )} 
+          onClick={() => setActivePlanId("all")}
+        >
+          {t('common.all_plans') || "All Plans"}
+        </button>
+        {clientPlans.map((pl: any) => (
+          <button 
+            key={pl.id} 
+            className={cn(
+              "py-2.5 px-4 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1", 
+              activePlanId === pl.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )} 
+            onClick={() => setActivePlanId(pl.id)}
+          >
+            {pl.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Global Summary Card */}
+      <div className="bg-slate-900 rounded-3xl p-6 mb-6 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full -ml-12 -mb-12 blur-xl" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              {activePlanId === "all" ? (t('common.all_total_summary') || "All Plans Summary") : (activePlan?.name || "Plan Summary")}
+            </div>
+            <div className="bg-white/10 px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter">
+              {activePlanId === "all" ? `${clientPlans.length} ${t('common.plans') || "Plans"}` : `${currentShareCount} ${t('client_info.shares') || "Shares"}`}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">{t('common.total_target') || "Total Target"}</div>
+              <div className="text-xl font-black">{BDT(totalTarget)}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">{t('common.total_paid') || "Total Paid"}</div>
+              <div className="text-xl font-black text-emerald-400">{BDT(totalPaid)}</div>
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <div className="flex justify-between items-end mb-2">
+              <div className="text-[10px] text-slate-400 font-bold uppercase">{t('common.overall_progress') || "Overall Progress"}</div>
+              <div className="text-xs font-black text-emerald-400">{Math.round((totalPaid / totalTarget) * 100) || 0}%</div>
+            </div>
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${(totalPaid / totalTarget) * 100 || 0}%` }}
+                className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+              />
+            </div>
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+            <div className="text-[10px] text-slate-400 font-bold uppercase">{t('common.total_due') || "Total Due"}</div>
+            <div className="text-lg font-black text-rose-400">{BDT(Math.max(0, totalTarget - totalPaid))}</div>
+          </div>
         </div>
       </div>
 
-      {shareCount > 1 && (
+      {currentShareCount > 1 && (
         <div className="flex bg-slate-200/50 p-1 rounded-xl mb-6">
           <button 
             className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "combined" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}
@@ -161,13 +236,19 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
             {prjDefs.map((d: any) => {
               const paid = clientPaidForDef(client.id, d.id, payments);
               const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
-              const target = d.targetAmount * shareCount;
+              const target = d.targetAmount * (d._shareCount || 1);
               const st = cellStatus(paid, target);
               const isDue = d.dueDate && d.dueDate < today && paid < target;
               const m = STATUS[st];
 
               return (
-                <div key={d.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm relative overflow-hidden">
+                <div key={d.id}>
+                  {activePlanId === "all" && (
+                    <div className="mb-2 px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 inline-block uppercase tracking-wider">
+                      {plans.find((p: any) => p.id === d.planId)?.name}
+                    </div>
+                  )}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm relative overflow-hidden">
                   <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", m.dot)} />
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -255,20 +336,21 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
                       <Clock size={14} /> {t('common.pending_approval_amount', { amount: BDT(pendingAmt) })}
                     </div>
                   )}
+                  </div>
                 </div>
               );
             })}
           </div>
         ) : (
           <div className="space-y-8">
-            {Array.from({ length: shareCount }).map((_, j) => (
+            {Array.from({ length: currentShareCount }).map((_, j) => (
               <div key={j} className="space-y-3">
                 <div className="flex items-center gap-2 px-2">
                   <div className="w-6 h-6 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[10px] font-black">{j + 1}</div>
                   <div className="text-xs font-black text-slate-900 uppercase tracking-widest">{t('client_info.shares')} {j + 1}</div>
                 </div>
                 <div className="space-y-2">
-                  {prjDefs.map((d: any) => {
+                  {prjDefs.filter((d: any) => (d._shareCount || 1) >= j + 1).map((d: any) => {
                     const totalPaidForDef = clientPaidForDef(client.id, d.id, payments);
                     const sharePaid = Math.min(d.targetAmount, Math.max(0, totalPaidForDef - j * d.targetAmount));
                     const st = cellStatus(sharePaid, d.targetAmount);
@@ -277,6 +359,11 @@ export function ClientInstallments({ client, instDefs, payments, projects }: any
                     return (
                       <div key={`${d.id}-${j}`} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex items-center gap-4">
                         <div className="flex-1 min-w-0">
+                          {activePlanId === "all" && (
+                            <div className="mb-1 px-2 py-0.5 bg-slate-100 rounded text-[8px] font-black text-slate-500 inline-block uppercase tracking-wider">
+                              {plans.find((p: any) => p.id === d.planId)?.name}
+                            </div>
+                          )}
                           <div className="text-xs font-bold text-slate-900">{d.title}</div>
                           <div className="text-[10px] text-slate-400 font-medium mt-0.5">{BDT(d.targetAmount)}</div>
                         </div>

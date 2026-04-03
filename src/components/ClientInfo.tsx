@@ -7,9 +7,10 @@ import { Trash2, Eye, EyeOff, Edit2, Camera, Printer, FileUp } from "lucide-reac
 
 import { useLanguage } from "../lib/i18n";
 
-export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAddSingle, onDelete, projectId }: any) {
+export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAddSingle, onDelete, projectId, plans }: any) {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState("all");
   const [editClient, setEditClient] = useState<any>(null);
   const [viewClient, setViewClient] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -19,8 +20,15 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
 
   const filtered = clients.filter((c: any) => {
     const q = search.toLowerCase();
-    return !q || c.name?.toLowerCase().includes(q) || c.id?.toLowerCase().includes(q) || c.phone?.includes(q) || c.nid?.includes(q) || c.email?.toLowerCase().includes(q);
+    const matchesSearch = !q || c.name?.toLowerCase().includes(q) || c.id?.toLowerCase().includes(q) || c.phone?.includes(q) || c.nid?.includes(q) || c.email?.toLowerCase().includes(q);
+    const matchesPlan = planFilter === "all" || (c.planAssignments || []).some((pa: any) => pa.planId === planFilter);
+    return matchesSearch && matchesPlan;
   });
+
+  const getTotalShares = (c: any) => {
+    if (!c.planAssignments || c.planAssignments.length === 0) return c.shareCount || 1;
+    return c.planAssignments.reduce((sum: number, pa: any) => sum + (pa.shareCount || 0), 0);
+  };
 
   const parseFile = (file: File) => {
     const reader = new FileReader();
@@ -29,41 +37,51 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
       
-      // Group identical rows (ignoring common serial/index columns)
-      const grouped: { row: any; count: number; firstIndex: number }[] = [];
+      const clientMap = new Map<string, any>();
+      
       rows.forEach((r: any, i: number) => {
-        // Create a comparison object without common "index" keys
-        const compObj = { ...r };
-        const ignoreKeys = ["sl", "serial", "id", "no", "index", "row"];
-        Object.keys(compObj).forEach(k => {
-          if (ignoreKeys.includes(k.toLowerCase().replace(/[\s_]/g, ""))) {
-            delete compObj[k];
+        const get = (targetKeys: string[]) => {
+          for (const k of targetKeys) {
+            const foundKey = Object.keys(r).find(rk => {
+              const normalized = rk.toLowerCase().replace(/[\s_]/g, "");
+              return normalized === k || normalized.includes(k);
+            });
+            if (foundKey && r[foundKey]) return { key: foundKey, value: String(r[foundKey]) };
           }
-        });
+          return null;
+        };
 
-        const existing = grouped.find(g => {
-          const gComp = { ...g.row };
-          Object.keys(gComp).forEach(k => {
-            if (ignoreKeys.includes(k.toLowerCase().replace(/[\s_]/g, ""))) {
-              delete gComp[k];
-            }
-          });
-          return JSON.stringify(gComp) === JSON.stringify(compObj);
-        });
+        const name = get(["customername", "name", "fullname", "clientname"])?.value || "";
+        const phone = get(["phone", "mobile", "contact", "cell", "number"])?.value || "";
+        const nid = get(["nid", "nationalid", "national"])?.value || "";
+        
+        if (!name) return;
 
-        if (existing) {
-          existing.count++;
+        // Identity key: Name + Phone + NID
+        const identity = `${name}|${phone}|${nid}`.toLowerCase().replace(/[\s_]/g, "");
+        const planName = get(["plan", "plantype", "category", "type"])?.value || "Default";
+        const shareCount = parseInt(get(["sharecount", "shares", "count", "share"])?.value) || 1;
+
+        if (clientMap.has(identity)) {
+          const existing = clientMap.get(identity);
+          existing.totalShares += shareCount;
+          existing.plans[planName] = (existing.plans[planName] || 0) + shareCount;
         } else {
-          grouped.push({ row: r, count: 1, firstIndex: i });
+          clientMap.set(identity, {
+            row: r,
+            totalShares: shareCount,
+            plans: { [planName]: shareCount },
+            firstIndex: i
+          });
         }
       });
 
-      const importResults: any[] = [];
-      const mapped = grouped.map((g: any) => {
+      const mapped = Array.from(clientMap.values()).map((g: any) => {
         const r = g.row;
         const i = g.firstIndex;
         const usedKeys = new Set<string>();
-        const get = (targetKeys: string[]) => {
+        
+        const getVal = (targetKeys: string[]) => {
           for (const k of targetKeys) {
             const foundKey = Object.keys(r).find(rk => {
               const normalized = rk.toLowerCase().replace(/[\s_]/g, "");
@@ -77,21 +95,30 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
           return "";
         };
 
-        const phone = get(["phone", "mobile", "contact", "cell", "number"]);
-        const id = get(["customerid", "clientid", "id", "sl", "serial"]) || phone || genClientId([...allClients, ...importResults]);
-        const shareCountFromCol = parseInt(get(["sharecount", "shares", "count", "share"])) || 0;
+        const phone = getVal(["phone", "mobile", "contact", "cell", "number"]);
+        const id = getVal(["customerid", "clientid", "id", "sl", "serial"]) || phone || genClientId([...allClients]);
         
+        // Map plan names to actual plan IDs
+        const planAssignments = Object.entries(g.plans).map(([pName, count]) => {
+          const matchedPlan = plans.find((p: any) => p.name.toLowerCase().includes(pName.toLowerCase()) || pName.toLowerCase().includes(p.name.toLowerCase()));
+          return {
+            planId: matchedPlan ? matchedPlan.id : (plans[0]?.id || "default"),
+            shareCount: count
+          };
+        });
+
         const client: any = {
           id,
-          name: get(["customername", "name", "fullname", "clientname"]),
-          fatherHusband: get(["father", "husband", "parent", "guardian"]),
-          birthDate: get(["birth", "dob", "dateofbirth"]),
+          name: getVal(["customername", "name", "fullname", "clientname"]),
+          fatherHusband: getVal(["father", "husband", "parent", "guardian"]),
+          birthDate: getVal(["birth", "dob", "dateofbirth"]),
           phone,
-          email: get(["email", "mail", "gmail"]),
-          nid: get(["nid", "nationalid", "national"]),
-          plot: get(["plot", "flat", "unit", "apartment", "plotno", "flatno"]),
-          totalAmount: parseFloat(get(["totalamount", "amount", "price", "total", "value"])) || 0,
-          shareCount: shareCountFromCol || g.count,
+          email: getVal(["email", "mail", "gmail"]),
+          nid: getVal(["nid", "nationalid", "national"]),
+          plot: getVal(["plot", "flat", "unit", "apartment", "plotno", "flatno"]),
+          totalAmount: parseFloat(getVal(["totalamount", "amount", "price", "total", "value"])) || 0,
+          shareCount: g.totalShares,
+          planAssignments,
           password: "1234",
           photo: "",
           projectId,
@@ -99,20 +126,15 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
           _row: i + 2
         };
 
-        // Collect all other columns into remarks
         const otherInfo: string[] = [];
         Object.keys(r).forEach(key => {
-          if (!usedKeys.has(key) && r[key]) {
-            otherInfo.push(`${key}: ${r[key]}`);
-          }
+          if (!usedKeys.has(key) && r[key]) otherInfo.push(`${key}: ${r[key]}`);
         });
-        if (otherInfo.length > 0) {
-          client.remarks = otherInfo.join(" | ");
-        }
+        if (otherInfo.length > 0) client.remarks = otherInfo.join(" | ");
 
-        if (client.name) importResults.push(client);
         return client;
-      }).filter(r => r.name);
+      });
+
       setImportData(mapped);
       setImportSheet(true);
     };
@@ -158,11 +180,20 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
         onChange={e => { if (e.target.files?.[0]) parseFile(e.target.files[0]); e.target.value = ""; }} 
       />
       
-      <input 
-        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all mb-4 no-print" 
-        placeholder={t("client_info.search_ph")} 
-        value={search} onChange={e => setSearch(e.target.value)} 
-      />
+      <div className="flex gap-2 mb-4 no-print">
+        <input 
+          className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
+          placeholder={t("client_info.search_ph")} 
+          value={search} onChange={e => setSearch(e.target.value)} 
+        />
+        <select 
+          className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all"
+          value={planFilter} onChange={e => setPlanFilter(e.target.value)}
+        >
+          <option value="all">All Plans</option>
+          {plans.filter((p: any) => p.projectId === projectId).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      </div>
       
       <div className="overflow-x-auto overflow-y-auto max-h-[60vh] rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-xs border-collapse">
@@ -202,7 +233,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
                 </td>
                 <td className="p-3">
                   <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-bold text-[10px]">
-                    {c.shareCount || 1} {t("client_info.shares")}
+                    {getTotalShares(c)} {t("client_info.shares")}
                   </span>
                 </td>
                 <td className="p-3"><PassCell value={c.password || "1234"} /></td>
@@ -227,7 +258,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
 
       <AnimatePresence mode="wait">
         {viewClient && <ClientDetailSheet client={viewClient} onClose={() => setViewClient(null)} onEdit={(c: any) => { setViewClient(null); setEditClient({ ...c }); }} />}
-        {editClient && <ClientEditSheet client={editClient} allClients={allClients} onSave={(c: any, oldId: string) => { if (c.__new) { onAddSingle(c); } else { onUpdate(c, oldId); } setEditClient(null); }} onClose={() => setEditClient(null)} />}
+        {editClient && <ClientEditSheet client={editClient} allClients={allClients} plans={plans} onSave={(c: any, oldId: string) => { if (c.__new) { onAddSingle(c); } else { onUpdate(c, oldId); } setEditClient(null); }} onClose={() => setEditClient(null)} />}
         {importSheet && importData && <ImportPreviewSheet data={importData} onConfirm={() => { onAddBulk(importData); setImportSheet(false); setImportData(null); }} onClose={() => { setImportSheet(false); setImportData(null); }} />}
         {deleteTarget && <ConfirmDelete message={<><b>{deleteTarget.name}</b> ({deleteTarget.id}){t("client_info.will_be_deleted")}</>} onConfirm={() => { onDelete(deleteTarget.id); setDeleteTarget(null); }} onClose={() => setDeleteTarget(null)} />}
       </AnimatePresence>
@@ -238,6 +269,10 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
 function ClientDetailSheet({ client, onClose, onEdit }: any) {
   const { t } = useLanguage();
   const [showPass, setShowPass] = useState(false);
+
+  const totalShares = !client.planAssignments || client.planAssignments.length === 0 
+    ? (client.shareCount || 1) 
+    : client.planAssignments.reduce((sum: number, pa: any) => sum + (pa.shareCount || 0), 0);
   
   return (
     <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
@@ -262,7 +297,7 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
             [t("client_info.customer_id"), client.id], [t("client_info.name"), client.name], [t("client_info.father_husband"), client.fatherHusband], 
             [t("client_info.birth_date"), client.birthDate], [t("client_info.phone"), client.phone], [t("client_info.email"), client.email], 
             [t("client_info.nid"), client.nid], [t("client_info.plot"), client.plot], [t("client_info.total_amount"), BDT(client.totalAmount)],
-            [t("client_info.share_count"), client.shareCount || 1],
+            [t("client_info.share_count"), totalShares],
             [t("client_info.remarks"), client.remarks]
           ].map(([l, v]) => (
             <div key={l as string} className="flex items-center py-2 border-b border-slate-100 last:border-0">
@@ -291,17 +326,17 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
   );
 }
 
-function ClientEditSheet({ client, allClients, onSave, onClose }: any) {
+function ClientEditSheet({ client, allClients, plans, onSave, onClose }: any) {
   const { t } = useLanguage();
   const isNew = !!client.__new;
   const originalId = client.id;
-  const [f, setF] = useState({ ...client });
+  const [f, setF] = useState({ ...client, planAssignments: client.planAssignments || [] });
   const [idManuallyEdited, setIdManuallyEdited] = useState(false);
   const [preview, setPreview] = useState(client.photo || "");
   const [showPass, setShowPass] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
   
-  const s = (k: string, v: string) => {
+  const s = (k: string, v: any) => {
     setF((p: any) => {
       const next = { ...p, [k]: v };
       // If it's a new client, phone is being updated, and ID hasn't been manually edited
@@ -331,7 +366,21 @@ function ClientEditSheet({ client, allClients, onSave, onClose }: any) {
     if (!f.id) { alert(t("client_info.id_req")); return; }
     if (isNew && allClients.find((c: any) => c.id === f.id)) { alert(t("client_info.id_exists")); return; }
     if (!isNew && idChanged && allClients.find((c: any) => c.id === f.id && c.id !== originalId)) { alert(t("client_info.id_exists_other")); return; }
-    onSave({ ...f, totalAmount: parseFloat(f.totalAmount) || 0, shareCount: parseInt(f.shareCount) || 1, password: f.password || "1234" }, originalId);
+    onSave({ ...f, totalAmount: parseFloat(f.totalAmount) || 0, shareCount: parseInt(f.shareCount) || 1, password: f.password || "1234", planAssignments: f.planAssignments }, originalId);
+  };
+
+  const addAssignment = () => {
+    s("planAssignments", [...f.planAssignments, { planId: plans[0]?.id || "", shareCount: 1 }]);
+  };
+
+  const updateAssignment = (index: number, k: string, v: any) => {
+    const next = [...f.planAssignments];
+    next[index] = { ...next[index], [k]: v };
+    s("planAssignments", next);
+  };
+
+  const removeAssignment = (index: number) => {
+    s("planAssignments", f.planAssignments.filter((_: any, i: number) => i !== index));
   };
 
   return (
@@ -390,6 +439,18 @@ function ClientEditSheet({ client, allClients, onSave, onClose }: any) {
           <FG label="Email"><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="email" value={f.email || ""} onChange={e => s("email", e.target.value)} /></FG>
           <FG label="NID"><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={f.nid || ""} onChange={e => s("nid", e.target.value)} /></FG>
         </div>
+
+        <div className="mt-6 mb-2 text-sm font-bold text-slate-900">Plan Assignments</div>
+        {f.planAssignments.map((pa: any, i: number) => (
+          <div key={i} className="flex gap-2 mb-2">
+            <select className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={pa.planId} onChange={e => updateAssignment(i, "planId", e.target.value)}>
+              {plans.map((pl: any) => <option key={pl.id} value={pl.id}>{pl.name}</option>)}
+            </select>
+            <input className="w-20 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={pa.shareCount} onChange={e => updateAssignment(i, "shareCount", parseInt(e.target.value) || 0)} />
+            <button className="p-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100" onClick={() => removeAssignment(i)}><Trash2 size={16} /></button>
+          </div>
+        ))}
+        <button className="w-full py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-sm" onClick={addAssignment}>+ Add Plan</button>
 
         <FG label={t("client_info.remarks")}>
           <textarea 

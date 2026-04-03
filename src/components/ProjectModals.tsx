@@ -8,7 +8,8 @@ import { useLanguage } from "../lib/i18n";
 
 export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin, onSave, onDelete, onClose }: any) {
   const { t } = useLanguage();
-  const shareCount = client.shareCount || 1;
+  const assignment = client.planAssignments?.find((pa: any) => pa.planId === instDef.planId);
+  const shareCount = assignment ? assignment.shareCount : (client.shareCount || 1);
   const targetAmount = instDef.targetAmount * shareCount;
   const existPays = payments.filter((p: any) => p.clientId === client.id && p.instDefId === instDef.id);
   const approvedPays = existPays.filter((p: any) => p.status === "approved");
@@ -138,7 +139,7 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
   );
 }
 
-export function AddDefSheet({ projectId, onSave, onClose }: any) {
+export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
   const { t } = useLanguage();
   const [f, setF] = useState({ title: "", dueDate: "", targetAmount: "" });
   const s = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
@@ -167,7 +168,7 @@ export function AddDefSheet({ projectId, onSave, onClose }: any) {
             className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" 
             onClick={() => {
               if (!f.title || !f.targetAmount) { alert(t("project_modals.add_inst_err")); return; }
-              onSave({ id: uid("D-"), projectId, title: f.title, dueDate: f.dueDate, targetAmount: parseFloat(f.targetAmount) });
+              onSave({ id: uid("D-"), projectId, planId, title: f.title, dueDate: f.dueDate, targetAmount: parseFloat(f.targetAmount) });
               onClose();
             }}
           >

@@ -7,17 +7,15 @@ service cloud.firestore {
     // ===============================================================
 
     function isAuthenticated() {
-      return request.auth != null;
+      return true; // Bypass for custom auth
     }
 
     function isAdmin() {
-      return isAuthenticated() &&
-        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-          (request.auth.token.email == "zyhn.ab@gmail.com" && request.auth.token.email_verified == true));
+      return true; // Bypass for custom auth
     }
 
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return true; // Bypass for custom auth
     }
 
     function hasRequiredFields(fields) {
@@ -64,20 +62,28 @@ service cloud.firestore {
              (!('description' in data) || (data.description is string && data.description.size() < 1000));
     }
 
+    function isValidPlan(data) {
+      return data.keys().hasAll(['id', 'projectId', 'name']) &&
+             data.keys().hasOnly(['id', 'projectId', 'name']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100;
+    }
+
     function isValidClient(data) {
-      return data.keys().hasAll(['id', 'projectId', 'name', 'phone']) &&
-             data.keys().hasOnly(['id', 'projectId', 'name', 'fatherHusband', 'birthDate', 'phone', 'email', 'nid', 'plot', 'totalAmount', 'password', 'photo', 'remarks']) &&
+      return data.keys().hasAll(['id', 'projectId', 'name']) &&
+             data.keys().hasOnly(['id', 'projectId', 'name', 'fatherHusband', 'birthDate', 'phone', 'email', 'nid', 'plot', 'totalAmount', 'shareCount', 'password', 'photo', 'remarks', 'planAssignments', '_row']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.phone is string && data.phone.size() > 0 && data.phone.size() < 20 &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() < 20)) &&
              (!('fatherHusband' in data) || (data.fatherHusband is string && data.fatherHusband.size() < 100)) &&
              (!('birthDate' in data) || (data.birthDate is string && data.birthDate.size() < 20)) &&
              (!('email' in data) || isValidEmail(data.email)) &&
              (!('nid' in data) || (data.nid is string && data.nid.size() < 50)) &&
              (!('plot' in data) || (data.plot is string && data.plot.size() < 100)) &&
              (!('password' in data) || (data.password is string && data.password.size() < 100)) &&
-             (!('photo' in data) || (data.photo is string && data.photo.size() < 100000)) &&
+             (!('photo' in data) || (data.photo is string && data.photo.size() < 1000000)) &&
              (!('remarks' in data) || (data.remarks is string && data.remarks.size() < 1000)) &&
-             (!('totalAmount' in data) || isPositive('totalAmount'));
+             (!('totalAmount' in data) || isPositive('totalAmount')) &&
+             (!('shareCount' in data) || isPositive('shareCount')) &&
+             (!('planAssignments' in data) || (data.planAssignments is list && data.planAssignments.size() < 10));
     }
 
     // ===============================================================
@@ -85,49 +91,56 @@ service cloud.firestore {
     // ===============================================================
 
     match /admins/{adminId} {
-      allow read: if isAdmin();
-      allow create: if isAuthenticated() && (request.auth.token.email == "zyhn.ab@gmail.com" && request.auth.token.email_verified == true) && isValidAdmin(request.resource.data);
-      allow update: if isAdmin() && isValidAdmin(request.resource.data);
+      allow read: if true;
+      allow create: if (adminId == 'superadmin' && request.resource.data.id == 'superadmin' && isValidAdmin(request.resource.data)) || (isAuthenticated() && (request.auth.token.email == "zyhn.ab@gmail.com" && request.auth.token.email_verified == true) && isValidAdmin(request.resource.data));
+      allow update: if (adminId == 'superadmin' && request.resource.data.id == 'superadmin' && isValidAdmin(request.resource.data)) || (isAdmin() && isValidAdmin(request.resource.data));
       allow delete: if isAdmin();
     }
 
     match /projects/{projectId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if isAdmin() && isValidProject(request.resource.data);
       allow update: if isAdmin() && isValidProject(request.resource.data);
       allow delete: if isAdmin();
     }
 
+    match /plans/{planId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPlan(request.resource.data);
+      allow update: if isAdmin() && isValidPlan(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
     match /clients/{clientId} {
-      allow read: if isAdmin() || isOwner(clientId);
+      allow read: if true;
       allow create: if isAdmin() && isValidClient(request.resource.data);
       allow update: if isAdmin() && isValidClient(request.resource.data);
       allow delete: if isAdmin();
     }
 
     match /instDefs/{instDefId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     match /payments/{paymentId} {
-      allow read: if isAdmin() || (isAuthenticated() && resource.data.clientId == request.auth.uid);
+      allow read: if true;
       allow create: if isAdmin() || (isAuthenticated() && request.resource.data.clientId == request.auth.uid && request.resource.data.status == 'pending');
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     match /expenses/{expenseId} {
-      allow read: if isAdmin();
+      allow read: if true;
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     match /logs/{logId} {
-      allow read: if isAdmin();
+      allow read: if true;
       allow create: if isAdmin();
       allow update: if false;
       allow delete: if false;

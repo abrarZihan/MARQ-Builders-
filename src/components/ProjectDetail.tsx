@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BDT, BDTshort, dotJoin, ac, initials, uid, todayStr, cn, clientPaidForDef, cellStatus } from "../lib/utils";
 import { FG, ConfirmDelete, ClientAvatar, PassCell, PBar, CategoryIcon, CategoryColor } from "./Shared";
@@ -6,13 +6,20 @@ import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
 import { ClientInfoPage } from "./ClientInfo";
 import { CellPaySheet, AddDefSheet, AddExpSheet, ReceiptSheet } from "./ProjectModals";
-import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText, Edit2 } from "lucide-react";
+import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText, Edit2, Search, Filter } from "lucide-react";
 
 import { useLanguage } from "../lib/i18n";
 
-export function ProjectDetail({ project, clients, allClients, instDefs, payments, expenses, logs, isSuperAdmin, onBack, onAddDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
+export function ProjectDetail({ project, clients, allClients, instDefs, plans, payments, expenses, logs, isSuperAdmin, onBack, onAddPlan, onUpdatePlan, onDeletePlan, onAddDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
   const { t } = useLanguage();
   const [tab, setTab] = useState("sheet");
+  const [activePlanId, setActivePlanId] = useState<string | null>(null);
+  const [showAddPlan, setShowAddPlan] = useState(false);
+  const [newPlanName, setNewPlanName] = useState("");
+  const [search, setSearch] = useState("");
+  const [editPlanModal, setEditPlanModal] = useState<any>(null);
+  const [editPlanName, setEditPlanName] = useState("");
+  const [longPressTimer, setLongPressTimer] = useState<any>(null);
   const [cellModal, setCellModal] = useState<any>(null);
   const [viewR, setViewR] = useState<any>(null);
   const [addDefModal, setAddDefModal] = useState(false);
@@ -20,14 +27,38 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
   const [editExpModal, setEditExpModal] = useState<any>(null);
   const [delExp, setDelExp] = useState<any>(null);
   const [defTaps, setDefTaps] = useState<any>({});
+  
+  const prjPlans = plans.filter((pl: any) => pl.projectId === project.id);
+  useEffect(() => {
+    if (prjPlans.length > 0 && !activePlanId) setActivePlanId(prjPlans[0].id);
+  }, [prjPlans, activePlanId]);
 
-  const prjClients = clients.filter((c: any) => c.projectId === project.id);
-  const prjDefs = instDefs.filter((d: any) => d.projectId === project.id);
+  const prjClients = clients.filter((c: any) => {
+    if (c.projectId !== project.id) return false;
+    // If no plan assignments, they belong to the first/default plan
+    const assignments = c.planAssignments || [];
+    if (assignments.length === 0) {
+      return activePlanId === prjPlans[0]?.id;
+    }
+    // Otherwise, show only if assigned to the active plan
+    return assignments.some((pa: any) => pa.planId === activePlanId);
+  }).filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()));
+  
+  const allPrjClients = clients.filter((c: any) => c.projectId === project.id).filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()));
+  const prjDefs = instDefs.filter((d: any) => d.planId === activePlanId);
   const prjExpenses = expenses.filter((e: any) => e.projectId === project.id);
   const prjLogs = [...logs].filter(l => l.projectId === project.id).sort((a, b) => b.ts.localeCompare(a.ts));
   
-  const totalCollected = payments.filter((p: any) => p.status === "approved" && prjClients.find((c: any) => c.id === p.clientId)).reduce((s: number, p: any) => s + p.amount, 0);
-  const totalTarget = prjClients.reduce((s: number, c: any) => s + (c.shareCount || 1) * prjDefs.reduce((ss: number, d: any) => ss + d.targetAmount, 0), 0);
+  const totalCollected = payments.filter((p: any) => {
+    if (p.status !== "approved") return false;
+    const def = prjDefs.find(d => d.id === p.instDefId);
+    return !!def;
+  }).reduce((s: number, p: any) => s + p.amount, 0);
+  const totalTarget = prjClients.reduce((s: number, c: any) => {
+    const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
+    const sc = assignment ? assignment.shareCount : (c.shareCount || 1);
+    return s + sc * prjDefs.reduce((ss: number, d: any) => ss + d.targetAmount, 0);
+  }, 0);
   const totalDue = Math.max(0, totalTarget - totalCollected);
   
   const TABS = [
@@ -38,6 +69,31 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
     ["expenses", <span className="flex items-center gap-1.5"><Building2 size={14} /> {t("project_detail.tab_expense")}</span>], 
     ["log", <span className="flex items-center gap-1.5"><ClipboardList size={14} /> {t("project_detail.tab_log")}</span>]
   ];
+
+  const [isLongPress, setIsLongPress] = useState(false);
+
+  const handleLongPressStart = (pl: any) => {
+    setIsLongPress(false);
+    const timer = setTimeout(() => {
+      setIsLongPress(true);
+      setEditPlanModal(pl);
+      setEditPlanName(pl.name);
+    }, 600); // 600ms for long press
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handlePlanClick = (plId: string) => {
+    if (!isLongPress) {
+      setActivePlanId(plId);
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-24">
@@ -89,20 +145,115 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
 
       {tab === "sheet" && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="flex justify-end gap-3 mb-4 no-print">
-            <button 
-              className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2" 
-              onClick={() => window.print()}
-            >
-              <Printer size={14} /> {t("project_detail.print_sheet")}
-            </button>
-            <button 
-              className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm flex items-center gap-2" 
-              onClick={() => setAddDefModal(true)}
-            >
-              <Plus size={14} /> {t("project_detail.installment_col")}
-            </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 no-print">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 max-w-[calc(100vw-120px)] sm:max-w-[400px]">
+                {prjPlans.map((pl: any) => (
+                  <button
+                    key={pl.id}
+                    onClick={() => handlePlanClick(pl.id)}
+                    onMouseDown={() => handleLongPressStart(pl)}
+                    onMouseUp={handleLongPressEnd}
+                    onMouseLeave={handleLongPressEnd}
+                    onTouchStart={() => handleLongPressStart(pl)}
+                    onTouchEnd={handleLongPressEnd}
+                    className={cn(
+                      "px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border",
+                      activePlanId === pl.id 
+                        ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-200" 
+                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    )}
+                  >
+                    {pl.name}
+                  </button>
+                ))}
+              </div>
+              <div className="w-px h-6 bg-slate-200 shrink-0 hidden sm:block" />
+              <button 
+                className="w-9 h-9 bg-white text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-50 transition-colors shrink-0 border border-slate-200 shadow-sm"
+                onClick={() => setShowAddPlan(true)}
+                title="Add New Plan"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button 
+                className="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center gap-2" 
+                onClick={() => window.print()}
+              >
+                <Printer size={14} /> {t("project_detail.print_sheet")}
+              </button>
+              <button 
+                className="flex-1 sm:flex-none bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-2" 
+                onClick={() => setAddDefModal(true)}
+              >
+                <Plus size={14} /> {t("project_detail.installment_col")}
+              </button>
+            </div>
           </div>
+
+          <AnimatePresence>
+            {showAddPlan && (
+              <div className="fixed inset-0 bg-slate-900/60 z-[500] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowAddPlan(false)}>
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                  className="bg-white rounded-3xl w-full max-w-sm p-8 shadow-2xl border border-slate-200"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="w-16 h-16 bg-slate-100 text-slate-900 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                    <Table size={32} />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 mb-2 text-center">New Installment Plan</h3>
+                  <p className="text-sm text-slate-500 font-medium mb-6 text-center">Create a new structure for installments for this project.</p>
+                  
+                  <FG label="Plan Name">
+                    <input 
+                      autoFocus
+                      className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all font-bold"
+                      placeholder="e.g. Revised Plan 2024"
+                      value={newPlanName}
+                      onChange={e => setNewPlanName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && newPlanName.trim()) {
+                          const newId = uid("PLN-");
+                          setActivePlanId(newId);
+                          onAddPlan({ id: newId, projectId: project.id, name: newPlanName.trim() });
+                          setNewPlanName("");
+                          setShowAddPlan(false);
+                        }
+                      }}
+                    />
+                  </FG>
+                  
+                  <div className="flex gap-3 mt-8">
+                    <button 
+                      className="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-2xl hover:bg-slate-200 transition-colors"
+                      onClick={() => setShowAddPlan(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-2xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200 disabled:opacity-50"
+                      disabled={!newPlanName.trim()}
+                      onClick={() => {
+                        if (newPlanName.trim()) {
+                          const newId = uid("PLN-");
+                          setActivePlanId(newId);
+                          onAddPlan({ id: newId, projectId: project.id, name: newPlanName.trim() });
+                          setNewPlanName("");
+                          setShowAddPlan(false);
+                        }
+                      }}
+                    >
+                      Create Plan
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
           
           {prjClients.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 font-bold text-sm">
@@ -119,6 +270,17 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                   <tr>
                     <th className="sticky left-0 top-0 z-30 bg-slate-900 text-white text-left p-3 min-w-[140px] font-bold border-r border-b border-white/10 shadow-[4px_0_8px_rgba(0,0,0,0.15)]">
                       {t("project_detail.client_col")}
+                      <div className="relative mt-2 flex items-center">
+                        <Search size={12} className="absolute left-2 text-white/50" />
+                        <input 
+                          className="w-full pl-7 pr-7 py-1 bg-white/10 border border-white/20 rounded-lg text-[10px] focus:outline-none focus:border-white/40 placeholder:text-white/40"
+                          placeholder={t("client_info.search_ph")}
+                          value={search}
+                          onChange={e => setSearch(e.target.value)}
+                          onClick={e => e.stopPropagation()}
+                        />
+                        <Filter size={12} className="absolute right-2 text-white/50 cursor-pointer hover:text-white" />
+                      </div>
                     </th>
                     {prjDefs.map((d: any) => {
                       const taps = defTaps[d.id] || 0;
@@ -156,7 +318,8 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                 </thead>
                 <tbody>
                   {prjClients.map((client: any) => {
-                    const shareCount = client.shareCount || 1;
+                    const assignment = client.planAssignments?.find((pa: any) => pa.planId === activePlanId);
+                    const shareCount = assignment ? assignment.shareCount : (client.shareCount || 1);
                     const rowTotal = prjDefs.reduce((s: number, d: any) => s + clientPaidForDef(client.id, d.id, payments), 0);
                     const rowTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
                     
@@ -214,7 +377,11 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
                     <td className="sticky left-0 z-20 bg-slate-50 border-r border-slate-200 p-3 text-slate-900 text-xs shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t("project_detail.total_col")}</td>
                     {prjDefs.map((d: any) => {
                       const ct = prjClients.reduce((s: number, c: any) => s + clientPaidForDef(c.id, d.id, payments), 0);
-                      const cT = prjClients.reduce((s: number, c: any) => s + (c.shareCount || 1) * d.targetAmount, 0);
+                      const cT = prjClients.reduce((s: number, c: any) => {
+                        const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
+                        const sc = assignment ? assignment.shareCount : (c.shareCount || 1);
+                        return s + sc * d.targetAmount;
+                      }, 0);
                       return (
                         <td key={d.id} className="p-3 border-r border-slate-100 text-center align-middle">
                           <div className="text-xs font-black text-slate-900">{BDTshort(ct)}</div>
@@ -235,9 +402,9 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
 
       {tab === "clientinfo" && (
         <ClientInfoPage 
-          clients={prjClients} allClients={allClients} onUpdate={onUpdateClient} 
+          clients={allPrjClients} allClients={allClients} onUpdate={onUpdateClient} 
           onAddBulk={onAddBulkClients} onAddSingle={onAddClient} onDelete={onDeleteClient} 
-          projectId={project.id} 
+          projectId={project.id} plans={plans}
         />
       )}
 
@@ -249,8 +416,9 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
             </div>
           )}
           {prjClients.map((c: any) => {
-            const shareCount = c.shareCount || 1;
-            const cPaid = payments.filter((p: any) => p.clientId === c.id && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
+            const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
+            const shareCount = assignment ? assignment.shareCount : (c.shareCount || 1);
+            const cPaid = payments.filter((p: any) => p.clientId === c.id && p.status === "approved" && prjDefs.find(d => d.id === p.instDefId)).reduce((s: number, p: any) => s + p.amount, 0);
             const cTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
             return (
               <div key={c.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
@@ -299,7 +467,10 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
           </div>
 
           <div className="space-y-3">
-            {payments && payments.filter((p: any) => prjClients.find((c: any) => c.id === p.clientId)).sort((a: any, b: any) => b.date.localeCompare(a.date)).map((p: any, i: number) => {
+            {payments && payments.filter((p: any) => {
+              if (!prjClients.find((c: any) => c.id === p.clientId)) return false;
+              return !!prjDefs.find(d => d.id === p.instDefId);
+            }).sort((a: any, b: any) => b.date.localeCompare(a.date)).map((p: any, i: number) => {
               const client = prjClients.find((c: any) => c.id === p.clientId);
               const def = prjDefs.find((d: any) => d.id === p.instDefId);
               return (
@@ -408,10 +579,76 @@ export function ProjectDetail({ project, clients, allClients, instDefs, payments
       <AnimatePresence mode="wait">
         {viewR && <ReceiptSheet payment={viewR.payment} instDef={viewR.instDef} client={viewR.client} project={project} onClose={() => setViewR(null)} />}
         {cellModal && <CellPaySheet client={cellModal.client} instDef={cellModal.instDef} payments={payments} project={project} isSuperAdmin={isSuperAdmin} onSave={(p: any) => { onAddPayment(p); setCellModal(null); }} onDelete={(id: string) => onDeletePayment(id)} onClose={() => setCellModal(null)} />}
-        {addDefModal && <AddDefSheet projectId={project.id} onSave={(d: any) => { onAddDef(d); setAddDefModal(false); }} onClose={() => setAddDefModal(false)} />}
+        {addDefModal && <AddDefSheet projectId={project.id} planId={activePlanId} onSave={(d: any) => { onAddDef(d); setAddDefModal(false); }} onClose={() => setAddDefModal(false)} />}
         {addExpModal && <AddExpSheet projectId={project.id} onSave={(e: any) => { onAddExpense(e); setAddExpModal(false); }} onClose={() => setAddExpModal(false)} />}
         {editExpModal && <AddExpSheet projectId={project.id} expense={editExpModal} onSave={(e: any) => { onUpdateExpense(e); setEditExpModal(null); }} onClose={() => setEditExpModal(null)} />}
         {delExp && <ConfirmDelete message={<><b>{delExp.category}</b> — {BDT(delExp.amount)}{t("project_detail.will_be_deleted")}</>} onConfirm={() => { onDeleteExpense(delExp.id); setDelExp(null); }} onClose={() => setDelExp(null)} />}
+        
+        {editPlanModal && (
+          <div className="fixed inset-0 bg-slate-900/60 z-[500] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setEditPlanModal(null)}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-sm p-8 shadow-2xl border border-slate-200"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                <Edit2 size={32} />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 mb-2 text-center">Edit Plan Name</h3>
+              <p className="text-sm text-slate-500 font-medium mb-6 text-center">Change the name of this installment plan.</p>
+              
+              <FG label="Plan Name">
+                <input 
+                  autoFocus
+                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all font-bold"
+                  value={editPlanName}
+                  onChange={e => setEditPlanName(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && editPlanName.trim()) {
+                      onUpdatePlan({ ...editPlanModal, name: editPlanName.trim() });
+                      setEditPlanModal(null);
+                    }
+                  }}
+                />
+              </FG>
+              
+              <div className="flex gap-3 mt-8">
+                <button 
+                  className="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-2xl hover:bg-slate-200 transition-colors"
+                  onClick={() => setEditPlanModal(null)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-2xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200 disabled:opacity-50"
+                  disabled={!editPlanName.trim()}
+                  onClick={() => {
+                    if (editPlanName.trim()) {
+                      onUpdatePlan({ ...editPlanModal, name: editPlanName.trim() });
+                      setEditPlanModal(null);
+                    }
+                  }}
+                >
+                  Save Changes
+                </button>
+              </div>
+              
+              {isSuperAdmin && (
+                <button 
+                  className="w-full mt-6 text-rose-600 font-bold text-xs hover:underline flex items-center justify-center gap-1"
+                  onClick={() => {
+                    if (confirm(`Are you sure you want to delete "${editPlanModal.name}"? This will delete all installment definitions in this plan.`)) {
+                      onDeletePlan(editPlanModal.id);
+                      setEditPlanModal(null);
+                    }
+                  }}
+                >
+                  <Trash2 size={12} /> Delete Plan
+                </button>
+              )}
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </motion.div>
   );
