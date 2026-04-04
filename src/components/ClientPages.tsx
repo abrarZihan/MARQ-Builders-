@@ -70,8 +70,8 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   if (isProcessingPayment) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="w-10 h-10 text-slate-400 animate-spin" />
-        <div className="text-slate-500 font-bold">{t('common.loading_payment_data') || "Processing payment details..."}</div>
+        <Loader2 className="w-10 h-10 text-app-text-muted animate-spin" />
+        <div className="text-app-text-secondary font-bold">{t('common.loading_payment_data') || "Processing payment details..."}</div>
       </div>
     );
   }
@@ -123,24 +123,24 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
       {/* Client Info Card */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-5 flex items-center gap-4 mb-4 shadow-sm">
+      <div className="bg-app-surface rounded-3xl border border-app-border p-5 flex items-center gap-4 mb-4 shadow-sm transition-colors">
         <ClientAvatar client={client} size={56} />
         <div className="flex-1 min-w-0">
-          <div className="text-lg font-black text-slate-900 truncate">{client.name}</div>
-          <div className="text-sm font-medium text-slate-500 mt-0.5">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span> {activePlanId !== "all" && (prjDefs[0]?._shareCount || 1) > 1 && <span className="text-blue-600 font-bold">({prjDefs[0]._shareCount} {t('client_info.shares')})</span>}</div>
+          <div className="text-lg font-black text-app-text-primary truncate">{client.name}</div>
+          <div className="text-sm font-medium text-app-text-secondary mt-0.5">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span> {activePlanId !== "all" && (prjDefs[0]?._shareCount || 1) > 1 && <span className="text-blue-600 dark:text-blue-400 font-bold">({prjDefs[0]._shareCount} {t('client_info.shares')})</span>}</div>
         </div>
         <div className="text-right shrink-0">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t('common.total_price_label')}</div>
-          <div className="text-base font-black text-slate-900">{BDT(totalTarget)}</div>
+          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-0.5">{t('common.total_price_label')}</div>
+          <div className="text-base font-black text-app-text-primary">{BDT(totalTarget)}</div>
         </div>
       </div>
 
       {/* Plan Selection Tabs */}
-      <div className="flex bg-slate-200/50 p-1 rounded-xl mb-6 overflow-x-auto scrollbar-hide">
+      <div className="flex bg-app-bg p-1 rounded-xl mb-6 overflow-x-auto scrollbar-hide transition-colors border border-app-border">
         <button 
           className={cn(
             "py-2.5 px-4 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1", 
-            activePlanId === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            activePlanId === "all" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary"
           )} 
           onClick={() => setActivePlanId("all")}
         >
@@ -151,7 +151,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
             key={pl.id} 
             className={cn(
               "py-2.5 px-4 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1", 
-              activePlanId === pl.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              activePlanId === pl.id ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary"
             )} 
             onClick={() => setActivePlanId(pl.id)}
           >
@@ -161,62 +161,62 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
       </div>
 
       {/* Global Summary Card */}
-      <div className="bg-slate-900 rounded-3xl p-6 mb-6 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full -ml-12 -mb-12 blur-xl" />
+      <div className="bg-app-surface-elevated rounded-3xl p-6 mb-6 text-app-text-primary shadow-xl relative overflow-hidden border border-app-border">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-app-tab-active/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/5 rounded-full -ml-12 -mb-12 blur-xl" />
         
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-4">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            <div className="text-xs font-bold text-app-text-muted uppercase tracking-widest">
               {activePlanId === "all" ? (t('common.all_total_summary') || "All Plans Summary") : (activePlan?.name || "Plan Summary")}
             </div>
-            <div className="bg-white/10 px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter">
+            <div className="bg-app-bg px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter text-app-text-secondary border border-app-border">
               {activePlanId === "all" ? `${clientPlans.length} ${t('common.plans') || "Plans"}` : `${currentShareCount} ${t('client_info.shares') || "Shares"}`}
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">{t('common.total_target') || "Total Target"}</div>
+              <div className="text-[10px] text-app-text-muted font-bold uppercase mb-1">{t('common.total_target') || "Total Target"}</div>
               <div className="text-xl font-black">{BDT(totalTarget)}</div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">{t('common.total_paid') || "Total Paid"}</div>
-              <div className="text-xl font-black text-emerald-400">{BDT(totalPaid)}</div>
+              <div className="text-[10px] text-app-text-muted font-bold uppercase mb-1">{t('common.total_paid') || "Total Paid"}</div>
+              <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">{BDT(totalPaid)}</div>
             </div>
           </div>
           
           <div className="mt-6">
             <div className="flex justify-between items-end mb-2">
-              <div className="text-[10px] text-slate-400 font-bold uppercase">{t('common.overall_progress') || "Overall Progress"}</div>
-              <div className="text-xs font-black text-emerald-400">{Math.round((totalPaid / totalTarget) * 100) || 0}%</div>
+              <div className="text-[10px] text-app-text-muted font-bold uppercase">{t('common.overall_progress') || "Overall Progress"}</div>
+              <div className="text-xs font-black text-emerald-600 dark:text-emerald-400">{Math.round((totalPaid / totalTarget) * 100) || 0}%</div>
             </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-2 bg-app-bg rounded-full overflow-hidden border border-app-border">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${(totalPaid / totalTarget) * 100 || 0}%` }}
-                className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]"
               />
             </div>
           </div>
           
-          <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
-            <div className="text-[10px] text-slate-400 font-bold uppercase">{t('common.total_due') || "Total Due"}</div>
-            <div className="text-lg font-black text-rose-400">{BDT(Math.max(0, totalTarget - totalPaid))}</div>
+          <div className="mt-4 pt-4 border-t border-app-border flex justify-between items-center">
+            <div className="text-[10px] text-app-text-muted font-bold uppercase">{t('common.total_due') || "Total Due"}</div>
+            <div className="text-lg font-black text-rose-600 dark:text-rose-400">{BDT(Math.max(0, totalTarget - totalPaid))}</div>
           </div>
         </div>
       </div>
 
       {currentShareCount > 1 && (
-        <div className="flex bg-slate-200/50 p-1 rounded-xl mb-6">
+        <div className="flex bg-app-bg p-1 rounded-xl mb-6 border border-app-border">
           <button 
-            className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "combined" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}
+            className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "combined" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary")}
             onClick={() => setViewMode("combined")}
           >
             {t('client.view_combined')}
           </button>
           <button 
-            className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "shares" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}
+            className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "shares" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary")}
             onClick={() => setViewMode("shares")}
           >
             {t('client.view_per_share')}
@@ -225,7 +225,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
       )}
 
       {prjDefs.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 font-bold text-sm">
+        <div className="text-center py-12 bg-app-surface rounded-3xl border border-app-border text-app-text-muted font-bold text-sm">
           {t('common.no_installments')}
         </div>
       )}
@@ -244,18 +244,18 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
               return (
                 <div key={d.id}>
                   {activePlanId === "all" && (
-                    <div className="mb-2 px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 inline-block uppercase tracking-wider">
+                    <div className="mb-2 px-3 py-1 bg-app-bg rounded-lg text-[10px] font-black text-app-text-muted inline-block uppercase tracking-wider border border-app-border">
                       {plans.find((p: any) => p.id === d.planId)?.name}
                     </div>
                   )}
-                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm relative overflow-hidden">
+                  <div className="bg-app-surface rounded-2xl border border-app-border p-5 shadow-sm relative overflow-hidden transition-colors">
                   <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", m.dot)} />
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <div className="text-base font-black text-slate-900">{d.title}</div>
+                      <div className="text-base font-black text-app-text-primary">{d.title}</div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-slate-500 font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
-                        {isDue && <span className="bg-rose-100 text-rose-600 rounded-md px-2 py-0.5 text-[10px] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Due</span>}
+                        <span className="text-xs text-app-text-secondary font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
+                        {isDue && <span className="bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-md px-2 py-0.5 text-[10px] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Due</span>}
                       </div>
                     </div>
                     <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider", m.bg, m.text)}>
@@ -266,33 +266,33 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                   <PBar paid={paid} target={target} />
                   
                   {target - paid > 0 && (
-                    <div className="mt-3 pt-3 border-t border-slate-100">
+                    <div className="mt-3 pt-3 border-t border-app-border">
                       {activePaymentId === d.id ? (
                         <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('common.payment_amount')}</span>
+                            <span className="text-xs font-bold text-app-text-muted uppercase tracking-wider">{t('common.payment_amount')}</span>
                             <button 
                               onClick={() => setActivePaymentId(null)}
-                              className="text-xs text-slate-400 hover:text-slate-600 underline"
+                              className="text-xs text-app-text-muted hover:text-app-text-secondary underline"
                             >
                               {t('common.cancel')}
                             </button>
                           </div>
                           <div className="flex gap-2">
                             <div className="relative flex-1">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-app-text-muted font-bold">৳</span>
                               <input
                                 type="number"
                                 value={customAmount}
                                 onChange={(e) => setCustomAmount(e.target.value)}
-                                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all"
+                                className="w-full pl-8 pr-3 py-2 bg-app-bg border border-app-border rounded-lg text-sm font-bold focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary"
                                 placeholder="0.00"
                                 autoFocus
                               />
                             </div>
                             <button 
                               disabled={!!payingId || !customAmount || parseFloat(customAmount) <= 0}
-                              className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
+                              className="bg-app-tab-active text-app-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
                               onClick={() => handlePayment(d, parseFloat(customAmount))}
                             >
                               {payingId === d.id ? <Loader2 size={14} className="animate-spin" /> : t('common.confirm_pay')}
@@ -306,7 +306,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                                 <button
                                   key={ratio}
                                   onClick={() => setCustomAmount(amt.toString())}
-                                  className="text-[10px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors whitespace-nowrap"
+                                  className="text-[10px] font-bold px-2 py-1 bg-app-bg text-app-text-secondary rounded-md hover:bg-app-border transition-colors whitespace-nowrap border border-app-border"
                                 >
                                   {ratio === 1 ? t('common.full_pay') : `${ratio * 100}%`} ({BDT(amt)})
                                 </button>
@@ -316,10 +316,10 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                         </div>
                       ) : (
                         <div className="flex justify-between items-center">
-                          <div className="text-sm font-bold text-rose-600">{t('common.due')}: {BDT(target - paid)}</div>
+                          <div className="text-sm font-bold text-rose-600 dark:text-rose-400">{t('common.due')}: {BDT(target - paid)}</div>
                           <button 
                             disabled={!!payingId}
-                            className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-50"
+                            className="bg-app-tab-active text-app-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50"
                             onClick={() => {
                               setActivePaymentId(d.id);
                               setCustomAmount((target - paid).toString());
@@ -332,7 +332,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                     </div>
                   )}
                   {pendingAmt > 0 && (
-                    <div className="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-2.5 text-xs font-bold text-amber-700 flex items-center gap-1.5">
+                    <div className="mt-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                       <Clock size={14} /> {t('common.pending_approval_amount', { amount: BDT(pendingAmt) })}
                     </div>
                   )}
@@ -346,8 +346,8 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
             {Array.from({ length: currentShareCount }).map((_, j) => (
               <div key={j} className="space-y-3">
                 <div className="flex items-center gap-2 px-2">
-                  <div className="w-6 h-6 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[10px] font-black">{j + 1}</div>
-                  <div className="text-xs font-black text-slate-900 uppercase tracking-widest">{t('client_info.shares')} {j + 1}</div>
+                  <div className="w-6 h-6 bg-app-tab-active text-app-bg rounded-lg flex items-center justify-center text-[10px] font-black">{j + 1}</div>
+                  <div className="text-xs font-black text-app-text-primary uppercase tracking-widest">{t('client_info.shares')} {j + 1}</div>
                 </div>
                 <div className="space-y-2">
                   {prjDefs.filter((d: any) => (d._shareCount || 1) >= j + 1).map((d: any) => {
@@ -357,24 +357,24 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                     const m = STATUS[st];
                     
                     return (
-                      <div key={`${d.id}-${j}`} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex items-center gap-4">
+                      <div key={`${d.id}-${j}`} className="bg-app-surface rounded-xl border border-app-border p-4 shadow-sm flex items-center gap-4 transition-colors">
                         <div className="flex-1 min-w-0">
                           {activePlanId === "all" && (
-                            <div className="mb-1 px-2 py-0.5 bg-slate-100 rounded text-[8px] font-black text-slate-500 inline-block uppercase tracking-wider">
+                            <div className="mb-1 px-2 py-0.5 bg-app-bg rounded text-[8px] font-black text-app-text-muted inline-block uppercase tracking-wider border border-app-border">
                               {plans.find((p: any) => p.id === d.planId)?.name}
                             </div>
                           )}
-                          <div className="text-xs font-bold text-slate-900">{d.title}</div>
-                          <div className="text-[10px] text-slate-400 font-medium mt-0.5">{BDT(d.targetAmount)}</div>
+                          <div className="text-xs font-bold text-app-text-primary">{d.title}</div>
+                          <div className="text-[10px] text-app-text-muted font-medium mt-0.5">{BDT(d.targetAmount)}</div>
                         </div>
                         <div className="flex flex-col items-end gap-1.5">
                           <div className="flex items-center gap-2">
                             <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider", m.bg, m.text)}>
                               {st === "paid" ? t('common.status.paid') : st === "partial" ? t('common.status.partial') : t('common.status.unpaid')}
                             </span>
-                            <span className="text-xs font-black text-slate-900">{BDT(sharePaid)}</span>
+                            <span className="text-xs font-black text-app-text-primary">{BDT(sharePaid)}</span>
                           </div>
-                          <div className="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="w-24 h-1 bg-app-bg rounded-full overflow-hidden border border-app-border">
                             <div className={cn("h-full rounded-full", m.bar)} style={{ width: `${(sharePaid / d.targetAmount) * 100}%` }} />
                           </div>
                         </div>
@@ -427,19 +427,19 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-black text-slate-900">{t('common.receipts')}</h1>
-          <p className="text-xs font-medium text-slate-500">{t('common.approved_count', { count: myPays.length })}</p>
+          <h1 className="text-xl font-black text-app-text-primary">{t('common.receipts')}</h1>
+          <p className="text-xs font-medium text-app-text-secondary">{t('common.approved_count', { count: myPays.length })}</p>
         </div>
       </div>
 
       {pendingPays.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-sm font-bold text-amber-700 flex items-center gap-2">
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-6 text-sm font-bold text-amber-600 dark:text-amber-400 flex items-center gap-2">
           <Clock size={16} /> {t('common.pending_approval_count', { count: pendingPays.length })}
         </div>
       )}
 
       {myPays.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 text-slate-400 font-bold text-sm">
+        <div className="text-center py-16 bg-app-surface rounded-3xl border border-app-border text-app-text-muted font-bold text-sm">
           {t('common.no_approved_payments')}
         </div>
       ) : (
@@ -450,33 +450,33 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
               <motion.div 
                 whileHover={{ scale: 0.98, y: -2 }} whileTap={{ scale: 0.95 }}
                 key={`${p.id}-${i}`} 
-                className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden cursor-pointer group"
+                className="bg-app-surface rounded-3xl border border-app-border p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden cursor-pointer group"
                 onClick={() => setViewR(p)}
               >
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500 group-hover:w-2 transition-all" />
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
+                    <div className="w-10 h-10 bg-app-bg rounded-xl flex items-center justify-center text-app-text-muted group-hover:bg-emerald-500/10 group-hover:text-emerald-500 transition-colors border border-app-border">
                       <FileText size={20} />
                     </div>
                     <div>
-                      <div className="text-[10px] text-slate-400 font-mono font-bold tracking-widest uppercase mb-0.5">{p.id ? (p.id.split('-')[1] || p.id) : ""}</div>
-                      <div className="text-base font-black text-slate-900 leading-tight">{def?.title || t('common.installment')}</div>
+                      <div className="text-[10px] text-app-text-muted font-mono font-bold tracking-widest uppercase mb-0.5">{p.id ? (p.id.split('-')[1] || p.id) : ""}</div>
+                      <div className="text-base font-black text-app-text-primary leading-tight">{def?.title || t('common.installment')}</div>
                     </div>
                   </div>
-                  <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     {t('common.approved')}
                   </span>
                 </div>
                 <div className="flex justify-between items-end">
                   <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">{t('common.amount_paid')}</div>
-                    <div className="text-2xl font-black text-slate-900 tracking-tighter">{BDT(p.amount)}</div>
+                    <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-widest mb-1">{t('common.amount_paid')}</div>
+                    <div className="text-2xl font-black text-app-text-primary tracking-tighter">{BDT(p.amount)}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-slate-500 font-bold mb-2">{p.date}</div>
-                    <div className="inline-flex items-center gap-1.5 text-xs text-blue-600 font-black uppercase tracking-wider group-hover:gap-2 transition-all">
+                    <div className="text-xs text-app-text-secondary font-bold mb-2">{p.date}</div>
+                    <div className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 font-black uppercase tracking-wider group-hover:gap-2 transition-all">
                       {t('common.receipt_link')} <ChevronRight size={14} />
                     </div>
                   </div>
@@ -503,21 +503,21 @@ export function ClientExpenses({ client, expenses }: any) {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
       <div className="mb-6">
-        <h1 className="text-xl font-black text-slate-900">{t('common.project_expenses')}</h1>
+        <h1 className="text-xl font-black text-app-text-primary">{t('common.project_expenses')}</h1>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 mb-6 shadow-sm flex items-center gap-5">
-        <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center shrink-0">
+      <div className="bg-app-surface rounded-3xl border border-app-border p-6 mb-6 shadow-sm flex items-center gap-5 transition-colors">
+        <div className="w-16 h-16 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl flex items-center justify-center shrink-0">
           <CategoryIcon category="মোট ব্যয়" size={32} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t('common.total_expenses')}</div>
-          <div className="text-3xl font-black text-slate-900 tracking-tight">{BDT(total)}</div>
+          <div className="text-xs font-bold text-app-text-muted uppercase tracking-wider mb-1">{t('common.total_expenses')}</div>
+          <div className="text-3xl font-black text-app-text-primary tracking-tight">{BDT(total)}</div>
         </div>
       </div>
 
       {prjExpenses.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 text-slate-400 font-bold text-sm">
+        <div className="text-center py-16 bg-app-surface rounded-3xl border border-app-border text-app-text-muted font-bold text-sm">
           {t('common.no_expenses')}
         </div>
       ) : (
@@ -527,7 +527,7 @@ export function ClientExpenses({ client, expenses }: any) {
               <motion.div 
                 whileTap={{ scale: 0.98 }}
                 key={e.id} 
-                className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                className="bg-app-surface rounded-2xl border border-app-border p-4 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-app-bg transition-colors"
                 onClick={() => setSelExp(e)}
               >
                 <div 
@@ -536,11 +536,11 @@ export function ClientExpenses({ client, expenses }: any) {
                   <CategoryIcon category={e.category} size={24} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-slate-900">{e.category}</div>
-                  <div className="text-xs text-slate-500 font-medium mt-0.5 truncate">{e.description}</div>
-                  <div className="text-[10px] text-slate-400 mt-1">{e.date}</div>
+                  <div className="text-sm font-bold text-app-text-primary">{e.category}</div>
+                  <div className="text-xs text-app-text-secondary font-medium mt-0.5 truncate">{e.description}</div>
+                  <div className="text-[10px] text-app-text-muted mt-1">{e.date}</div>
                 </div>
-                <div className="text-base font-black shrink-0 text-slate-900">{BDT(e.amount)}</div>
+                <div className="text-base font-black shrink-0 text-app-text-primary">{BDT(e.amount)}</div>
               </motion.div>
             );
           })}
@@ -549,41 +549,41 @@ export function ClientExpenses({ client, expenses }: any) {
 
       <AnimatePresence>
         {selExp && (
-          <div className="fixed inset-0 bg-slate-900/60 z-[500] flex items-end sm:items-center justify-center backdrop-blur-sm p-4" onClick={() => setSelExp(null)}>
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[500] flex items-end sm:items-center justify-center backdrop-blur-sm p-4" onClick={() => setSelExp(null)}>
             <motion.div 
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md p-8 pb-safe" 
+              className="bg-app-surface-elevated rounded-t-3xl sm:rounded-3xl w-full max-w-md p-8 pb-safe border border-app-border" 
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8 sm:hidden" />
+              <div className="w-12 h-1.5 bg-app-border rounded-full mx-auto mb-8 sm:hidden" />
               
               <div className="flex items-center gap-5 mb-8">
                 <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-sm", CategoryColor(selExp.category))}>
                   <CategoryIcon category={selExp.category} size={32} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{selExp.category}</div>
-                  <div className="text-2xl font-black text-slate-900 leading-tight">{BDT(selExp.amount)}</div>
+                  <div className="text-xs font-bold text-app-text-muted uppercase tracking-widest mb-1">{selExp.category}</div>
+                  <div className="text-2xl font-black text-app-text-primary leading-tight">{BDT(selExp.amount)}</div>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">{t('common.details')}</div>
-                  <div className="text-sm font-bold text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-100 leading-relaxed">
+                  <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-widest mb-2">{t('common.details')}</div>
+                  <div className="text-sm font-bold text-app-text-secondary bg-app-bg p-4 rounded-2xl border border-app-border leading-relaxed">
                     {selExp.description || "—"}
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between py-4 border-t border-slate-100">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('modal.date')}</span>
-                  <span className="text-sm font-black text-slate-900">{selExp.date}</span>
+                <div className="flex items-center justify-between py-4 border-t border-app-border">
+                  <span className="text-xs font-bold text-app-text-muted uppercase tracking-widest">{t('modal.date')}</span>
+                  <span className="text-sm font-black text-app-text-primary">{selExp.date}</span>
                 </div>
               </div>
 
               <button 
-                className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-colors mt-8 shadow-lg shadow-slate-900/10" 
+                className="w-full bg-app-tab-active text-app-bg font-bold py-4 rounded-2xl hover:opacity-90 transition-colors mt-8 shadow-lg" 
                 onClick={() => setSelExp(null)}
               >
                 {t('project_modals.close')}
@@ -620,12 +620,12 @@ export function ClientProfile({ client, onUpdateClient }: any) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 mb-6 shadow-sm">
+      <div className="bg-app-surface rounded-3xl border border-app-border p-6 mb-6 shadow-sm transition-colors">
         <div className="flex items-center gap-5 mb-8">
           <ClientAvatar client={client} size={80} />
           <div>
-            <div className="text-2xl font-black text-slate-900">{client.name}</div>
-            <div className="text-sm font-medium text-slate-500 mt-1">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span></div>
+            <div className="text-2xl font-black text-app-text-primary">{client.name}</div>
+            <div className="text-sm font-medium text-app-text-secondary mt-1">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span></div>
           </div>
         </div>
         
@@ -636,30 +636,30 @@ export function ClientProfile({ client, onUpdateClient }: any) {
             [t('client.email'), client.email || "—"], [t('client.nid'), client.nid || "—"], 
             [t('common.total_price_label'), BDT(client.totalAmount * (client.shareCount || 1))]
           ].map(([l, v], i) => (
-            <div key={`${l}-${i}`} className="flex items-center py-2 border-b border-slate-100 last:border-0">
-              <span className="text-xs font-bold text-slate-400 w-32 shrink-0">{l}</span>
-              <span className="text-sm font-bold text-slate-900 flex-1">{v}</span>
+            <div key={`${l}-${i}`} className="flex items-center py-2 border-b border-app-border last:border-0">
+              <span className="text-xs font-bold text-app-text-muted w-32 shrink-0">{l}</span>
+              <span className="text-sm font-bold text-app-text-primary flex-1">{v}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+      <div className="bg-app-surface rounded-3xl border border-app-border p-6 shadow-sm transition-colors">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
+          <div className="w-10 h-10 bg-app-bg rounded-xl flex items-center justify-center text-app-text-secondary border border-app-border">
             <KeyRound size={20} />
           </div>
-          <h2 className="text-lg font-black text-slate-900">{t('common.change_password')}</h2>
+          <h2 className="text-lg font-black text-app-text-primary">{t('common.change_password')}</h2>
         </div>
         
         <FG label={t('common.current_password')}>
           <div className="relative">
             <input 
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all pr-12" 
+              className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all pr-12 text-app-text-primary" 
               type={showO ? "text" : "password"} 
               value={old} onChange={e => setOld(e.target.value)} 
             />
-            <button onClick={() => setShowO(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+            <button onClick={() => setShowO(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-app-text-muted hover:text-app-text-secondary p-1">
               {showO ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -668,11 +668,11 @@ export function ClientProfile({ client, onUpdateClient }: any) {
         <FG label={t('common.new_password')}>
           <div className="relative">
             <input 
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all pr-12" 
+              className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all pr-12 text-app-text-primary" 
               type={showN ? "text" : "password"} 
               value={nw} onChange={e => setNw(e.target.value)} 
             />
-            <button onClick={() => setShowN(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+            <button onClick={() => setShowN(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-app-text-muted hover:text-app-text-secondary p-1">
               {showN ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -680,7 +680,7 @@ export function ClientProfile({ client, onUpdateClient }: any) {
         
         <FG label={t('common.confirm_password')}>
           <input 
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
+            className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" 
             type="password" 
             value={conf} onChange={e => setConf(e.target.value)} 
           />
@@ -691,7 +691,7 @@ export function ClientProfile({ client, onUpdateClient }: any) {
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
               <div className={cn(
                 "p-4 rounded-xl mb-6 text-sm font-bold border",
-                msg.t === "s" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"
+                msg.t === "s" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
               )}>
                 {msg.v}
               </div>
@@ -699,7 +699,7 @@ export function ClientProfile({ client, onUpdateClient }: any) {
           )}
         </AnimatePresence>
         
-        <button className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors mt-2" onClick={save}>
+        <button className="w-full bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors mt-2" onClick={save}>
           {t('common.change_password')}
         </button>
       </div>

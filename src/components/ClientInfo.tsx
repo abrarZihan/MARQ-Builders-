@@ -151,24 +151,24 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-black text-slate-900">{t("client_info.title")}</h1>
-          <p className="text-xs font-medium text-slate-500">{t("client_info.stats", { count: clients.length })}</p>
+          <h1 className="text-xl font-black text-app-text-primary">{t("client_info.title")}</h1>
+          <p className="text-xs font-medium text-app-text-secondary">{t("client_info.stats", { count: clients.length })}</p>
         </div>
         <div className="flex gap-2 no-print">
           <button 
-            className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2" 
+            className="bg-app-surface border border-app-border text-app-text-secondary px-3 py-2 rounded-xl text-xs font-bold hover:bg-app-bg transition-colors shadow-sm flex items-center gap-2" 
             onClick={() => window.print()}
           >
             <Printer size={14} /> {t("client_info.print")}
           </button>
           <button 
-            className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2" 
+            className="bg-app-surface border border-app-border text-app-text-secondary px-3 py-2 rounded-xl text-xs font-bold hover:bg-app-bg transition-colors shadow-sm flex items-center gap-2" 
             onClick={() => fileRef.current?.click()}
           >
             <FileUp size={14} /> {t("client_info.import")}
           </button>
           <button 
-            className="bg-slate-900 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm" 
+            className="bg-app-tab-active text-app-bg px-3 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition-colors shadow-sm" 
             onClick={() => setEditClient(newTpl)}
           >
             {t("client_info.add_client")}
@@ -183,9 +183,9 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
       
       <div className="relative mb-4 no-print flex items-center gap-2">
         <div className="relative flex-1 group">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-600 transition-colors" />
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-app-text-muted group-focus-within:text-app-text-secondary transition-colors" />
           <input 
-            className="w-full pl-11 pr-11 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-50 transition-all shadow-sm" 
+            className="w-full pl-11 pr-11 py-3.5 bg-app-surface border border-app-border rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all shadow-sm text-app-text-primary" 
             placeholder={t("client_info.search_ph")} 
             value={search} 
             onChange={e => setSearch(e.target.value)} 
@@ -193,7 +193,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
           {search && (
             <button 
               onClick={() => setSearch("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-app-text-muted hover:text-app-text-secondary p-1"
             >
               <X size={16} />
             </button>
@@ -206,8 +206,8 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
             className={cn(
               "p-3.5 rounded-2xl border transition-all flex items-center justify-center gap-2 font-bold text-sm",
               planFilter !== "all" 
-                ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200" 
-                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
+                ? "bg-app-tab-active border-app-tab-active text-app-bg shadow-lg" 
+                : "bg-app-surface border-app-border text-app-text-secondary hover:bg-app-bg shadow-sm"
             )}
           >
             <Filter size={18} />
@@ -222,14 +222,14 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-[101] overflow-hidden p-2"
+                  className="absolute right-0 mt-2 w-56 bg-app-surface-elevated border border-app-border rounded-2xl shadow-xl z-[101] overflow-hidden p-2"
                 >
-                  <div className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">Filter by Plan</div>
+                  <div className="px-3 py-2 text-[10px] font-black text-app-text-muted uppercase tracking-wider">Filter by Plan</div>
                   <button 
                     onClick={() => { setPlanFilter("all"); setShowFilterMenu(false); }}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-colors mb-1",
-                      planFilter === "all" ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50"
+                      planFilter === "all" ? "bg-app-bg text-app-text-primary" : "text-app-text-secondary hover:bg-app-bg"
                     )}
                   >
                     All Plans
@@ -240,7 +240,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
                       onClick={() => { setPlanFilter(p.id); setShowFilterMenu(false); }}
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-colors mb-1",
-                        planFilter === p.id ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50"
+                        planFilter === p.id ? "bg-app-bg text-app-text-primary" : "text-app-text-secondary hover:bg-app-bg"
                       )}
                     >
                       {p.name}
@@ -253,55 +253,55 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
         </div>
       </div>
       
-      <div className="overflow-x-auto overflow-y-auto max-h-[60vh] rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto overflow-y-auto max-h-[60vh] rounded-2xl border border-app-border bg-app-surface shadow-sm">
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr>
-              <th className="bg-slate-900 text-white p-3 text-center w-10 font-bold border-r border-white/10">SL</th>
-              <th className="bg-slate-900 text-white p-3 w-12 font-bold border-r border-white/10">{t("client_info.photo")}</th>
-              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.customer_id")}</th>
-              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.name")}</th>
-              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.father_husband")}</th>
-              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.birth_date")}</th>
-              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.phone")}</th>
-              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.share_count")}</th>
-              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("common.password")}</th>
-              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.email")}</th>
-              <th className="bg-slate-900 text-white p-3 text-left font-bold border-r border-white/10">{t("client_info.nid")}</th>
-              <th className="bg-slate-900 text-white p-3 text-center font-bold no-print">{t("common.actions")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-center w-10 font-bold border-r border-b border-app-border">SL</th>
+              <th className="bg-app-bg text-app-text-primary p-3 w-12 font-bold border-r border-b border-app-border">{t("client_info.photo")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.customer_id")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.name")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.father_husband")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.birth_date")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.phone")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.share_count")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("common.password")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.email")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.nid")}</th>
+              <th className="bg-app-bg text-app-text-primary p-3 text-center font-bold border-b border-app-border no-print">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan={11} className="text-center py-12 text-slate-400 font-bold">{t("client_info.no_clients")}</td></tr>
+              <tr><td colSpan={11} className="text-center py-12 text-app-text-muted font-bold">{t("client_info.no_clients")}</td></tr>
             )}
             {filtered.map((c: any, i: number) => (
-              <tr key={c.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
-                <td className="p-3 text-center text-slate-400 font-medium">{i + 1}</td>
+              <tr key={c.id} className="hover:bg-app-bg transition-colors border-b border-app-border last:border-0">
+                <td className="p-3 text-center text-app-text-muted font-medium">{i + 1}</td>
                 <td className="p-3"><ClientAvatar client={c} size={34} /></td>
-                <td className="p-3"><span className="bg-slate-100 px-2 py-1 rounded-md font-mono text-[10px] font-bold text-slate-600">{c.id}</span></td>
-                <td className="p-3 font-bold text-slate-900">{c.name || "—"}</td>
-                <td className="p-3 text-slate-500 font-medium">{c.fatherHusband || "—"}</td>
-                <td className="p-3 text-slate-500 font-medium whitespace-nowrap">{c.birthDate || "—"}</td>
+                <td className="p-3"><span className="bg-app-bg px-2 py-1 rounded-md font-mono text-[10px] font-bold text-app-text-secondary border border-app-border">{c.id}</span></td>
+                <td className="p-3 font-bold text-app-text-primary">{c.name || "—"}</td>
+                <td className="p-3 text-app-text-secondary font-medium">{c.fatherHusband || "—"}</td>
+                <td className="p-3 text-app-text-secondary font-medium whitespace-nowrap">{c.birthDate || "—"}</td>
                 <td className="p-3">
                   <div className="flex flex-col gap-0.5">
-                    <span className="font-bold text-slate-900">{c.phone || "—"}</span>
-                    <span className="text-[9px] text-slate-400 font-bold tracking-wider">USERNAME</span>
+                    <span className="font-bold text-app-text-primary">{c.phone || "—"}</span>
+                    <span className="text-[9px] text-app-text-muted font-bold tracking-wider">USERNAME</span>
                   </div>
                 </td>
                 <td className="p-3">
-                  <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-bold text-[10px]">
+                  <span className="bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 px-2 py-1 rounded-md font-bold text-[10px] border border-blue-200 dark:border-blue-500/20">
                     {getTotalShares(c)} {t("client_info.shares")}
                   </span>
                 </td>
                 <td className="p-3"><PassCell value={c.password || "1234"} /></td>
-                <td className="p-3 text-blue-600 font-medium">{c.email || "—"}</td>
-                <td className="p-3"><span className="bg-amber-50 text-amber-700 px-2 py-1 rounded-md font-mono text-[10px] font-bold">{c.nid || "—"}</span></td>
+                <td className="p-3 text-blue-600 dark:text-blue-400 font-medium">{c.email || "—"}</td>
+                <td className="p-3"><span className="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 px-2 py-1 rounded-md font-mono text-[10px] font-bold border border-amber-200 dark:border-amber-500/20">{c.nid || "—"}</span></td>
                 <td className="p-3 no-print">
                   <div className="flex gap-1.5 justify-center">
-                    <button className="w-7 h-7 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center hover:bg-slate-200 transition-colors" onClick={() => setViewClient(c)}><Eye size={14} /></button>
-                    <button className="w-7 h-7 bg-slate-900 text-white rounded-lg flex items-center justify-center hover:bg-slate-800 transition-colors" onClick={() => { const { __new, ...clean } = c; setEditClient(clean); }}><Edit2 size={14} /></button>
-                    <button className="w-7 h-7 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-200 transition-colors" onClick={() => setDeleteTarget(c)}><Trash2 size={14} /></button>
+                    <button className="w-7 h-7 bg-app-bg text-app-text-secondary rounded-lg flex items-center justify-center hover:bg-app-border transition-colors border border-app-border" onClick={() => setViewClient(c)}><Eye size={14} /></button>
+                    <button className="w-7 h-7 bg-app-tab-active text-app-bg rounded-lg flex items-center justify-center hover:opacity-90 transition-colors" onClick={() => { const { __new, ...clean } = c; setEditClient(clean); }}><Edit2 size={14} /></button>
+                    <button className="w-7 h-7 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg flex items-center justify-center hover:bg-rose-500/20 transition-colors border border-rose-500/20" onClick={() => setDeleteTarget(c)}><Trash2 size={14} /></button>
                   </div>
                 </td>
               </tr>
@@ -310,7 +310,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
         </table>
       </div>
       
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 font-medium">
+      <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-600 dark:text-blue-400 font-medium">
         {t("client_info.help_text")}
       </div>
 
@@ -333,20 +333,20 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
     : client.planAssignments.reduce((sum: number, pa: any) => sum + (pa.shareCount || 0), 0);
   
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <motion.div 
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe max-h-[90vh] overflow-y-auto" 
+        className="bg-app-surface-elevated rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe max-h-[90vh] overflow-y-auto border border-app-border" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
+        <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
         
         <div className="flex items-center gap-4 mb-6">
           <ClientAvatar client={client} size={64} />
           <div>
-            <div className="text-xl font-black text-slate-900">{client.name}</div>
-            <div className="text-sm font-medium text-slate-500 mt-1">{dotJoin(client.phone, client.plot)}</div>
+            <div className="text-xl font-black text-app-text-primary">{client.name}</div>
+            <div className="text-sm font-medium text-app-text-secondary mt-1">{dotJoin(client.phone, client.plot)}</div>
           </div>
         </div>
         
@@ -358,16 +358,16 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
             [t("client_info.share_count"), totalShares],
             [t("client_info.remarks"), client.remarks]
           ].map(([l, v], i) => (
-            <div key={`${l}-${i}`} className="flex items-center py-2 border-b border-slate-100 last:border-0">
-              <span className="text-xs font-bold text-slate-400 w-32 shrink-0">{l}</span>
-              <span className="text-sm font-bold text-slate-900 flex-1">{v || "—"}</span>
+            <div key={`${l}-${i}`} className="flex items-center py-2 border-b border-app-border last:border-0">
+              <span className="text-xs font-bold text-app-text-muted w-32 shrink-0">{l}</span>
+              <span className="text-sm font-bold text-app-text-primary flex-1">{v || "—"}</span>
             </div>
           ))}
-          <div className="flex items-center py-2 border-b border-slate-100 last:border-0">
-            <span className="text-xs font-bold text-slate-400 w-32 shrink-0">Password</span>
+          <div className="flex items-center py-2 border-b border-app-border last:border-0">
+            <span className="text-xs font-bold text-app-text-muted w-32 shrink-0">Password</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-mono font-bold tracking-widest text-slate-900">{showPass ? client.password : "••••••"}</span>
-              <button className="text-slate-400 hover:text-slate-600 transition-colors" onClick={() => setShowPass(s => !s)}>
+              <span className="text-sm font-mono font-bold tracking-widest text-app-text-primary">{showPass ? client.password : "••••••"}</span>
+              <button className="text-app-text-muted hover:text-app-text-secondary transition-colors" onClick={() => setShowPass(s => !s)}>
                 {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
             </div>
@@ -375,9 +375,9 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
         </div>
         
         <div className="flex gap-3 no-print">
-          <button className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2" onClick={() => onEdit(client)}><Edit2 size={16} /> Edit</button>
-          <button className="flex-1 bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2" onClick={() => window.print()}><Printer size={16} /> {t("client_info.print")}</button>
-          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>{t("client_info.close")}</button>
+          <button className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" onClick={() => onEdit(client)}><Edit2 size={16} /> Edit</button>
+          <button className="flex-1 bg-app-bg border border-app-border text-app-text-primary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors flex items-center justify-center gap-2" onClick={() => window.print()}><Printer size={16} /> {t("client_info.print")}</button>
+          <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>{t("client_info.close")}</button>
         </div>
       </motion.div>
     </div>
@@ -442,77 +442,77 @@ function ClientEditSheet({ client, allClients, plans, onSave, onClose }: any) {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <motion.div 
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe max-h-[90vh] overflow-y-auto" 
+        className="bg-app-surface-elevated rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe max-h-[90vh] overflow-y-auto border border-app-border" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-        <div className="text-xl font-black text-slate-900 mb-6">{isNew ? t("client_info.new_client") : t("client_info.update_client")}</div>
+        <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
+        <div className="text-xl font-black text-app-text-primary mb-6">{isNew ? t("client_info.new_client") : t("client_info.update_client")}</div>
         
         <div className="flex items-center gap-4 mb-6">
           <div 
-            className="w-16 h-16 rounded-full border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer overflow-hidden bg-slate-50 shrink-0 hover:bg-slate-100 transition-colors" 
+            className="w-16 h-16 rounded-full border-2 border-dashed border-app-border flex flex-col items-center justify-center cursor-pointer overflow-hidden bg-app-bg shrink-0 hover:bg-app-border transition-colors" 
             onClick={() => photoRef.current?.click()}
           >
             {preview ? (
               <img src={preview} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
               <>
-                <Camera size={20} className="text-slate-400 mb-1" />
-                <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{t("client_info.photo")}</div>
+                <Camera size={20} className="text-app-text-muted mb-1" />
+                <div className="text-[9px] text-app-text-muted font-bold uppercase tracking-wider">{t("client_info.photo")}</div>
               </>
             )}
           </div>
           <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold text-slate-900 truncate">{f.name || t("client_info.no_name")}</div>
-            <div className="text-xs text-slate-500 font-medium">{f.id}</div>
+            <div className="text-sm font-bold text-app-text-primary truncate">{f.name || t("client_info.no_name")}</div>
+            <div className="text-xs text-app-text-secondary font-medium">{f.id}</div>
           </div>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div>
             <FG label="Customer ID">
-              <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={f.id} onChange={e => handleIdChange(e.target.value)} />
+              <input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" value={f.id} onChange={e => handleIdChange(e.target.value)} />
             </FG>
-            {idChanged && <div className="text-[10px] bg-indigo-50 text-indigo-700 rounded-lg p-2 -mt-2 mb-4 font-bold border border-indigo-100">🔄 <b>{originalId}</b> → <b>{f.id}</b><br/>{t("client_info.id_change_warn")}</div>}
+            {idChanged && <div className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg p-2 -mt-2 mb-4 font-bold border border-blue-500/20">🔄 <b>{originalId}</b> → <b>{f.id}</b><br/>{t("client_info.id_change_warn")}</div>}
           </div>
           <FG label={t("client_info.plot")}>
-            <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={f.plot || ""} onChange={e => s("plot", e.target.value)} />
+            <input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" value={f.plot || ""} onChange={e => s("plot", e.target.value)} />
           </FG>
         </div>
         
-        <FG label={t("client_info.name")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={f.name || ""} onChange={e => s("name", e.target.value)} /></FG>
-        <FG label={t("client_info.father_husband_name")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={f.fatherHusband || ""} onChange={e => s("fatherHusband", e.target.value)} /></FG>
+        <FG label={t("client_info.name")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" value={f.name || ""} onChange={e => s("name", e.target.value)} /></FG>
+        <FG label={t("client_info.father_husband_name")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" value={f.fatherHusband || ""} onChange={e => s("fatherHusband", e.target.value)} /></FG>
         
         <div className="grid grid-cols-2 gap-4">
-          <FG label={t("client_info.birth_date_full")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="date" value={f.birthDate || ""} onChange={e => s("birthDate", e.target.value)} /></FG>
-          <FG label="Phone"><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={f.phone || ""} onChange={e => s("phone", e.target.value)} /></FG>
+          <FG label={t("client_info.birth_date_full")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" type="date" value={f.birthDate || ""} onChange={e => s("birthDate", e.target.value)} /></FG>
+          <FG label="Phone"><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" value={f.phone || ""} onChange={e => s("phone", e.target.value)} /></FG>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <FG label="Email"><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="email" value={f.email || ""} onChange={e => s("email", e.target.value)} /></FG>
-          <FG label="NID"><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={f.nid || ""} onChange={e => s("nid", e.target.value)} /></FG>
+          <FG label="Email"><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" type="email" value={f.email || ""} onChange={e => s("email", e.target.value)} /></FG>
+          <FG label="NID"><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" value={f.nid || ""} onChange={e => s("nid", e.target.value)} /></FG>
         </div>
 
-        <div className="mt-6 mb-2 text-sm font-bold text-slate-900">Plan Assignments</div>
+        <div className="mt-6 mb-2 text-sm font-bold text-app-text-primary">Plan Assignments</div>
         {f.planAssignments.map((pa: any, i: number) => (
           <div key={`${pa.planId}-${i}`} className="flex gap-2 mb-2">
-            <select className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={pa.planId} onChange={e => updateAssignment(i, "planId", e.target.value)}>
+            <select className="flex-1 px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" value={pa.planId} onChange={e => updateAssignment(i, "planId", e.target.value)}>
               {plans.map((pl: any, i: number) => <option key={`${pl.id}-${i}`} value={pl.id}>{pl.name}</option>)}
             </select>
-            <input className="w-20 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={pa.shareCount} onChange={e => updateAssignment(i, "shareCount", parseInt(e.target.value) || 0)} />
-            <button className="p-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100" onClick={() => removeAssignment(i)}><Trash2 size={16} /></button>
+            <input className="w-20 px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" type="number" value={pa.shareCount} onChange={e => updateAssignment(i, "shareCount", parseInt(e.target.value) || 0)} />
+            <button className="p-3 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-500/20" onClick={() => removeAssignment(i)}><Trash2 size={16} /></button>
           </div>
         ))}
-        <button className="w-full py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-sm" onClick={addAssignment}>+ Add Plan</button>
+        <button className="w-full py-3 bg-app-bg text-app-text-secondary font-bold rounded-xl hover:bg-app-border transition-colors text-sm border border-app-border" onClick={addAssignment}>+ Add Plan</button>
 
         <FG label={t("client_info.remarks")}>
           <textarea 
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all min-h-[80px]" 
+            className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all min-h-[80px] text-app-text-primary" 
             value={f.remarks || ""} 
             onChange={e => s("remarks", e.target.value)} 
             placeholder={t("client_info.remarks_ph")}
@@ -520,20 +520,20 @@ function ClientEditSheet({ client, allClients, plans, onSave, onClose }: any) {
         </FG>
         
         <div className="grid grid-cols-2 gap-4">
-          <FG label={t("client_info.total_amount_bdt")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={f.totalAmount} onChange={e => s("totalAmount", e.target.value)} /></FG>
-          <FG label={t("client_info.share_count")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={f.shareCount} onChange={e => s("shareCount", e.target.value)} /></FG>
+          <FG label={t("client_info.total_amount_bdt")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" type="number" value={f.totalAmount} onChange={e => s("totalAmount", e.target.value)} /></FG>
+          <FG label={t("client_info.share_count")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" type="number" value={f.shareCount} onChange={e => s("shareCount", e.target.value)} /></FG>
         </div>
         
         <FG label="Password">
           <div className="relative">
-            <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all pr-10" type={showPass ? "text" : "password"} value={f.password || ""} onChange={e => s("password", e.target.value)} />
-            <button onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">{showPass ? "🙈" : "👁️"}</button>
+            <input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all pr-10 text-app-text-primary" type={showPass ? "text" : "password"} value={f.password || ""} onChange={e => s("password", e.target.value)} />
+            <button onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-app-text-muted hover:text-app-text-secondary p-1">{showPass ? "🙈" : "👁️"}</button>
           </div>
         </FG>
         
         <div className="flex gap-3 mt-4">
-          <button className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" onClick={submit}>{isNew ? t("client_info.add") : t("client_info.update")}</button>
-          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>{t("client_info.cancel")}</button>
+          <button className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors" onClick={submit}>{isNew ? t("client_info.add") : t("client_info.update")}</button>
+          <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>{t("client_info.cancel")}</button>
         </div>
       </motion.div>
     </div>
@@ -543,48 +543,48 @@ function ClientEditSheet({ client, allClients, plans, onSave, onClose }: any) {
 function ImportPreviewSheet({ data, onConfirm, onClose }: any) {
   const { t } = useLanguage();
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <motion.div 
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe max-h-[90vh] overflow-y-auto" 
+        className="bg-app-surface-elevated rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe max-h-[90vh] overflow-y-auto border border-app-border" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-        <div className="text-xl font-black text-slate-900 mb-6">📥 {t("client_info.import_preview")} — {data.length} {t("client_info.clients_count")}</div>
+        <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
+        <div className="text-xl font-black text-app-text-primary mb-6">📥 {t("client_info.import_preview")} — {data.length} {t("client_info.clients_count")}</div>
         
-        <div className="overflow-x-auto mb-4 border border-slate-200 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto mb-4 border border-app-border rounded-xl overflow-hidden">
           <table className="w-full text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-50 text-slate-500 font-bold text-left">
-                <th className="p-2 border-b border-slate-200">{t("client_info.row")}</th>
-                <th className="p-2 border-b border-slate-200">ID</th>
-                <th className="p-2 border-b border-slate-200">{t("client_info.name")}</th>
-                <th className="p-2 border-b border-slate-200">{t("client_info.share_count")}</th>
-                <th className="p-2 border-b border-slate-200">Phone</th>
-                <th className="p-2 border-b border-slate-200">{t("client_info.remarks_col")}</th>
+              <tr className="bg-app-bg text-app-text-muted font-bold text-left">
+                <th className="p-2 border-b border-app-border">{t("client_info.row")}</th>
+                <th className="p-2 border-b border-app-border">ID</th>
+                <th className="p-2 border-b border-app-border">{t("client_info.name")}</th>
+                <th className="p-2 border-b border-app-border">{t("client_info.share_count")}</th>
+                <th className="p-2 border-b border-app-border">Phone</th>
+                <th className="p-2 border-b border-app-border">{t("client_info.remarks_col")}</th>
               </tr>
             </thead>
             <tbody>
               {data.slice(0, 15).map((r: any, i: number) => (
-                <tr key={r.id || i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                  <td className="p-2 text-slate-400 font-medium">{r._row}</td>
-                  <td className="p-2"><span className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-[10px] font-bold text-slate-600">{r.id}</span></td>
-                  <td className="p-2 font-bold text-slate-900">{r.name || <span className="text-rose-500">{t("client_info.empty")}</span>}</td>
-                  <td className="p-2 text-slate-500 font-bold">{r.shareCount || 1}</td>
-                  <td className="p-2 text-slate-500 font-medium">{r.phone || "—"}</td>
-                  <td className="p-2 text-[10px] text-slate-400 italic truncate max-w-[100px]">{r.remarks || "—"}</td>
+                <tr key={r.id || i} className="border-b border-app-border last:border-0 hover:bg-app-bg">
+                  <td className="p-2 text-app-text-muted font-medium">{r._row}</td>
+                  <td className="p-2"><span className="bg-app-bg px-1.5 py-0.5 rounded font-mono text-[10px] font-bold text-app-text-secondary border border-app-border">{r.id}</span></td>
+                  <td className="p-2 font-bold text-app-text-primary">{r.name || <span className="text-app-error-text">{t("client_info.empty")}</span>}</td>
+                  <td className="p-2 text-app-text-secondary font-bold">{r.shareCount || 1}</td>
+                  <td className="p-2 text-app-text-secondary font-medium">{r.phone || "—"}</td>
+                  <td className="p-2 text-[10px] text-app-text-muted italic truncate max-w-[100px]">{r.remarks || "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         
-        {data.length > 15 && <div className="text-xs text-slate-400 font-bold text-center mb-4">{t("client_info.more_count", { count: data.length - 15 })}</div>}
+        {data.length > 15 && <div className="text-xs text-app-text-muted font-bold text-center mb-4">{t("client_info.more_count", { count: data.length - 15 })}</div>}
         
         <div className="flex gap-3">
-          <button className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" onClick={onConfirm}>{t("client_info.import_btn", { count: data.length })}</button>
-          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>{t("client_info.cancel")}</button>
+          <button className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors" onClick={onConfirm}>{t("client_info.import_btn", { count: data.length })}</button>
+          <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>{t("client_info.cancel")}</button>
         </div>
       </motion.div>
     </div>

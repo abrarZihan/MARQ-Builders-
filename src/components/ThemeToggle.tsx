@@ -7,10 +7,14 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-colors"
+      className="p-2 rounded-lg bg-app-nav-text/10 text-app-nav-text border border-app-nav-text/20 hover:bg-app-nav-text/20 transition-colors"
       aria-label="Toggle theme"
     >
-      {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+      {theme === "light" ? (
+        <Moon size={20} className="text-blue-200 fill-blue-200/20" />
+      ) : (
+        <Sun size={20} className="text-amber-400 fill-amber-400/20" />
+      )}
     </button>
   );
 }

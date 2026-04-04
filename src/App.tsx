@@ -38,15 +38,15 @@ function PendingApprovals({ payments, clients, instDefs, projects, onApprove, on
   const { t } = useLanguage();
   const pending = payments.filter((p: any) => p.status === "pending");
   if (pending.length === 0) return (
-    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4 flex items-center gap-3">
-      <CheckCircle2 size={24} className="text-emerald-600" />
-      <span className="text-sm font-bold text-emerald-700">{t("dashboard.no_pending")}</span>
+    <div className="bg-app-banner-success-bg border border-app-border rounded-2xl p-4 mb-4 flex items-center gap-3 transition-colors">
+      <CheckCircle2 size={24} className="text-app-banner-success-text" />
+      <span className="text-sm font-bold text-app-banner-success-text">{t("dashboard.no_pending")}</span>
     </div>
   );
   return (
     <div className="mb-6">
-      <div className="text-sm font-extrabold text-rose-600 mb-3 flex items-center gap-2">
-        <span className="bg-rose-100 text-rose-600 rounded-full px-2.5 py-0.5 text-xs">{pending.length}</span>
+      <div className="text-sm font-extrabold text-app-banner-error-text mb-3 flex items-center gap-2">
+        <span className="bg-app-banner-error-bg text-app-banner-error-text rounded-full px-2.5 py-0.5 text-xs">{pending.length}</span>
         {t("dashboard.pending_approval")}
       </div>
       {pending.map((p: any) => {
@@ -57,19 +57,19 @@ function PendingApprovals({ payments, clients, instDefs, projects, onApprove, on
           <motion.div 
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             key={p.id} 
-            className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-3"
+            className="bg-app-banner-warning-bg border-2 border-app-border rounded-2xl p-4 mb-3 transition-colors"
           >
             <div className="flex justify-between items-start mb-3">
               <div>
-                <div className="text-sm font-extrabold text-slate-900">{client?.name || p.clientId}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{dotJoin(prj?.name, def?.title)}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{dotJoin(p.date, p.note)}</div>
+                <div className="text-sm font-extrabold text-app-text-primary">{client?.name || p.clientId}</div>
+                <div className="text-xs text-app-text-muted mt-0.5">{dotJoin(prj?.name, def?.title)}</div>
+                <div className="text-xs text-app-text-muted mt-0.5">{dotJoin(p.date, p.note)}</div>
               </div>
-              <div className="text-xl font-black text-amber-700">{BDT(p.amount)}</div>
+              <div className="text-xl font-black text-app-banner-warning-text">{BDT(p.amount)}</div>
             </div>
             <div className="flex gap-2">
-              <button className="flex-1 bg-emerald-100 text-emerald-700 font-bold py-2.5 rounded-xl hover:bg-emerald-200 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onApprove(p.id)}><CheckCircle2 size={16} /> {t("dashboard.approve")}</button>
-              <button className="flex-1 bg-rose-100 text-rose-700 font-bold py-2.5 rounded-xl hover:bg-rose-200 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onReject(p.id)}><XCircle size={16} /> {t("dashboard.reject")}</button>
+              <button className="flex-1 bg-app-banner-success-bg text-app-banner-success-text font-bold py-2.5 rounded-xl hover:opacity-80 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onApprove(p.id)}><CheckCircle2 size={16} /> {t("dashboard.approve")}</button>
+              <button className="flex-1 bg-app-banner-error-bg text-app-banner-error-text font-bold py-2.5 rounded-xl hover:opacity-80 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onReject(p.id)}><XCircle size={16} /> {t("dashboard.reject")}</button>
             </div>
           </motion.div>
         );
@@ -110,65 +110,68 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 rounded-lg flex items-center justify-center border border-blue-200 dark:border-blue-500/20">
             <Wallet size={18} />
           </div>
-          <h1 className="text-xl font-black text-slate-900">{t("dashboard.financial_summary")}</h1>
+          <h1 className="text-xl font-black text-app-text-primary">{t("dashboard.financial_summary")}</h1>
         </div>
-        <p className="text-xs font-medium text-slate-500">{t("dashboard.overall_analysis")}</p>
+        <p className="text-xs font-medium text-app-text-muted">{t("dashboard.overall_analysis")}</p>
       </div>
       
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 mb-4 text-white shadow-xl">
-        <div className="text-xs text-slate-400 font-bold mb-1 tracking-wider">{t("dashboard.net_profit_loss")}</div>
-        <div className={cn("text-4xl font-black tracking-tighter", netProfit >= 0 ? "text-emerald-400" : "text-rose-400")}>
-          {netProfit >= 0 ? "+" : ""}{BDT(netProfit)}
+      <div className="bg-app-surface-elevated rounded-3xl p-6 mb-4 text-app-text-primary shadow-xl border border-app-border relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-app-tab-active/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+        <div className="relative z-10">
+          <div className="text-xs text-app-text-muted font-bold mb-1 tracking-wider">{t("dashboard.net_profit_loss")}</div>
+          <div className={cn("text-4xl font-black tracking-tighter", netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+            {netProfit >= 0 ? "+" : ""}{BDT(netProfit)}
+          </div>
+          <div className="text-xs text-app-text-muted mt-2 font-medium">{t("dashboard.collection_minus_expense")}</div>
         </div>
-        <div className="text-xs text-slate-400 mt-2 font-medium">{t("dashboard.collection_minus_expense")}</div>
       </div>
       
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t("dashboard.total_expected")}</div>
-          <div className="text-lg font-black text-slate-900 mt-1">{BDTshort(totalExpected)}</div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-4">
+          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_expected")}</div>
+          <div className="text-lg font-black text-app-text-primary mt-1">{BDTshort(totalExpected)}</div>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t("dashboard.total_collected")}</div>
-          <div className="text-lg font-black text-emerald-600 mt-1">{BDTshort(totalCollected)}</div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-4">
+          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_collected")}</div>
+          <div className="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-1">{BDTshort(totalCollected)}</div>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t("dashboard.total_due")}</div>
-          <div className="text-lg font-black text-rose-600 mt-1">{BDTshort(totalDue)}</div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-4">
+          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_due")}</div>
+          <div className="text-lg font-black text-rose-600 dark:text-rose-400 mt-1">{BDTshort(totalDue)}</div>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t("dashboard.total_expenses")}</div>
-          <div className="text-lg font-black text-violet-600 mt-1">{BDTshort(totalExpenses)}</div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-4">
+          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_expenses")}</div>
+          <div className="text-lg font-black text-violet-600 dark:text-violet-400 mt-1">{BDTshort(totalExpenses)}</div>
         </div>
       </div>
       
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-6">
+      <div className="bg-app-surface rounded-2xl border border-app-border p-5 mb-6">
         <div className="flex justify-between items-end mb-2">
-          <span className="text-sm font-bold text-slate-900">{t("dashboard.collection_progress")}</span>
-          <span className="text-lg font-black text-blue-600">{collectPct}%</span>
+          <span className="text-sm font-bold text-app-text-primary">{t("dashboard.collection_progress")}</span>
+          <span className="text-lg font-black text-app-tab-active">{collectPct}%</span>
         </div>
-        <div className="h-3 bg-slate-100 rounded-full overflow-hidden mb-3">
+        <div className="h-3 bg-app-bg rounded-full overflow-hidden mb-3 border border-app-border">
           <motion.div 
             initial={{ width: 0 }} animate={{ width: `${collectPct}%` }} 
             transition={{ duration: 1, ease: "easeOut" }}
             className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full" 
           />
         </div>
-        <div className="flex justify-between text-xs text-slate-500 font-medium">
+        <div className="flex justify-between text-xs text-app-text-muted font-medium">
           <span>{t("dashboard.collected_label")} {BDT(totalCollected)}</span>
           <span>{t("dashboard.due_label")} {BDT(totalDue)}</span>
         </div>
         {totalPending > 0 && (
-          <div className="mt-4 text-xs text-amber-700 font-bold bg-amber-50 rounded-xl p-3 border border-amber-100 flex items-center gap-2">
+          <div className="mt-4 text-xs text-app-banner-warning-text font-bold bg-app-banner-warning-bg rounded-xl p-3 border border-app-border flex items-center gap-2">
             <Clock size={14} /> {t("dashboard.pending_approval_label")} {BDT(totalPending)}
           </div>
         )}
       </div>
       
-      <div className="text-lg font-black text-slate-900 mb-4">{t("dashboard.project_analysis")}</div>
+      <div className="text-lg font-black text-app-text-primary mb-4">{t("dashboard.project_analysis")}</div>
       
       {projects.map((prj: any, idx: number) => {
         const prjClients = clients.filter((c: any) => c.projectId === prj.id);
@@ -203,53 +206,53 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
         const topCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 3);
         
         return (
-          <div key={prj.id} className="bg-white rounded-2xl border border-slate-200 p-5 mb-4 relative overflow-hidden">
+          <div key={prj.id} className="bg-app-surface rounded-2xl border border-app-border p-5 mb-4 relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: color }} />
             <div className="flex justify-between items-start mb-4">
               <div>
-                <div className="text-base font-black text-slate-900">{prj.name}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{t("dashboard.stats", { clients: prjClients.length, insts: prjDefs.length })}</div>
+                <div className="text-base font-black text-app-text-primary">{prj.name}</div>
+                <div className="text-xs text-app-text-muted mt-0.5">{t("dashboard.stats", { clients: prjClients.length, insts: prjDefs.length })}</div>
               </div>
-              <span className={cn("text-sm font-black", net >= 0 ? "text-emerald-600" : "text-rose-600")}>
+              <span className={cn("text-sm font-black", net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
                 {net >= 0 ? "+" : ""}{BDTshort(net)}
               </span>
             </div>
             
             <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="bg-emerald-50 rounded-xl p-2.5">
-                <div className="text-[9px] text-slate-500 font-bold uppercase">{t("dashboard.collected_short")}</div>
-                <div className="text-sm font-black text-emerald-700 mt-0.5">{BDTshort(collected)}</div>
+              <div className="bg-app-banner-success-bg rounded-xl p-2.5">
+                <div className="text-[9px] text-app-text-muted font-bold uppercase">{t("dashboard.collected_short")}</div>
+                <div className="text-sm font-black text-app-banner-success-text mt-0.5">{BDTshort(collected)}</div>
               </div>
-              <div className="bg-rose-50 rounded-xl p-2.5">
-                <div className="text-[9px] text-slate-500 font-bold uppercase">{t("dashboard.due_short")}</div>
-                <div className="text-sm font-black text-rose-700 mt-0.5">{BDTshort(due)}</div>
+              <div className="bg-app-banner-error-bg rounded-xl p-2.5">
+                <div className="text-[9px] text-app-text-muted font-bold uppercase">{t("dashboard.due_short")}</div>
+                <div className="text-sm font-black text-app-banner-error-text mt-0.5">{BDTshort(due)}</div>
               </div>
-              <div className="bg-violet-50 rounded-xl p-2.5">
-                <div className="text-[9px] text-slate-500 font-bold uppercase">{t("dashboard.expense_short")}</div>
-                <div className="text-sm font-black text-violet-700 mt-0.5">{BDTshort(spent)}</div>
+              <div className="bg-app-bg rounded-xl p-2.5 border border-app-border">
+                <div className="text-[9px] text-app-text-muted font-bold uppercase">{t("dashboard.expense_short")}</div>
+                <div className="text-sm font-black text-violet-600 dark:text-violet-400 mt-0.5">{BDTshort(spent)}</div>
               </div>
             </div>
             
             <div className="flex justify-between items-end mb-1.5">
-              <span className="text-xs text-slate-500 font-medium">{t("dashboard.collection_progress")}</span>
+              <span className="text-xs text-app-text-muted font-medium">{t("dashboard.collection_progress")}</span>
               <span className="text-xs font-black" style={{ color }}>{pct}%</span>
             </div>
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
+            <div className="h-2 bg-app-bg rounded-full overflow-hidden mb-4 border border-app-border">
               <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} className="h-full rounded-full" style={{ backgroundColor: color }} />
             </div>
             
             {topCats.length > 0 && (
               <div>
-                <div className="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-wider">{t("dashboard.top_expenses")}</div>
+                <div className="text-[10px] text-app-text-muted font-bold mb-2 uppercase tracking-wider">{t("dashboard.top_expenses")}</div>
                 {topCats.map(([cat, amt], i) => (
-                  <div key={`${cat}-${i}`} className="flex justify-between items-center text-xs mb-1.5 text-slate-600">
+                  <div key={`${cat}-${i}`} className="flex justify-between items-center text-xs mb-1.5 text-app-text-secondary">
                     <span className="font-medium flex items-center gap-1.5">
                       <div className={cn("w-5 h-5 rounded-md flex items-center justify-center", CategoryColor(cat))}>
                         <CategoryIcon category={cat} size={12} />
                       </div>
                       {cat}
                     </span>
-                    <span className="font-bold text-slate-900">{BDT(amt)}</span>
+                    <span className="font-bold text-app-text-primary">{BDT(amt)}</span>
                   </div>
                 ))}
               </div>
@@ -281,26 +284,26 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-24">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">MARQ Builders</h1>
-          <p className="text-sm font-medium text-slate-500">{t("admin_home.projects_count", { count: projects.length })}</p>
+          <h1 className="text-2xl font-black text-app-text-primary tracking-tight">MARQ Builders</h1>
+          <p className="text-sm font-medium text-app-text-muted">{t("admin_home.projects_count", { count: projects.length })}</p>
         </div>
         <button 
-          className="bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow-sm" 
+          className="bg-app-tab-active text-app-surface px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-colors shadow-sm" 
           onClick={() => setAddModal(true)}
         >
           {t("admin_home.add_project")}
         </button>
       </div>
       
-      <div className="flex bg-slate-200/50 p-1 rounded-xl mb-6">
+      <div className="flex bg-app-bg p-1 rounded-xl mb-6 border border-app-border">
         <button 
-          className={cn("flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2", view === "projects" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")} 
+          className={cn("flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2", view === "projects" ? "bg-app-surface text-app-text-primary shadow-sm" : "text-app-text-muted hover:text-app-text-secondary")} 
           onClick={() => setView("projects")}
         >
           <Building2 size={16} /> {t("admin_home.projects_tab")}
         </button>
         <button 
-          className={cn("flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2", view === "financial" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")} 
+          className={cn("flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2", view === "financial" ? "bg-app-surface text-app-text-primary shadow-sm" : "text-app-text-muted hover:text-app-text-secondary")} 
           onClick={() => setView("financial")}
         >
           <Wallet size={16} /> {t("admin_home.financial_tab")}
@@ -314,26 +317,26 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
           {isSuperAdmin && <PendingApprovals payments={payments} clients={clients} instDefs={instDefs} projects={projects} onApprove={onApprovePayment} onReject={onRejectPayment} />}
           
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-center">
-              <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-3">
+            <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-center">
+              <div className="w-10 h-10 bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 rounded-xl flex items-center justify-center mb-3 border border-blue-200 dark:border-blue-500/20">
                 <Building2 size={20} />
               </div>
-              <div className="text-xs text-slate-500 font-bold mb-1">{t("admin_home.total_projects")}</div>
-              <div className="text-xl font-black text-slate-900">{projects.length}</div>
+              <div className="text-xs text-app-text-muted font-bold mb-1">{t("admin_home.total_projects")}</div>
+              <div className="text-xl font-black text-app-text-primary">{projects.length}</div>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-center">
-              <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-3">
+            <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-center">
+              <div className="w-10 h-10 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-xl flex items-center justify-center mb-3 border border-emerald-200 dark:border-emerald-500/20">
                 <Wallet size={20} />
               </div>
-              <div className="text-xs text-slate-500 font-bold mb-1">{t("admin_home.total_collected")}</div>
-              <div className="text-xl font-black text-slate-900">{BDTshort(allCollected)}</div>
+              <div className="text-xs text-app-text-muted font-bold mb-1">{t("admin_home.total_collected")}</div>
+              <div className="text-xl font-black text-app-text-primary">{BDTshort(allCollected)}</div>
             </div>
           </div>
           
           {pendingCount > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex justify-between items-center">
-              <span className="text-sm font-bold text-amber-700 flex items-center gap-2"><Clock size={16} /> {pendingCount}{t("admin_home.pending_payments")}</span>
-              {!isSuperAdmin && <span className="text-xs font-medium text-amber-600">{t("admin_home.super_admin_approve")}</span>}
+            <div className="bg-app-banner-warning-bg border border-app-border rounded-2xl p-4 mb-6 flex justify-between items-center">
+              <span className="text-sm font-bold text-app-banner-warning-text flex items-center gap-2"><Clock size={16} /> {pendingCount}{t("admin_home.pending_payments")}</span>
+              {!isSuperAdmin && <span className="text-xs font-medium text-app-banner-warning-text opacity-80">{t("admin_home.super_admin_approve")}</span>}
             </div>
           )}
           
@@ -347,30 +350,30 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
                 <motion.div 
                   whileHover={{ scale: 0.98 }} whileTap={{ scale: 0.95 }}
                   key={prj.id} 
-                  className="bg-white rounded-2xl border border-slate-200 p-5 cursor-pointer shadow-sm hover:shadow-md transition-all" 
+                  className="bg-app-surface rounded-2xl border border-app-border p-5 cursor-pointer shadow-sm hover:shadow-md transition-all" 
                   onClick={() => onSelect(prj.id)}
                 >
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: color + "20", color }}>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border" style={{ backgroundColor: color + "15", color, borderColor: color + "30" }}>
                       <Building2 size={24} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-lg font-black text-slate-900 truncate">{prj.name}</div>
-                      <div className="text-xs text-slate-500 font-medium mt-1 line-clamp-2">{prj.description}</div>
+                      <div className="text-lg font-black text-app-text-primary truncate">{prj.name}</div>
+                      <div className="text-xs text-app-text-muted font-medium mt-1 line-clamp-2">{prj.description}</div>
                     </div>
-                    <div className="text-slate-300 flex items-center justify-center w-6 h-6">
+                    <div className="text-app-text-muted flex items-center justify-center w-6 h-6">
                       <ChevronRight size={20} />
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex gap-2">
                       <span className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ backgroundColor: color + "15", color }}>{prjClients.length} জন</span>
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700">{BDTshort(prjPaid)}</span>
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-app-banner-success-bg text-app-banner-success-text">{BDTshort(prjPaid)}</span>
                     </div>
                     
                     <div className="relative">
                       <button 
-                        className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"
+                        className="p-2 hover:bg-app-bg rounded-full transition-colors text-app-text-muted"
                         onClick={e => { e.stopPropagation(); setMenuOpen(menuOpen === prj.id ? null : prj.id); }}
                       >
                         <MoreVertical size={20} />
@@ -384,11 +387,11 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
                               initial={{ opacity: 0, scale: 0.95, y: -10 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                              className="absolute right-0 bottom-full mb-2 w-36 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-[110] overflow-hidden"
+                              className="absolute right-0 bottom-full mb-2 w-36 bg-app-surface rounded-xl shadow-xl border border-app-border py-1.5 z-[110] overflow-hidden"
                               onClick={e => e.stopPropagation()}
                             >
                               <button 
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-bold text-app-text-primary hover:bg-app-bg transition-colors"
                                 onClick={() => {
                                   setEditModal(prj);
                                   setEditName(prj.name);
@@ -399,7 +402,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
                                 <Edit2 size={16} className="text-blue-500" /> {t("common.edit")}
                               </button>
                               <button 
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-bold text-rose-600 hover:bg-app-banner-error-bg transition-colors"
                                 onClick={() => {
                                   setDelProject(prj);
                                   setMenuOpen(null);
@@ -422,30 +425,30 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
       
       <AnimatePresence>
         {addModal && (
-          <div className="fixed inset-0 bg-slate-900/60 z-[300] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={() => setAddModal(false)}>
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[300] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={() => setAddModal(false)}>
             <motion.div 
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe" 
+              className="bg-app-surface rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe border-t sm:border border-app-border" 
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-              <div className="text-xl font-black text-slate-900 mb-6">{t("admin_home.new_project")}</div>
+              <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
+              <div className="text-xl font-black text-app-text-primary mb-6">{t("admin_home.new_project")}</div>
               <FG label={t("admin_home.project_name")}>
                 <input 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
+                  className="w-full px-4 py-3 bg-app-input-bg border border-app-input-border rounded-xl text-sm focus:outline-none focus:border-app-tab-active focus:ring-1 focus:ring-app-tab-active transition-all text-app-text-primary" 
                   placeholder={t("admin_home.project_name_ph")} 
                   value={newName} onChange={e => setNewName(e.target.value)} 
                 />
               </FG>
               <FG label={t("admin_home.project_desc")}>
                 <input 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
+                  className="w-full px-4 py-3 bg-app-input-bg border border-app-input-border rounded-xl text-sm focus:outline-none focus:border-app-tab-active focus:ring-1 focus:ring-app-tab-active transition-all text-app-text-primary" 
                   value={newDesc} onChange={e => setNewDesc(e.target.value)} 
                 />
               </FG>
               <button 
-                className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors mt-2" 
+                className="w-full bg-app-tab-active text-app-surface font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors mt-2" 
                 onClick={() => {
                   if (newName.trim()) {
                     onAddProject({ id: uid("PRJ-"), name: newName.trim(), description: newDesc.trim() });
@@ -462,29 +465,29 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
 
       <AnimatePresence>
         {editModal && (
-          <div className="fixed inset-0 bg-slate-900/60 z-[300] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={() => setEditModal(null)}>
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[300] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={() => setEditModal(null)}>
             <motion.div 
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe" 
+              className="bg-app-surface rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe border-t sm:border border-app-border" 
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-              <div className="text-xl font-black text-slate-900 mb-6">{t("common.edit")} {t("admin_home.projects_tab")}</div>
+              <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
+              <div className="text-xl font-black text-app-text-primary mb-6">{t("common.edit")} {t("admin_home.projects_tab")}</div>
               <FG label={t("admin_home.project_name")}>
                 <input 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
+                  className="w-full px-4 py-3 bg-app-input-bg border border-app-input-border rounded-xl text-sm focus:outline-none focus:border-app-tab-active focus:ring-1 focus:ring-app-tab-active transition-all text-app-text-primary" 
                   value={editName} onChange={e => setEditName(e.target.value)} 
                 />
               </FG>
               <FG label={t("admin_home.project_desc")}>
                 <input 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
+                  className="w-full px-4 py-3 bg-app-input-bg border border-app-input-border rounded-xl text-sm focus:outline-none focus:border-app-tab-active focus:ring-1 focus:ring-app-tab-active transition-all text-app-text-primary" 
                   value={editDesc} onChange={e => setEditDesc(e.target.value)} 
                 />
               </FG>
               <button 
-                className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors mt-2" 
+                className="w-full bg-app-tab-active text-app-surface font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors mt-2" 
                 onClick={() => {
                   if (editName.trim()) {
                     onUpdateProject({ ...editModal, name: editName.trim(), description: editDesc.trim() });
@@ -544,21 +547,21 @@ class ErrorBoundary extends (Component as any) {
       } catch (e) {}
       
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-3xl border border-slate-200 p-8 max-w-md w-full shadow-xl">
-            <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-6">
+        <div className="min-h-screen bg-app-bg flex items-center justify-center p-6">
+          <div className="bg-app-surface rounded-3xl border border-app-border p-8 max-w-md w-full shadow-xl">
+            <div className="w-16 h-16 bg-app-banner-error-bg text-app-banner-error-text rounded-2xl flex items-center justify-center mb-6">
               <AlertCircle size={32} />
             </div>
-            <h1 className="text-2xl font-black text-slate-900 mb-2">Something went wrong</h1>
-            <p className="text-slate-500 font-medium mb-6">The application encountered an unexpected error. Please try refreshing the page.</p>
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-6 overflow-auto max-h-40">
-              <pre className="text-[10px] font-mono text-rose-600 whitespace-pre-wrap">
+            <h1 className="text-2xl font-black text-app-text-primary mb-2">Something went wrong</h1>
+            <p className="text-app-text-muted font-medium mb-6">The application encountered an unexpected error. Please try refreshing the page.</p>
+            <div className="bg-app-bg rounded-xl p-4 border border-app-border mb-6 overflow-auto max-h-40">
+              <pre className="text-[10px] font-mono text-app-banner-error-text whitespace-pre-wrap">
                 {JSON.stringify(errorInfo, null, 2)}
               </pre>
             </div>
             <button 
               onClick={() => window.location.reload()}
-              className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-colors"
+              className="w-full bg-app-tab-active text-app-surface font-bold py-4 rounded-2xl hover:opacity-90 transition-colors"
             >
               Refresh Page
             </button>
@@ -1209,10 +1212,10 @@ export default function App() {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-app-bg">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
-        <div className="text-sm font-bold text-slate-500">লোডিং...</div>
+        <div className="w-12 h-12 border-4 border-app-border border-t-app-tab-active rounded-full animate-spin" />
+        <div className="text-sm font-bold text-app-text-muted">লোডিং...</div>
       </div>
     </div>
   );
@@ -1236,8 +1239,8 @@ export default function App() {
   const pendingCount = payments.filter((p: any) => p.status === "pending").length;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="fixed top-0 left-0 right-0 h-16 bg-slate-900 flex items-center px-4 gap-3 z-[100] shadow-md no-print">
+    <div className="min-h-screen bg-app-bg">
+      <div className="fixed top-0 left-0 right-0 h-16 bg-app-nav-bg border-b border-app-nav-text/10 flex items-center px-4 gap-3 z-[100] shadow-sm no-print transition-colors">
         <div className="flex-1 min-w-0 flex items-center gap-3">
           <img 
             src="/logo.png" 
@@ -1249,8 +1252,8 @@ export default function App() {
             }}
           />
           <div>
-            <div className="font-black text-lg text-white tracking-tight">MARQ <span className="text-slate-400 font-bold">Builders</span></div>
-            <div className="text-[11px] text-slate-400 font-bold tracking-wider uppercase truncate">{topTitle}</div>
+            <div className="font-black text-lg text-app-nav-text tracking-tight">MARQ <span className="text-app-nav-text-muted font-bold">Builders</span></div>
+            <div className="text-[11px] text-app-nav-text-muted font-bold tracking-wider uppercase truncate">{topTitle}</div>
           </div>
         </div>
         {isSuperAdmin && pendingCount > 0 && (
@@ -1259,14 +1262,14 @@ export default function App() {
           </div>
         )}
         <ThemeToggle />
-        <button 
-          className="w-10 h-10 bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:bg-white/20 transition-colors" 
-          onClick={() => setDrawer(true)}
-        >
-          <span className="w-5 h-0.5 bg-slate-300 rounded-full" />
-          <span className="w-5 h-0.5 bg-slate-300 rounded-full" />
-          <span className="w-5 h-0.5 bg-slate-300 rounded-full" />
-        </button>
+          <button 
+            className="w-10 h-10 bg-app-nav-text/10 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:bg-app-nav-text/20 transition-colors" 
+            onClick={() => setDrawer(true)}
+          >
+            <span className="w-5 h-0.5 bg-app-nav-text-muted rounded-full" />
+            <span className="w-5 h-0.5 bg-app-nav-text-muted rounded-full" />
+            <span className="w-5 h-0.5 bg-app-nav-text-muted rounded-full" />
+          </button>
       </div>
 
       <Drawer 

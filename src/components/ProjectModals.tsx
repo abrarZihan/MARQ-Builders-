@@ -33,33 +33,33 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm transition-colors" onClick={onClose}>
       <motion.div 
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe max-h-[90vh] overflow-y-auto" 
+        className="bg-app-surface-elevated rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe max-h-[90vh] overflow-y-auto border border-app-border transition-colors" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-        <div className="text-xl font-black text-slate-900">{t("project_modals.payment_record")}</div>
-        <div className="text-xs font-bold text-slate-500 mt-1 mb-6">{dotJoin(client.name, client.plot, instDef.title)} {shareCount > 1 && <span className="text-blue-600">({shareCount} {t("client_info.shares")})</span>}</div>
+        <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
+        <div className="text-xl font-black text-app-text-primary">{t("project_modals.payment_record")}</div>
+        <div className="text-xs font-bold text-app-text-secondary mt-1 mb-6">{dotJoin(client.name, client.plot, instDef.title)} {shareCount > 1 && <span className="text-blue-600 dark:text-blue-400">({shareCount} {t("client_info.shares")})</span>}</div>
         
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6">
+        <div className="bg-app-bg border border-app-border rounded-2xl p-4 mb-6 transition-colors">
           <PBar paid={paid} target={targetAmount} />
-          {rem > 0 && <div className="text-sm font-bold text-rose-600 mt-3">{t("project_modals.remaining", { amount: BDT(rem) })}</div>}
+          {rem > 0 && <div className="text-sm font-bold text-rose-600 dark:text-rose-400 mt-3">{t("project_modals.remaining", { amount: BDT(rem) })}</div>}
         </div>
         
         {approvedPays.length > 0 && (
           <div className="mb-4">
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">{t("project_modals.approved")}</div>
+            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-2">{t("project_modals.approved")}</div>
             {approvedPays.map((p: any) => (
-              <div key={p.id} className="flex justify-between items-center bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-2">
-                <span className="text-xs font-medium text-slate-700">{dotJoin(p.date, p.note)}</span>
+              <div key={p.id} className="flex justify-between items-center bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-2 transition-colors">
+                <span className="text-xs font-medium text-app-text-secondary">{dotJoin(p.date, p.note)}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-emerald-700 mr-1">{BDT(p.amount)}</span>
-                  <button className="w-7 h-7 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-200 transition-colors" onClick={() => setViewR(p)}><FileText size={14} /></button>
+                  <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 mr-1">{BDT(p.amount)}</span>
+                  <button className="w-7 h-7 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center hover:bg-blue-500/20 transition-colors border border-blue-500/20" onClick={() => setViewR(p)}><FileText size={14} /></button>
                   {isSuperAdmin && (
-                    <button className="w-7 h-7 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-200 transition-colors" onClick={() => setDelPay(p)}><Trash2 size={14} /></button>
+                    <button className="w-7 h-7 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg flex items-center justify-center hover:bg-rose-500/20 transition-colors border border-rose-500/20" onClick={() => setDelPay(p)}><Trash2 size={14} /></button>
                   )}
                 </div>
               </div>
@@ -69,14 +69,14 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
         
         {pendingPays.length > 0 && (
           <div className="mb-6">
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">{t("project_modals.pending_approval")}</div>
+            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-2">{t("project_modals.pending_approval")}</div>
             {pendingPays.map((p: any) => (
-              <div key={p.id} className="flex justify-between items-center bg-amber-50 border border-amber-200 rounded-xl p-3 mb-2">
-                <span className="text-xs font-medium text-amber-800 flex items-center gap-1.5"><Clock size={12} /> {dotJoin(p.date, p.note)}</span>
+              <div key={p.id} className="flex justify-between items-center bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-2 transition-colors">
+                <span className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5"><Clock size={12} /> {dotJoin(p.date, p.note)}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-black text-amber-700">{BDT(p.amount)}</span>
+                  <span className="text-sm font-black text-amber-600 dark:text-amber-500">{BDT(p.amount)}</span>
                   {isSuperAdmin && (
-                    <button className="w-7 h-7 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-200 transition-colors" onClick={() => setDelPay(p)}><Trash2 size={14} /></button>
+                    <button className="w-7 h-7 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg flex items-center justify-center hover:bg-rose-500/20 transition-colors border border-rose-500/20" onClick={() => setDelPay(p)}><Trash2 size={14} /></button>
                   )}
                 </div>
               </div>
@@ -88,36 +88,36 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
           <>
             <FG label={`${t("project_modals.amount_bdt")}${!isSuperAdmin ? t("project_modals.super_admin_approve") : ""}`}>
               <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all font-bold" 
+                className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" 
                 type="number" inputMode="numeric" placeholder={t("project_modals.max_placeholder", { amount: rem.toString() })} 
                 value={amount} onChange={e => { setAmount(e.target.value); setErr(""); }} 
               />
             </FG>
             {!isSuperAdmin && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 -mt-2 mb-4 text-xs font-bold text-amber-700 flex items-center gap-2">
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 -mt-2 mb-4 text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-2 transition-colors">
                 <Clock size={14} /> {t("project_modals.pending_msg")}
               </div>
             )}
             <div className="grid grid-cols-2 gap-4">
-              <FG label={t("project_modals.date")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="date" value={date} onChange={e => setDate(e.target.value)} /></FG>
-              <FG label={t("project_modals.note")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" placeholder={t("project_modals.optional")} value={note} onChange={e => setNote(e.target.value)} /></FG>
+              <FG label={t("project_modals.date")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="date" value={date} onChange={e => setDate(e.target.value)} /></FG>
+              <FG label={t("project_modals.note")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" placeholder={t("project_modals.optional")} value={note} onChange={e => setNote(e.target.value)} /></FG>
             </div>
             
             <AnimatePresence>
               {err && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                  <div className="text-rose-600 text-sm font-bold mb-4 bg-rose-50 p-3 rounded-xl border border-rose-100">{err}</div>
+                  <div className="text-app-error-text text-sm font-bold mb-4 bg-app-error-bg p-3 rounded-xl border border-app-error-text/10">{err}</div>
                 </motion.div>
               )}
             </AnimatePresence>
             
             <div className="flex gap-3 mt-2">
-              <button className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" onClick={submit}>{isSuperAdmin ? t("project_modals.save_btn") : t("project_modals.submit_for_approval")}</button>
-              <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>{t("project_modals.cancel")}</button>
+              <button className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors" onClick={submit}>{isSuperAdmin ? t("project_modals.save_btn") : t("project_modals.submit_for_approval")}</button>
+              <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>{t("project_modals.cancel")}</button>
             </div>
           </>
         ) : (
-          <div className="text-center py-6 text-emerald-600 font-black bg-emerald-50 rounded-2xl border border-emerald-100">
+          <div className="text-center py-6 text-emerald-600 dark:text-emerald-400 font-black bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
             {t("project_modals.fully_paid")}
           </div>
         )}
@@ -145,27 +145,27 @@ export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
   const s = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
   
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <motion.div 
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe" 
+        className="bg-app-surface-elevated rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe border border-app-border" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-        <div className="text-xl font-black text-slate-900 mb-6">{t("project_modals.new_installment_col")}</div>
+        <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
+        <div className="text-xl font-black text-app-text-primary mb-6">{t("project_modals.new_installment_col")}</div>
         
         <FG label={t("project_modals.inst_name")}>
-          <input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all font-bold" placeholder={t("project_modals.inst_name_ph")} value={f.title} onChange={e => s("title", e.target.value)} />
+          <input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" placeholder={t("project_modals.inst_name_ph")} value={f.title} onChange={e => s("title", e.target.value)} />
         </FG>
         <div className="grid grid-cols-2 gap-4">
-          <FG label={t("project_modals.target_bdt")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all font-bold" type="number" value={f.targetAmount} onChange={e => s("targetAmount", e.target.value)} /></FG>
-          <FG label={t("project_modals.due_date")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="date" value={f.dueDate} onChange={e => s("dueDate", e.target.value)} /></FG>
+          <FG label={t("project_modals.target_bdt")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="number" value={f.targetAmount} onChange={e => s("targetAmount", e.target.value)} /></FG>
+          <FG label={t("project_modals.due_date")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="date" value={f.dueDate} onChange={e => s("dueDate", e.target.value)} /></FG>
         </div>
         
         <div className="flex gap-3 mt-4">
           <button 
-            className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" 
+            className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors" 
             onClick={() => {
               if (!f.title || !f.targetAmount) { alert(t("project_modals.add_inst_err")); return; }
               onSave({ id: uid("D-"), projectId, planId, title: f.title, dueDate: f.dueDate, targetAmount: parseFloat(f.targetAmount) });
@@ -174,7 +174,7 @@ export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
           >
             {t("project_modals.add")}
           </button>
-          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>{t("project_modals.cancel")}</button>
+          <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>{t("project_modals.cancel")}</button>
         </div>
       </motion.div>
     </div>
@@ -187,31 +187,31 @@ export function AddExpSheet({ projectId, expense, onSave, onClose }: any) {
   const s = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
   
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <motion.div 
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe" 
+        className="bg-app-surface-elevated rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe border border-app-border" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden" />
-        <div className="text-xl font-black text-slate-900 mb-6">{expense ? t("modal.edit_expense") : t("project_modals.expense_add")}</div>
+        <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
+        <div className="text-xl font-black text-app-text-primary mb-6">{expense ? t("modal.edit_expense") : t("project_modals.expense_add")}</div>
         
         <FG label={t("project_modals.category")}>
-          <select className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all font-bold appearance-none" value={f.category} onChange={e => s("category", e.target.value)}>
+          <select className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold appearance-none text-app-text-primary" value={f.category} onChange={e => s("category", e.target.value)}>
             <option value="">{t("project_modals.select")}</option>
             {EXP_CATS.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </FG>
-        <FG label={t("project_modals.description")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={f.description} onChange={e => s("description", e.target.value)} /></FG>
+        <FG label={t("project_modals.description")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" value={f.description} onChange={e => s("description", e.target.value)} /></FG>
         <div className="grid grid-cols-2 gap-4">
-          <FG label={t("project_modals.amount_bdt_simple")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all font-bold" type="number" value={f.amount} onChange={e => s("amount", e.target.value)} /></FG>
-          <FG label={t("project_modals.date")}><input className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="date" value={f.date} onChange={e => s("date", e.target.value)} /></FG>
+          <FG label={t("project_modals.amount_bdt_simple")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="number" value={f.amount} onChange={e => s("amount", e.target.value)} /></FG>
+          <FG label={t("project_modals.date")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="date" value={f.date} onChange={e => s("date", e.target.value)} /></FG>
         </div>
         
         <div className="flex gap-3 mt-4">
           <button 
-            className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors" 
+            className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors" 
             onClick={() => {
               if (!f.category || !f.amount) { alert(t("project_modals.expense_add_err")); return; }
               onSave({ id: expense?.id || uid("EX-"), projectId, ...f, amount: parseFloat(f.amount) });
@@ -220,7 +220,7 @@ export function AddExpSheet({ projectId, expense, onSave, onClose }: any) {
           >
             {expense ? t("modal.update") : t("project_modals.add")}
           </button>
-          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>{t("project_modals.cancel")}</button>
+          <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>{t("project_modals.cancel")}</button>
         </div>
       </motion.div>
     </div>
@@ -343,10 +343,10 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   );
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[400] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none" 
+        className="bg-app-surface rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none border border-app-border" 
         onClick={e => e.stopPropagation()}
       >
         <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible">
@@ -359,14 +359,14 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           )}
         </div>
         
-        <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3 no-print">
+        <div className="p-6 bg-app-bg border-t border-app-border flex gap-3 no-print">
           <button 
-            className="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2" 
+            className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
             onClick={() => window.print()}
           >
             <Printer size={18} /> {t("project_modals.print")}
           </button>
-          <button className="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors" onClick={onClose}>
+          <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>
             {t("project_modals.close")}
           </button>
         </div>
