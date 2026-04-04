@@ -9,6 +9,7 @@ import {
   BDT, BDTshort, dotJoin, uid, todayStr, tsNow, fmtTs, genClientId, 
   clientPaidForDef, cellStatus, ac, initials, cn 
 } from "./lib/utils";
+import { ThemeToggle } from './components/ThemeToggle.tsx';
 import { 
   Badge, PBar, FG, ClientAvatar, PassCell, ConfirmDelete, 
   Drawer, BottomBar, Login, ForceChangePw 
@@ -1257,6 +1258,7 @@ export default function App() {
             <Clock size={12} /> {pendingCount}
           </div>
         )}
+        <ThemeToggle />
         <button 
           className="w-10 h-10 bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:bg-white/20 transition-colors" 
           onClick={() => setDrawer(true)}

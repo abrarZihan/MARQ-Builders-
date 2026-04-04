@@ -21,7 +21,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
 
   const filtered = clients.filter((c: any) => {
     const q = search.toLowerCase();
-    const matchesSearch = !q || c.name?.toLowerCase().includes(q) || c.id?.toLowerCase().includes(q) || c.phone?.includes(q) || c.nid?.includes(q) || c.email?.toLowerCase().includes(q);
+    const matchesSearch = !q || c.name?.toLowerCase()?.includes(q) || c.id?.toLowerCase()?.includes(q) || c.phone?.includes(q) || c.nid?.includes(q) || c.email?.toLowerCase()?.includes(q);
     const matchesPlan = planFilter === "all" || (c.planAssignments || []).some((pa: any) => pa.planId === planFilter);
     return matchesSearch && matchesPlan;
   });

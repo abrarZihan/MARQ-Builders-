@@ -43,9 +43,9 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
     }
     // Otherwise, show only if assigned to the active plan
     return assignments.some((pa: any) => pa.planId === activePlanId);
-  }).filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()));
+  }).filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
   
-  const allPrjClients = clients.filter((c: any) => c.projectId === project.id).filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()));
+  const allPrjClients = clients.filter((c: any) => c.projectId === project.id).filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
   const prjDefs = instDefs.filter((d: any) => d.planId === activePlanId);
   const prjExpenses = expenses.filter((e: any) => e.projectId === project.id);
   const prjLogs = [...logs].filter(l => l.projectId === project.id).sort((a, b) => b.ts.localeCompare(a.ts));

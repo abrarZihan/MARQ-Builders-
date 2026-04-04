@@ -5,11 +5,15 @@ import './index.css';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { LanguageProvider } from './lib/i18n.tsx';
 
+import { ThemeProvider } from './components/ThemeProvider.tsx';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <LanguageProvider>
       <ErrorBoundary>
-        <App />
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
       </ErrorBoundary>
     </LanguageProvider>
   </StrictMode>,
