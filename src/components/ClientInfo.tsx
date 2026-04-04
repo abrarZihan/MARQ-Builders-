@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "motion/react";
 import { BDT, BDTshort, dotJoin, ac, initials, uid, todayStr, cn, genClientId } from "../lib/utils";
 import { FG, ConfirmDelete, ClientAvatar, PassCell } from "./Shared";
-import { Trash2, Eye, EyeOff, Edit2, Camera, Printer, FileUp } from "lucide-react";
+import { Trash2, Eye, EyeOff, Edit2, Camera, Printer, FileUp, Search, Filter, X } from "lucide-react";
 
 import { useLanguage } from "../lib/i18n";
 
@@ -11,6 +11,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [editClient, setEditClient] = useState<any>(null);
   const [viewClient, setViewClient] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -180,19 +181,76 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
         onChange={e => { if (e.target.files?.[0]) parseFile(e.target.files[0]); e.target.value = ""; }} 
       />
       
-      <div className="flex gap-2 mb-4 no-print">
-        <input 
-          className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" 
-          placeholder={t("client_info.search_ph")} 
-          value={search} onChange={e => setSearch(e.target.value)} 
-        />
-        <select 
-          className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all"
-          value={planFilter} onChange={e => setPlanFilter(e.target.value)}
-        >
-          <option value="all">All Plans</option>
-          {plans.filter((p: any) => p.projectId === projectId).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+      <div className="relative mb-4 no-print flex items-center gap-2">
+        <div className="relative flex-1 group">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-600 transition-colors" />
+          <input 
+            className="w-full pl-11 pr-11 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-50 transition-all shadow-sm" 
+            placeholder={t("client_info.search_ph")} 
+            value={search} 
+            onChange={e => setSearch(e.target.value)} 
+          />
+          {search && (
+            <button 
+              onClick={() => setSearch("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+        
+        <div className="relative">
+          <button 
+            onClick={() => setShowFilterMenu(!showFilterMenu)}
+            className={cn(
+              "p-3.5 rounded-2xl border transition-all flex items-center justify-center gap-2 font-bold text-sm",
+              planFilter !== "all" 
+                ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200" 
+                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
+            )}
+          >
+            <Filter size={18} />
+            {planFilter !== "all" && <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-md">1</span>}
+          </button>
+          
+          <AnimatePresence>
+            {showFilterMenu && (
+              <>
+                <div className="fixed inset-0 z-[100]" onClick={() => setShowFilterMenu(false)} />
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-[101] overflow-hidden p-2"
+                >
+                  <div className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">Filter by Plan</div>
+                  <button 
+                    onClick={() => { setPlanFilter("all"); setShowFilterMenu(false); }}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-colors mb-1",
+                      planFilter === "all" ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50"
+                    )}
+                  >
+                    All Plans
+                  </button>
+                  {plans.filter((p: any) => p.projectId === projectId).map((p: any) => (
+                    <button 
+                      key={p.id}
+                      onClick={() => { setPlanFilter(p.id); setShowFilterMenu(false); }}
+                      className={cn(
+                        "w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-colors mb-1",
+                        planFilter === p.id ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50"
+                      )}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
       
       <div className="overflow-x-auto overflow-y-auto max-h-[60vh] rounded-2xl border border-slate-200 bg-white shadow-sm">

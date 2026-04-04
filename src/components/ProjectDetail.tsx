@@ -6,7 +6,7 @@ import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
 import { ClientInfoPage } from "./ClientInfo";
 import { CellPaySheet, AddDefSheet, AddExpSheet, ReceiptSheet } from "./ProjectModals";
-import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText, Edit2, Search, Filter } from "lucide-react";
+import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText, Edit2, Search, Filter, X } from "lucide-react";
 
 import { useLanguage } from "../lib/i18n";
 
@@ -279,7 +279,14 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                           onChange={e => setSearch(e.target.value)}
                           onClick={e => e.stopPropagation()}
                         />
-                        <Filter size={12} className="absolute right-2 text-white/50 cursor-pointer hover:text-white" />
+                        {search && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setSearch(""); }}
+                            className="absolute right-2 text-white/50 hover:text-white p-0.5"
+                          >
+                            <X size={10} />
+                          </button>
+                        )}
                       </div>
                     </th>
                     {prjDefs.map((d: any) => {
