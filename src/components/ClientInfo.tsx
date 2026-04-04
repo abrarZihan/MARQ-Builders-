@@ -357,8 +357,8 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
             [t("client_info.nid"), client.nid], [t("client_info.plot"), client.plot], [t("client_info.total_amount"), BDT(client.totalAmount)],
             [t("client_info.share_count"), totalShares],
             [t("client_info.remarks"), client.remarks]
-          ].map(([l, v]) => (
-            <div key={l as string} className="flex items-center py-2 border-b border-slate-100 last:border-0">
+          ].map(([l, v], i) => (
+            <div key={`${l}-${i}`} className="flex items-center py-2 border-b border-slate-100 last:border-0">
               <span className="text-xs font-bold text-slate-400 w-32 shrink-0">{l}</span>
               <span className="text-sm font-bold text-slate-900 flex-1">{v || "—"}</span>
             </div>
@@ -500,9 +500,9 @@ function ClientEditSheet({ client, allClients, plans, onSave, onClose }: any) {
 
         <div className="mt-6 mb-2 text-sm font-bold text-slate-900">Plan Assignments</div>
         {f.planAssignments.map((pa: any, i: number) => (
-          <div key={i} className="flex gap-2 mb-2">
+          <div key={`${pa.planId}-${i}`} className="flex gap-2 mb-2">
             <select className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" value={pa.planId} onChange={e => updateAssignment(i, "planId", e.target.value)}>
-              {plans.map((pl: any) => <option key={pl.id} value={pl.id}>{pl.name}</option>)}
+              {plans.map((pl: any, i: number) => <option key={`${pl.id}-${i}`} value={pl.id}>{pl.name}</option>)}
             </select>
             <input className="w-20 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all" type="number" value={pa.shareCount} onChange={e => updateAssignment(i, "shareCount", parseInt(e.target.value) || 0)} />
             <button className="p-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100" onClick={() => removeAssignment(i)}><Trash2 size={16} /></button>
@@ -567,7 +567,7 @@ function ImportPreviewSheet({ data, onConfirm, onClose }: any) {
             </thead>
             <tbody>
               {data.slice(0, 15).map((r: any, i: number) => (
-                <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                <tr key={r.id || i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                   <td className="p-2 text-slate-400 font-medium">{r._row}</td>
                   <td className="p-2"><span className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-[10px] font-bold text-slate-600">{r.id}</span></td>
                   <td className="p-2 font-bold text-slate-900">{r.name || <span className="text-rose-500">{t("client_info.empty")}</span>}</td>

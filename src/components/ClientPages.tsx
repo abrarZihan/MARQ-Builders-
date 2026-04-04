@@ -635,8 +635,8 @@ export function ClientProfile({ client, onUpdateClient }: any) {
             [t('client.father_husband'), client.fatherHusband || "—"], [t('client.birth_date'), client.birthDate || "—"], 
             [t('client.email'), client.email || "—"], [t('client.nid'), client.nid || "—"], 
             [t('common.total_price_label'), BDT(client.totalAmount * (client.shareCount || 1))]
-          ].map(([l, v]) => (
-            <div key={l} className="flex items-center py-2 border-b border-slate-100 last:border-0">
+          ].map(([l, v], i) => (
+            <div key={`${l}-${i}`} className="flex items-center py-2 border-b border-slate-100 last:border-0">
               <span className="text-xs font-bold text-slate-400 w-32 shrink-0">{l}</span>
               <span className="text-sm font-bold text-slate-900 flex-1">{v}</span>
             </div>

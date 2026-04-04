@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BDT, BDTshort, dotJoin, ac, initials, uid, todayStr, cn, clientPaidForDef, cellStatus } from "../lib/utils";
-import { FG, ConfirmDelete, ClientAvatar, PassCell, PBar, CategoryIcon, CategoryColor } from "./Shared";
+import { FG, ConfirmDelete, ClientAvatar, PassCell, PBar, CategoryIcon, CategoryColor, ConfirmDeletePlan } from "./Shared";
 import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
 import { ClientInfoPage } from "./ClientInfo";
@@ -26,6 +26,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   const [addExpModal, setAddExpModal] = useState(false);
   const [editExpModal, setEditExpModal] = useState<any>(null);
   const [delExp, setDelExp] = useState<any>(null);
+  const [deletePlanTarget, setDeletePlanTarget] = useState<any>(null);
   const [defTaps, setDefTaps] = useState<any>({});
   
   const prjPlans = plans.filter((pl: any) => pl.projectId === project.id);
@@ -289,14 +290,14 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                         )}
                       </div>
                     </th>
-                    {prjDefs.map((d: any) => {
+                    {prjDefs.map((d: any, i: number) => {
                       const taps = defTaps[d.id] || 0;
                       const tapColor = taps === 0 ? "text-rose-400" : taps === 1 ? "text-amber-500" : "text-emerald-500";
                       const tapBg = taps === 0 ? "bg-rose-500/20" : taps === 1 ? "bg-amber-500/20" : "bg-emerald-500/20";
                       const tapLabel = taps === 0 ? t("project_detail.delete") : taps === 1 ? t("project_detail.confirm_2_3") : t("project_detail.delete_3_3");
                       
                       return (
-                        <th key={d.id} className="sticky top-0 z-10 bg-slate-900 text-white p-3 min-w-[120px] font-bold border-r border-b border-white/10 text-center">
+                        <th key={`${d.id}-${i}`} className="sticky top-0 z-10 bg-slate-900 text-white p-3 min-w-[120px] font-bold border-r border-b border-white/10 text-center">
                           <div className="text-[11px] mb-1">{d.title}</div>
                           <div className="text-[9px] text-slate-400 font-medium">{BDT(d.targetAmount)}</div>
                           {d.dueDate && <div className="text-[8px] text-slate-500 mt-0.5">{d.dueDate}</div>}
@@ -341,7 +342,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                             </div>
                           </div>
                         </td>
-                        {prjDefs.map((d: any) => {
+                        {prjDefs.map((d: any, i: number) => {
                           const cellTarget = d.targetAmount * shareCount;
                           const paid = clientPaidForDef(client.id, d.id, payments);
                           const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
@@ -350,7 +351,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                           const m = STATUS[st];
                           
                           return (
-                            <td key={d.id} className="p-2 border-r border-b border-slate-100 text-center align-middle">
+                            <td key={`${d.id}-${i}`} className="p-2 border-r border-b border-slate-100 text-center align-middle">
                               <button 
                                 className={cn("w-full rounded-xl p-2 cursor-pointer transition-transform active:scale-95", m.bg)} 
                                 onClick={() => setCellModal({ client, instDef: d })}
@@ -382,7 +383,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                   })}
                   <tr className="bg-slate-50 font-bold">
                     <td className="sticky left-0 z-20 bg-slate-50 border-r border-slate-200 p-3 text-slate-900 text-xs shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t("project_detail.total_col")}</td>
-                    {prjDefs.map((d: any) => {
+                    {prjDefs.map((d: any, i: number) => {
                       const ct = prjClients.reduce((s: number, c: any) => s + clientPaidForDef(c.id, d.id, payments), 0);
                       const cT = prjClients.reduce((s: number, c: any) => {
                         const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
@@ -390,7 +391,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                         return s + sc * d.targetAmount;
                       }, 0);
                       return (
-                        <td key={d.id} className="p-3 border-r border-slate-100 text-center align-middle">
+                        <td key={`${d.id}-${i}`} className="p-3 border-r border-slate-100 text-center align-middle">
                           <div className="text-xs font-black text-slate-900">{BDTshort(ct)}</div>
                           <div className="text-[10px] text-slate-500 font-medium mt-0.5">{cT > 0 ? Math.round((ct / cT) * 100) : 0}%</div>
                         </td>
@@ -643,18 +644,25 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
               {isSuperAdmin && (
                 <button 
                   className="w-full mt-6 text-rose-600 font-bold text-xs hover:underline flex items-center justify-center gap-1"
-                  onClick={() => {
-                    if (confirm(`Are you sure you want to delete "${editPlanModal.name}"? This will delete all installment definitions in this plan.`)) {
-                      onDeletePlan(editPlanModal.id);
-                      setEditPlanModal(null);
-                    }
-                  }}
+                  onClick={() => setDeletePlanTarget(editPlanModal)}
                 >
                   <Trash2 size={12} /> Delete Plan
                 </button>
               )}
             </motion.div>
           </div>
+        )}
+        {deletePlanTarget && (
+          <ConfirmDeletePlan 
+            plan={deletePlanTarget} 
+            amount={instDefs.filter((d: any) => d.planId === deletePlanTarget.id).reduce((s: number, d: any) => s + d.targetAmount, 0)}
+            onConfirm={() => {
+              onDeletePlan(deletePlanTarget.id);
+              setDeletePlanTarget(null);
+              setEditPlanModal(null);
+            }}
+            onClose={() => setDeletePlanTarget(null)}
+          />
         )}
       </AnimatePresence>
     </motion.div>

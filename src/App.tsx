@@ -240,8 +240,8 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
             {topCats.length > 0 && (
               <div>
                 <div className="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-wider">{t("dashboard.top_expenses")}</div>
-                {topCats.map(([cat, amt]) => (
-                  <div key={cat} className="flex justify-between items-center text-xs mb-1.5 text-slate-600">
+                {topCats.map(([cat, amt], i) => (
+                  <div key={`${cat}-${i}`} className="flex justify-between items-center text-xs mb-1.5 text-slate-600">
                     <span className="font-medium flex items-center gap-1.5">
                       <div className={cn("w-5 h-5 rounded-md flex items-center justify-center", CategoryColor(cat))}>
                         <CategoryIcon category={cat} size={12} />
@@ -951,9 +951,11 @@ export default function App() {
   };
 
   const deletePlan = async (id: string) => {
+    console.log("Deleting plan:", id);
     const p = plans.find(x => x.id === id);
     const defsToDelete = instDefs.filter((d: any) => d.planId === id);
     const clientsToUpdate = clients.filter((c: any) => (c.planAssignments || []).some((pa: any) => pa.planId === id));
+    console.log("Defs to delete:", defsToDelete.length, "Clients to update:", clientsToUpdate.length);
     
     try {
       const batch = writeBatch(db);
@@ -966,9 +968,11 @@ export default function App() {
       });
       
       await batch.commit();
+      console.log("Plan deleted successfully");
       if (p) addLog(adminUser, "plan_delete", p.name, "প্ল্যান মুছে ফেলা হয়েছে", p.projectId);
       showToast(t("common.success_deleted"));
     } catch (e) {
+      console.error("Error deleting plan:", e);
       handleFirestoreError(e, OperationType.DELETE, `plans/${id}`);
       showToast(t("common.error_occurred"), 'e');
     }

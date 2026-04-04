@@ -141,6 +141,32 @@ export function ConfirmDelete({ message, onConfirm, onClose }: { message: React.
   );
 }
 
+export function ConfirmDeletePlan({ plan, amount, onConfirm, onClose }: { plan: any; amount: number; onConfirm: () => void; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 z-[600] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
+      <motion.div 
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm p-8 pb-safe" 
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-8 sm:hidden" />
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Trash2 size={40} />
+          </div>
+          <div className="text-2xl font-black text-slate-900 mb-3">মুছে ফেলবেন?</div>
+          <div className="text-sm font-bold text-slate-500">{plan.name} — ৳ {amount.toLocaleString('bn-BD')} মুছে যাবে।</div>
+        </div>
+        <div className="flex gap-4">
+          <button className="flex-1 bg-rose-50 text-rose-600 font-black py-4 rounded-2xl hover:bg-rose-100 transition-colors" onClick={onConfirm}>হ্যাঁ, মুছুন</button>
+          <button className="flex-1 bg-slate-100 text-slate-600 font-black py-4 rounded-2xl hover:bg-slate-200 transition-colors" onClick={onClose}>বাতিল</button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isSuperAdmin, pendingCount }: any) {
   const { t, lang, setLang } = useLanguage();
   const adminNav = [
