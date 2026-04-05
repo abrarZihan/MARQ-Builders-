@@ -202,8 +202,8 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
           >
             <div className="p-6 border-b border-app-nav-text/10">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-app-nav-text/10 rounded-xl flex items-center justify-center overflow-hidden shrink-0 shadow-sm border border-app-nav-text/10">
-                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain p-0.5 brightness-0 invert" referrerPolicy="no-referrer" />
+                <div className="w-12 h-12 bg-white force-white rounded-xl flex items-center justify-center overflow-hidden shrink-0 shadow-sm border border-app-nav-text/10">
+                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer" />
                 </div>
                 <div>
                   <div className="text-app-nav-text font-black text-lg leading-tight">MARQ</div>
@@ -322,23 +322,23 @@ export function Login({ onLogin }: any) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-app-bg p-4 relative transition-colors">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-app-nav-bg p-4 relative transition-colors">
       <button 
         onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-        className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-app-border text-app-text-primary rounded-full text-xs font-bold transition-colors border border-app-border"
+        className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white rounded-full text-xs font-bold transition-colors border border-white/20 hover:bg-white/20"
       >
         <Globe size={14} />
         {lang === 'bn' ? 'English' : 'বাংলা'}
       </button>
       <div className="text-center mb-8">
-        <div className="text-3xl font-black text-app-text-primary tracking-tighter">MARQ BUILDERS</div>
+        <div className="text-3xl font-black text-white tracking-tighter">MARQ BUILDERS</div>
       </div>
       <motion.div 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="bg-app-surface rounded-3xl p-8 w-full max-w-md shadow-2xl border border-app-border"
       >
-        <div className="w-32 h-32 flex items-center justify-center overflow-hidden mx-auto mb-2">
-          <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain dark:brightness-0 dark:invert" referrerPolicy="no-referrer" />
+        <div className="w-32 h-32 bg-white force-white rounded-3xl flex items-center justify-center overflow-hidden mx-auto mb-4 shadow-sm border border-app-border">
+          <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
         </div>
         <div className="text-center mb-6">
           <div className="text-2xl font-extrabold text-app-text-primary">{t("login.welcome")}</div>
@@ -362,7 +362,7 @@ export function Login({ onLogin }: any) {
 
         <FG label={role === "admin" ? t("login.username") : t("login.customer_id")}>
           <input 
-            className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all" 
+            className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-app-nav-bg transition-all border border-app-input-border bg-app-input-bg text-app-text-primary" 
             placeholder={role === "admin" ? "admin" : "C001"} 
             value={id} onChange={e => setId(e.target.value)} 
           />
@@ -370,7 +370,7 @@ export function Login({ onLogin }: any) {
         <FG label={t("login.password")}>
           <div className="relative">
             <input 
-              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all pr-12" 
+              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-app-nav-bg transition-all pr-12 border border-app-input-border bg-app-input-bg text-app-text-primary" 
               type={show ? "text" : "password"} 
               placeholder="••••••••" 
               value={pass} onChange={e => setPass(e.target.value)} 

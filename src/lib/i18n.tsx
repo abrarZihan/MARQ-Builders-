@@ -248,7 +248,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "dashboard.due_short": "বাকি",
     "dashboard.expense_short": "ব্যয়",
     "dashboard.top_expenses": "TOP EXPENSES",
-    "admin_home.projects_count": "{{count}}",
+    "admin_home.projects_count": "{{count}} টি প্রজেক্ট",
+    "admin_home.count_with_suffix": "{{count}} টি",
     "admin_home.add_project": "+ প্রজেক্ট",
     "admin_home.projects_tab": "প্রজেক্টসমূহ",
     "admin_home.financial_tab": "Financial Summary",
@@ -635,6 +636,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "dashboard.expense_short": "Expense",
     "dashboard.top_expenses": "TOP EXPENSES",
     "admin_home.projects_count": "{{count}} project(s)",
+    "admin_home.count_with_suffix": "{{count}}",
     "admin_home.add_project": "+ Project",
     "admin_home.projects_tab": "Projects",
     "admin_home.financial_tab": "Financial Summary",
@@ -800,11 +802,22 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('app_lang', newLang);
   };
 
+  const toBanglaDigits = (str: string) => {
+    const digits: Record<string, string> = {
+      '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪', '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'
+    };
+    return str.replace(/[0-9]/g, w => digits[w]);
+  };
+
   const t = (key: string, params?: Record<string, any>): string => {
     let text = translations[lang][key] || translations['bn'][key] || key;
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
-        text = text.replace(`{{${k}}}`, String(v));
+        let val = String(v);
+        if (lang === 'bn' && typeof v === 'number') {
+          val = toBanglaDigits(val);
+        }
+        text = text.replace(`{{${k}}}`, val);
       });
     }
     return text;

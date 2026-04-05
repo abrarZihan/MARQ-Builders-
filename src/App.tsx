@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   INIT_ADMINS, SP, SC, SD, SPA, SE, INIT_LOGS, 
-  STATUS, STATUS_LABEL, EXP_CATS, ACTION_META 
+  STATUS, STATUS_LABEL, EXP_CATS, ACTION_META, LOGO_URL 
 } from "./lib/data";
 import { 
   BDT, BDTshort, dotJoin, uid, todayStr, tsNow, fmtTs, genClientId, 
@@ -322,7 +322,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
                 <Building2 size={20} />
               </div>
               <div className="text-xs text-app-text-muted font-bold mb-1">{t("admin_home.total_projects")}</div>
-              <div className="text-xl font-black text-app-text-primary">{projects.length}</div>
+              <div className="text-xl font-black text-app-text-primary">{t("admin_home.count_with_suffix", { count: projects.length })}</div>
             </div>
             <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-center">
               <div className="w-10 h-10 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-xl flex items-center justify-center mb-3 border border-emerald-200 dark:border-emerald-500/20">
@@ -1242,15 +1242,6 @@ export default function App() {
     <div className="min-h-screen bg-app-bg">
       <div className="fixed top-0 left-0 right-0 h-16 bg-app-nav-bg border-b border-app-nav-text/10 flex items-center px-4 gap-3 z-[100] shadow-sm no-print transition-colors">
         <div className="flex-1 min-w-0 flex items-center gap-3">
-          <img 
-            src="/logo.png" 
-            alt="Logo" 
-            className="h-8 w-auto object-contain brightness-0 invert"
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
           <div>
             <div className="font-black text-lg text-app-nav-text tracking-tight">MARQ <span className="text-app-nav-text-muted font-bold">Builders</span></div>
             <div className="text-[11px] text-app-nav-text-muted font-bold tracking-wider uppercase truncate">{topTitle}</div>

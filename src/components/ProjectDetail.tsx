@@ -112,18 +112,18 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-app-surface rounded-2xl border border-app-border p-3 flex flex-col justify-center items-center text-center transition-colors">
-          <div className="w-8 h-8 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-lg flex items-center justify-center mb-2 border border-emerald-200 dark:border-emerald-500/30"><CheckCircle2 size={16} /></div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-3 flex flex-col justify-center items-center text-center transition-colors shadow-sm">
+          <div className="w-8 h-8 bg-slate-300/50 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-lg flex items-center justify-center mb-2 border border-emerald-300/30 dark:border-emerald-500/30"><CheckCircle2 size={16} /></div>
           <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-0.5">{t("project_detail.collected")}</div>
           <div className="text-sm font-black text-app-text-primary">{BDTshort(totalCollected)}</div>
         </div>
-        <div className="bg-app-surface rounded-2xl border border-app-border p-3 flex flex-col justify-center items-center text-center transition-colors">
-          <div className="w-8 h-8 bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 rounded-lg flex items-center justify-center mb-2 border border-rose-200 dark:border-rose-500/30"><Clock size={16} /></div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-3 flex flex-col justify-center items-center text-center transition-colors shadow-sm">
+          <div className="w-8 h-8 bg-slate-300/50 text-rose-800 dark:bg-rose-500/20 dark:text-rose-400 rounded-lg flex items-center justify-center mb-2 border border-rose-300/30 dark:border-rose-500/30"><Clock size={16} /></div>
           <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-0.5">{t("project_detail.due")}</div>
           <div className="text-sm font-black text-app-text-primary">{BDTshort(totalDue)}</div>
         </div>
-        <div className="bg-app-surface rounded-2xl border border-app-border p-3 flex flex-col justify-center items-center text-center transition-colors">
-          <div className="w-8 h-8 bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400 rounded-lg flex items-center justify-center mb-2 border border-violet-200 dark:border-violet-500/30"><Building2 size={16} /></div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-3 flex flex-col justify-center items-center text-center transition-colors shadow-sm">
+          <div className="w-8 h-8 bg-slate-300/50 text-violet-800 dark:bg-violet-500/20 dark:text-violet-400 rounded-lg flex items-center justify-center mb-2 border border-violet-300/30 dark:border-violet-500/30"><Building2 size={16} /></div>
           <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-0.5">{t("project_detail.expense")}</div>
           <div className="text-sm font-black text-app-text-primary">{BDTshort(prjExpenses.reduce((s: number, e: any) => s + e.amount, 0))}</div>
         </div>
@@ -269,12 +269,12 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
               <table className="w-full text-xs border-separate border-spacing-0">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 top-0 z-30 bg-app-bg text-app-text-primary text-left p-3 min-w-[140px] font-bold border-r border-b border-app-border shadow-[4px_0_8px_rgba(0,0,0,0.15)] transition-colors">
+                    <th className="sticky left-0 top-0 z-30 bg-app-nav-bg text-white text-left p-3 min-w-[140px] font-bold border-r border-b border-app-border/30 shadow-[4px_0_8px_rgba(0,0,0,0.3)] transition-colors">
                       {t("project_detail.client_col")}
                       <div className="relative mt-2 flex items-center">
-                        <Search size={12} className="absolute left-2 text-app-text-muted" />
+                        <Search size={12} className="absolute left-2 text-white/60" />
                         <input 
-                          className="w-full pl-7 pr-7 py-1 bg-app-surface border border-app-border rounded-lg text-[10px] focus:outline-none focus:ring-1 focus:ring-app-text-muted placeholder:text-app-text-muted text-app-text-primary transition-all"
+                          className="w-full pl-7 pr-7 py-1 bg-white/10 border border-white/20 rounded-lg text-[10px] focus:outline-none focus:ring-1 focus:ring-white/40 placeholder:text-white/40 text-white transition-all"
                           placeholder={t("client_info.search_ph")}
                           value={search}
                           onChange={e => setSearch(e.target.value)}
@@ -297,10 +297,10 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                       const tapLabel = taps === 0 ? t("project_detail.delete") : taps === 1 ? t("project_detail.confirm_2_3") : t("project_detail.delete_3_3");
                       
                       return (
-                        <th key={`${d.id}-${i}`} className="sticky top-0 z-10 bg-app-bg text-app-text-primary p-3 min-w-[120px] font-bold border-r border-b border-app-border text-center transition-colors">
+                        <th key={`${d.id}-${i}`} className="sticky top-0 z-10 bg-app-nav-bg text-white p-3 min-w-[120px] font-bold border-r border-b border-app-border/30 text-center transition-colors">
                           <div className="text-[11px] mb-1">{d.title}</div>
-                          <div className="text-[9px] text-app-text-secondary font-medium">{BDT(d.targetAmount)}</div>
-                          {d.dueDate && <div className="text-[8px] text-app-text-muted mt-0.5">{d.dueDate}</div>}
+                          <div className="text-[9px] text-white/70 font-medium">{BDT(d.targetAmount)}</div>
+                          {d.dueDate && <div className="text-[8px] text-white/50 mt-0.5">{d.dueDate}</div>}
                           {isSuperAdmin && (
                             <button
                               onClick={() => {
@@ -321,7 +321,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                         </th>
                       );
                     })}
-                    <th className="sticky top-0 z-10 bg-app-bg text-app-text-primary p-3 min-w-[100px] font-bold text-center border-b border-app-border transition-colors">{t("project_detail.total_col")}</th>
+                    <th className="sticky top-0 z-10 bg-app-nav-bg text-white p-3 min-w-[100px] font-bold text-center border-r border-b border-app-border/30 transition-colors">{t("project_detail.total_col")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -372,7 +372,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                             </td>
                           );
                         })}
-                        <td className="p-3 text-center align-middle border-b border-app-border transition-colors">
+                        <td className="p-3 text-center align-middle border-r border-b border-app-border transition-colors">
                           <div className={cn("text-xs font-black", rowTotal >= rowTarget ? "text-emerald-600 dark:text-emerald-400" : rowTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-app-text-muted")}>
                             {BDTshort(rowTotal)}
                           </div>
@@ -381,8 +381,8 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                       </tr>
                     );
                   })}
-                  <tr className="bg-app-bg font-bold transition-colors">
-                    <td className="sticky left-0 z-20 bg-app-bg border-r border-app-border p-3 text-app-text-primary text-xs shadow-[2px_0_5px_rgba(0,0,0,0.05)]">{t("project_detail.total_col")}</td>
+                  <tr className="bg-app-nav-bg text-white font-bold transition-colors">
+                    <td className="sticky left-0 z-20 bg-app-nav-bg border-r border-white/10 p-3 text-white text-xs shadow-[2px_0_5px_rgba(0,0,0,0.2)]">{t("project_detail.total_col")}</td>
                     {prjDefs.map((d: any, i: number) => {
                       const ct = prjClients.reduce((s: number, c: any) => s + clientPaidForDef(c.id, d.id, payments), 0);
                       const cT = prjClients.reduce((s: number, c: any) => {
@@ -391,14 +391,14 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                         return s + sc * d.targetAmount;
                       }, 0);
                       return (
-                        <td key={`${d.id}-${i}`} className="p-3 border-r border-app-border text-center align-middle">
-                          <div className="text-xs font-black text-app-text-primary">{BDTshort(ct)}</div>
-                          <div className="text-[10px] text-app-text-secondary font-medium mt-0.5">{cT > 0 ? Math.round((ct / cT) * 100) : 0}%</div>
+                        <td key={`${d.id}-${i}`} className="p-3 border-r border-white/10 text-center align-middle">
+                          <div className="text-xs font-black text-white">{BDTshort(ct)}</div>
+                          <div className="text-[10px] text-white/70 font-medium mt-0.5">{cT > 0 ? Math.round((ct / cT) * 100) : 0}%</div>
                         </td>
                       );
                     })}
                     <td className="p-3 text-center align-middle">
-                      <div className="text-sm font-black text-emerald-600 dark:text-emerald-400">{BDTshort(totalCollected)}</div>
+                      <div className="text-sm font-black text-emerald-400">{BDTshort(totalCollected)}</div>
                     </td>
                   </tr>
                 </tbody>

@@ -257,18 +257,18 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr>
-              <th className="bg-app-bg text-app-text-primary p-3 text-center w-10 font-bold border-r border-b border-app-border">SL</th>
-              <th className="bg-app-bg text-app-text-primary p-3 w-12 font-bold border-r border-b border-app-border">{t("client_info.photo")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.customer_id")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.name")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.father_husband")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.birth_date")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.phone")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.share_count")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("common.password")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.email")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-left font-bold border-r border-b border-app-border">{t("client_info.nid")}</th>
-              <th className="bg-app-bg text-app-text-primary p-3 text-center font-bold border-b border-app-border no-print">{t("common.actions")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-center w-10 font-bold border-r border-b border-app-border/30">SL</th>
+              <th className="bg-app-nav-bg text-white p-3 w-12 font-bold border-r border-b border-app-border/30">{t("client_info.photo")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-left font-bold border-r border-b border-app-border/30">{t("client_info.customer_id")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-left font-bold border-r border-b border-app-border/30">{t("client_info.name")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-left font-bold border-r border-b border-app-border/30">{t("client_info.father_husband")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-left font-bold border-r border-b border-app-border/30">{t("client_info.birth_date")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-left font-bold border-r border-b border-app-border/30">{t("client_info.phone")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-left font-bold border-r border-b border-app-border/30">{t("client_info.share_count")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-left font-bold border-r border-b border-app-border/30">{t("common.password")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-left font-bold border-r border-b border-app-border/30">{t("client_info.email")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-left font-bold border-r border-b border-app-border/30">{t("client_info.nid")}</th>
+              <th className="bg-app-nav-bg text-white p-3 text-center font-bold border-b border-app-border/30 no-print">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -277,26 +277,26 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
             )}
             {filtered.map((c: any, i: number) => (
               <tr key={c.id} className="hover:bg-app-bg transition-colors border-b border-app-border last:border-0">
-                <td className="p-3 text-center text-app-text-muted font-medium">{i + 1}</td>
-                <td className="p-3"><ClientAvatar client={c} size={34} /></td>
-                <td className="p-3"><span className="bg-app-bg px-2 py-1 rounded-md font-mono text-[10px] font-bold text-app-text-secondary border border-app-border">{c.id}</span></td>
-                <td className="p-3 font-bold text-app-text-primary">{c.name || "—"}</td>
-                <td className="p-3 text-app-text-secondary font-medium">{c.fatherHusband || "—"}</td>
-                <td className="p-3 text-app-text-secondary font-medium whitespace-nowrap">{c.birthDate || "—"}</td>
-                <td className="p-3">
+                <td className="p-3 text-center text-app-text-muted font-medium border-r border-app-border">{i + 1}</td>
+                <td className="p-3 border-r border-app-border"><ClientAvatar client={c} size={34} /></td>
+                <td className="p-3 border-r border-app-border"><span className="bg-app-bg px-2 py-1 rounded-md font-mono text-[10px] font-bold text-app-text-secondary border border-app-border">{c.id}</span></td>
+                <td className="p-3 font-bold text-app-text-primary border-r border-app-border">{c.name || "—"}</td>
+                <td className="p-3 text-app-text-secondary font-medium border-r border-app-border">{c.fatherHusband || "—"}</td>
+                <td className="p-3 text-app-text-secondary font-medium whitespace-nowrap border-r border-app-border">{c.birthDate || "—"}</td>
+                <td className="p-3 border-r border-app-border">
                   <div className="flex flex-col gap-0.5">
                     <span className="font-bold text-app-text-primary">{c.phone || "—"}</span>
                     <span className="text-[9px] text-app-text-muted font-bold tracking-wider">USERNAME</span>
                   </div>
                 </td>
-                <td className="p-3">
+                <td className="p-3 border-r border-app-border">
                   <span className="bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 px-2 py-1 rounded-md font-bold text-[10px] border border-blue-200 dark:border-blue-500/20">
                     {getTotalShares(c)} {t("client_info.shares")}
                   </span>
                 </td>
-                <td className="p-3"><PassCell value={c.password || "1234"} /></td>
-                <td className="p-3 text-blue-600 dark:text-blue-400 font-medium">{c.email || "—"}</td>
-                <td className="p-3"><span className="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 px-2 py-1 rounded-md font-mono text-[10px] font-bold border border-amber-200 dark:border-amber-500/20">{c.nid || "—"}</span></td>
+                <td className="p-3 border-r border-app-border"><PassCell value={c.password || "1234"} /></td>
+                <td className="p-3 text-blue-600 dark:text-blue-400 font-medium border-r border-app-border">{c.email || "—"}</td>
+                <td className="p-3 border-r border-app-border"><span className="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 px-2 py-1 rounded-md font-mono text-[10px] font-bold border border-amber-200 dark:border-amber-500/20">{c.nid || "—"}</span></td>
                 <td className="p-3 no-print">
                   <div className="flex gap-1.5 justify-center">
                     <button className="w-7 h-7 bg-app-bg text-app-text-secondary rounded-lg flex items-center justify-center hover:bg-app-border transition-colors border border-app-border" onClick={() => setViewClient(c)}><Eye size={14} /></button>

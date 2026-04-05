@@ -66,7 +66,7 @@
   --input-bg: #1e293b;
   --input-border: #334155;
   --tab-active: #f8fafc;
-  --tab-inactive: #64748b;
+  --tab-inactive: #94a3b8;
   --nav-bg: #020617;
   --nav-text: #f8fafc;
   --nav-text-muted: #64748b;
@@ -85,14 +85,14 @@ body {
 }
 
 /* Global Reset for common elements to use tokens */
-.dark .bg-white { @apply !bg-app-surface; }
+.dark .bg-white:not(.force-white) { @apply !bg-app-surface; }
 .dark .text-slate-900 { @apply !text-app-text-primary; }
 .dark .text-slate-500 { @apply !text-app-text-secondary; }
 .dark .border-slate-200 { @apply !border-app-border; }
 
 /* Input specific overrides */
 input, textarea, select {
-  @apply bg-app-input-bg border-app-input-border text-app-text-primary transition-all;
+  @apply bg-app-input-bg border border-app-input-border text-app-text-primary transition-all;
 }
 
 .dark input, .dark textarea, .dark select {
