@@ -30,7 +30,7 @@ export const CategoryColor = (category: string) => {
 };
 
 export function Badge({ status }: { status: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const m = STATUS[status];
   return (
     <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold", m.bg, m.text)}>
@@ -41,7 +41,7 @@ export function Badge({ status }: { status: string }) {
 }
 
 export function PBar({ paid, target }: { paid: number; target: number }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const pct = target > 0 ? Math.min(100, Math.round((paid / target) * 100)) : 0;
   const st = paid === 0 ? "unpaid" : paid >= target ? "paid" : "partial";
   const m = STATUS[st];
@@ -49,8 +49,8 @@ export function PBar({ paid, target }: { paid: number; target: number }) {
   return (
     <div>
       <div className="flex justify-between mb-1.5">
-        <span className="text-sm font-extrabold text-app-text-primary">{BDT(paid)}</span>
-        <span className="text-xs font-medium text-app-text-secondary">/ {BDT(target)}</span>
+        <span className="text-sm font-extrabold text-app-text-primary">{BDT(paid, lang === 'bn')}</span>
+        <span className="text-xs font-medium text-app-text-secondary">/ {BDT(target, lang === 'bn')}</span>
       </div>
       <div className="h-1.5 bg-app-border rounded-full overflow-hidden">
         <motion.div 
@@ -66,6 +66,7 @@ export function PBar({ paid, target }: { paid: number; target: number }) {
 }
 
 export function FG({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+  const { t, lang } = useLanguage();
   return (
     <div className={cn("mb-4", className)}>
       <label className="block text-xs font-bold text-app-text-secondary mb-1.5">{label}</label>
@@ -115,7 +116,7 @@ export function PassCell({ value }: { value: string }) {
 }
 
 export function ConfirmDelete({ message, onConfirm, onClose }: { message: React.ReactNode; onConfirm: () => void; onClose: () => void }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   return (
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[300] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <motion.div 
@@ -142,7 +143,7 @@ export function ConfirmDelete({ message, onConfirm, onClose }: { message: React.
 }
 
 export function ConfirmDeletePlan({ plan, amount, onConfirm, onClose }: { plan: any; amount: number; onConfirm: () => void; onClose: () => void }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   return (
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[600] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <motion.div 
@@ -272,7 +273,7 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
 }
 
 export function BottomBar({ role, page, setPage }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   if (role === "admin" || role === "superadmin") return null;
   const tabs = [
     { id: "installments", label: t("nav.my_installments"), icon: Receipt },
@@ -413,7 +414,7 @@ export function Login({ onLogin }: any) {
 }
 
 export function ForceChangePw({ admin, onDone }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [newPw, setNewPw] = useState("");
   const [conf, setConf] = useState("");
   const [showN, setShowN] = useState(false);

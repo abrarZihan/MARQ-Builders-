@@ -8,7 +8,7 @@ import { Eye, EyeOff, Building2, CheckCircle2, Clock, KeyRound, FileText, Chevro
 import { useLanguage } from "../lib/i18n";
 
 export function ClientInstallments({ client, instDefs, payments, projects, plans }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [activePlanId, setActivePlanId] = useState<string>(client.planAssignments?.[0]?.planId || "");
   const [viewMode, setViewMode] = useState<"combined" | "shares">("combined");
   const [payingId, setPayingId] = useState<string | null>(null);
@@ -131,7 +131,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
         </div>
         <div className="text-right shrink-0">
           <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-0.5">{t('common.total_price_label')}</div>
-          <div className="text-base font-black text-app-text-primary">{BDT(totalTarget)}</div>
+          <div className="text-base font-black text-app-text-primary">{BDT(totalTarget, lang === 'bn')}</div>
         </div>
       </div>
 
@@ -178,11 +178,11 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
           <div className="grid grid-cols-2 gap-6">
             <div>
               <div className="text-[10px] text-app-text-muted font-bold uppercase mb-1">{t('common.total_target') || "Total Target"}</div>
-              <div className="text-xl font-black">{BDT(totalTarget)}</div>
+              <div className="text-xl font-black">{BDT(totalTarget, lang === 'bn')}</div>
             </div>
             <div className="text-right">
               <div className="text-[10px] text-app-text-muted font-bold uppercase mb-1">{t('common.total_paid') || "Total Paid"}</div>
-              <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">{BDT(totalPaid)}</div>
+              <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">{BDT(totalPaid, lang === 'bn')}</div>
             </div>
           </div>
           
@@ -202,7 +202,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
           
           <div className="mt-4 pt-4 border-t border-app-border flex justify-between items-center">
             <div className="text-[10px] text-app-text-muted font-bold uppercase">{t('common.total_due') || "Total Due"}</div>
-            <div className="text-lg font-black text-rose-600 dark:text-rose-400">{BDT(Math.max(0, totalTarget - totalPaid))}</div>
+            <div className="text-lg font-black text-rose-600 dark:text-rose-400">{BDT(Math.max(0, totalTarget - totalPaid), lang === 'bn')}</div>
           </div>
         </div>
       </div>
@@ -308,7 +308,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                                   onClick={() => setCustomAmount(amt.toString())}
                                   className="text-[10px] font-bold px-2 py-1 bg-app-bg text-app-text-secondary rounded-md hover:bg-app-border transition-colors whitespace-nowrap border border-app-border"
                                 >
-                                  {ratio === 1 ? t('common.full_pay') : `${ratio * 100}%`} ({BDT(amt)})
+                                  {ratio === 1 ? t('common.full_pay') : `${ratio * 100}%`} ({BDT(amt, lang === 'bn')})
                                 </button>
                               );
                             })}
@@ -316,7 +316,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                         </div>
                       ) : (
                         <div className="flex justify-between items-center">
-                          <div className="text-sm font-bold text-rose-600 dark:text-rose-400">{t('common.due')}: {BDT(target - paid)}</div>
+                          <div className="text-sm font-bold text-rose-600 dark:text-rose-400">{t('common.due')}: {BDT(target - paid, lang === 'bn')}</div>
                           <button 
                             disabled={!!payingId}
                             className="bg-app-tab-active text-app-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50"
@@ -333,7 +333,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                   )}
                   {pendingAmt > 0 && (
                     <div className="mt-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                      <Clock size={14} /> {t('common.pending_approval_amount', { amount: BDT(pendingAmt) })}
+                      <Clock size={14} /> {t('common.pending_approval_amount', { amount: BDT(pendingAmt, lang === 'bn') })}
                     </div>
                   )}
                   </div>
@@ -365,14 +365,14 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                             </div>
                           )}
                           <div className="text-xs font-bold text-app-text-primary">{d.title}</div>
-                          <div className="text-[10px] text-app-text-muted font-medium mt-0.5">{BDT(d.targetAmount)}</div>
+                          <div className="text-[10px] text-app-text-muted font-medium mt-0.5">{BDT(d.targetAmount, lang === 'bn')}</div>
                         </div>
                         <div className="flex flex-col items-end gap-1.5">
                           <div className="flex items-center gap-2">
                             <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider", m.bg, m.text)}>
                               {st === "paid" ? t('common.status.paid') : st === "partial" ? t('common.status.partial') : t('common.status.unpaid')}
                             </span>
-                            <span className="text-xs font-black text-app-text-primary">{BDT(sharePaid)}</span>
+                            <span className="text-xs font-black text-app-text-primary">{BDT(sharePaid, lang === 'bn')}</span>
                           </div>
                           <div className="w-24 h-1 bg-app-bg rounded-full overflow-hidden border border-app-border">
                             <div className={cn("h-full rounded-full", m.bar)} style={{ width: `${(sharePaid / d.targetAmount) * 100}%` }} />
@@ -417,7 +417,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
 }
 
 export function ClientReceipts({ client, instDefs, payments, projects }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [viewR, setViewR] = useState<any>(null);
   const myPays = [...payments.filter((p: any) => p.clientId === client.id && p.status === "approved")].sort((a, b) => b.date.localeCompare(a.date));
   const pendingPays = payments.filter((p: any) => p.clientId === client.id && p.status === "pending");
@@ -472,7 +472,7 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
                 <div className="flex justify-between items-end">
                   <div>
                     <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-widest mb-1">{t('common.amount_paid')}</div>
-                    <div className="text-2xl font-black text-app-text-primary tracking-tighter">{BDT(p.amount)}</div>
+                    <div className="text-2xl font-black text-app-text-primary tracking-tighter">{BDT(p.amount, lang === 'bn')}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-app-text-secondary font-bold mb-2">{p.date}</div>
@@ -495,7 +495,7 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
 }
 
 export function ClientExpenses({ client, expenses }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [selExp, setSelExp] = useState<any>(null);
   const prjExpenses = expenses.filter((e: any) => e.projectId === client.projectId);
   const total = prjExpenses.reduce((s: number, e: any) => s + e.amount, 0);
@@ -512,7 +512,7 @@ export function ClientExpenses({ client, expenses }: any) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-xs font-bold text-app-text-muted uppercase tracking-wider mb-1">{t('common.total_expenses')}</div>
-          <div className="text-3xl font-black text-app-text-primary tracking-tight">{BDT(total)}</div>
+          <div className="text-3xl font-black text-app-text-primary tracking-tight">{BDT(total, lang === 'bn')}</div>
         </div>
       </div>
 
@@ -540,7 +540,7 @@ export function ClientExpenses({ client, expenses }: any) {
                   <div className="text-xs text-app-text-secondary font-medium mt-0.5 truncate">{e.description}</div>
                   <div className="text-[10px] text-app-text-muted mt-1">{e.date}</div>
                 </div>
-                <div className="text-base font-black shrink-0 text-app-text-primary">{BDT(e.amount)}</div>
+                <div className="text-base font-black shrink-0 text-app-text-primary">{BDT(e.amount, lang === 'bn')}</div>
               </motion.div>
             );
           })}
@@ -564,7 +564,7 @@ export function ClientExpenses({ client, expenses }: any) {
                 </div>
                 <div>
                   <div className="text-xs font-bold text-app-text-muted uppercase tracking-widest mb-1">{selExp.category}</div>
-                  <div className="text-2xl font-black text-app-text-primary leading-tight">{BDT(selExp.amount)}</div>
+                  <div className="text-2xl font-black text-app-text-primary leading-tight">{BDT(selExp.amount, lang === 'bn')}</div>
                 </div>
               </div>
 
@@ -597,7 +597,7 @@ export function ClientExpenses({ client, expenses }: any) {
 }
 
 export function ClientProfile({ client, onUpdateClient }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [old, setOld] = useState("");
   const [nw, setNw] = useState("");
   const [conf, setConf] = useState("");
@@ -634,7 +634,7 @@ export function ClientProfile({ client, onUpdateClient }: any) {
             [t('common.customer_id'), client.id], [t('common.phone'), client.phone || "—"], 
             [t('client.father_husband'), client.fatherHusband || "—"], [t('client.birth_date'), client.birthDate || "—"], 
             [t('client.email'), client.email || "—"], [t('client.nid'), client.nid || "—"], 
-            [t('common.total_price_label'), BDT(client.totalAmount * (client.shareCount || 1))]
+            [t('common.total_price_label'), BDT(client.totalAmount * (client.shareCount || 1), lang === 'bn')]
           ].map(([l, v], i) => (
             <div key={`${l}-${i}`} className="flex items-center py-2 border-b border-app-border last:border-0">
               <span className="text-xs font-bold text-app-text-muted w-32 shrink-0">{l}</span>

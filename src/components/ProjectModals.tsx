@@ -7,7 +7,7 @@ import { Trash2, Clock, Printer, FileText } from "lucide-react";
 import { useLanguage } from "../lib/i18n";
 
 export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin, onSave, onDelete, onClose }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const assignment = client.planAssignments?.find((pa: any) => pa.planId === instDef.planId);
   const shareCount = assignment ? assignment.shareCount : (client.shareCount || 1);
   const targetAmount = instDef.targetAmount * shareCount;
@@ -27,7 +27,7 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
   const submit = () => {
     const a = parseFloat(amount);
     if (!a || a <= 0) { setErr(t("project_modals.enter_valid_amount")); return; }
-    if (a > rem) { setErr(t("project_modals.max_amount", { amount: BDT(rem) })); return; }
+    if (a > rem) { setErr(t("project_modals.max_amount", { amount: BDT(rem, lang === 'bn') })); return; }
     onSave({ id: uid("PAY-"), clientId: client.id, instDefId: instDef.id, amount: a, date, note, status: isSuperAdmin ? "approved" : "pending", approvedBy: null });
     onClose();
   };
@@ -46,7 +46,7 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
         
         <div className="bg-app-bg border border-app-border rounded-2xl p-4 mb-6 transition-colors">
           <PBar paid={paid} target={targetAmount} />
-          {rem > 0 && <div className="text-sm font-bold text-rose-600 dark:text-rose-400 mt-3">{t("project_modals.remaining", { amount: BDT(rem) })}</div>}
+          {rem > 0 && <div className="text-sm font-bold text-rose-600 dark:text-rose-400 mt-3">{t("project_modals.remaining", { amount: BDT(rem, lang === 'bn') })}</div>}
         </div>
         
         {approvedPays.length > 0 && (
@@ -56,7 +56,7 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
               <div key={p.id} className="flex justify-between items-center bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-2 transition-colors">
                 <span className="text-xs font-medium text-app-text-secondary">{dotJoin(p.date, p.note)}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 mr-1">{BDT(p.amount)}</span>
+                  <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 mr-1">{BDT(p.amount, lang === 'bn')}</span>
                   <button className="w-7 h-7 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center hover:bg-blue-500/20 transition-colors border border-blue-500/20" onClick={() => setViewR(p)}><FileText size={14} /></button>
                   {isSuperAdmin && (
                     <button className="w-7 h-7 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg flex items-center justify-center hover:bg-rose-500/20 transition-colors border border-rose-500/20" onClick={() => setDelPay(p)}><Trash2 size={14} /></button>
@@ -74,7 +74,7 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
               <div key={p.id} className="flex justify-between items-center bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-2 transition-colors">
                 <span className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5"><Clock size={12} /> {dotJoin(p.date, p.note)}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-black text-amber-600 dark:text-amber-500">{BDT(p.amount)}</span>
+                  <span className="text-sm font-black text-amber-600 dark:text-amber-500">{BDT(p.amount, lang === 'bn')}</span>
                   {isSuperAdmin && (
                     <button className="w-7 h-7 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg flex items-center justify-center hover:bg-rose-500/20 transition-colors border border-rose-500/20" onClick={() => setDelPay(p)}><Trash2 size={14} /></button>
                   )}
@@ -125,7 +125,7 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
         <AnimatePresence>
           {delPay && (
             <ConfirmDelete 
-              message={<><b>{BDT(delPay.amount)}</b> ({delPay.date}){t("project_modals.will_be_deleted")}</>} 
+              message={<><b>{BDT(delPay.amount, lang === 'bn')}</b> ({delPay.date}){t("project_modals.will_be_deleted")}</>} 
               onConfirm={() => { onDelete(delPay.id); setDelPay(null); }} 
               onClose={() => setDelPay(null)} 
             />
@@ -140,7 +140,7 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
 }
 
 export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [f, setF] = useState({ title: "", dueDate: "", targetAmount: "" });
   const s = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
   
@@ -182,7 +182,7 @@ export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
 }
 
 export function AddExpSheet({ projectId, expense, onSave, onClose }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [f, setF] = useState(expense ? { ...expense } : { category: "", description: "", amount: expense?.amount?.toString() || "", date: todayStr() });
   const s = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
   
@@ -228,7 +228,7 @@ export function AddExpSheet({ projectId, expense, onSave, onClose }: any) {
 }
 
 export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy, onClose }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   
   const ReceiptContent = ({ type }: { type: string }) => (
     <div className="relative p-10 bg-white text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">

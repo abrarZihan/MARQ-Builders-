@@ -18,7 +18,7 @@ import { AuditLogPage, LogRow } from "./components/Admin";
 import { AdminProfile, AdminManagePage, AdminPaymentsPage } from "./components/AdminPages";
 import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
-import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle, MoreVertical, Edit2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle, MoreVertical, Edit2, AlertCircle, ClipboardList, CircleDollarSign } from "lucide-react";
 import { CategoryIcon, CategoryColor } from "./components/Shared";
 import { useLanguage } from "./lib/i18n";
 
@@ -130,21 +130,41 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
       </div>
       
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-app-surface rounded-2xl border border-app-border p-4">
-          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_expected")}</div>
-          <div className="text-lg font-black text-app-text-primary mt-1">{BDTshort(totalExpected)}</div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 rounded-lg flex items-center justify-center border border-blue-200 dark:border-blue-500/20">
+              <ClipboardList size={16} />
+            </div>
+            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_expected")}</div>
+          </div>
+          <div className="text-lg font-black text-app-text-primary">{BDTshort(totalExpected)}</div>
         </div>
-        <div className="bg-app-surface rounded-2xl border border-app-border p-4">
-          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_collected")}</div>
-          <div className="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-1">{BDTshort(totalCollected)}</div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg flex items-center justify-center border border-emerald-200 dark:border-emerald-500/20">
+              <CircleDollarSign size={16} />
+            </div>
+            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_collected")}</div>
+          </div>
+          <div className="text-lg font-black text-emerald-600 dark:text-emerald-400">{BDTshort(totalCollected)}</div>
         </div>
-        <div className="bg-app-surface rounded-2xl border border-app-border p-4">
-          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_due")}</div>
-          <div className="text-lg font-black text-rose-600 dark:text-rose-400 mt-1">{BDTshort(totalDue)}</div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 rounded-lg flex items-center justify-center border border-rose-200 dark:border-rose-500/20">
+              <Clock size={16} />
+            </div>
+            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_due")}</div>
+          </div>
+          <div className="text-lg font-black text-rose-600 dark:text-rose-400">{BDTshort(totalDue)}</div>
         </div>
-        <div className="bg-app-surface rounded-2xl border border-app-border p-4">
-          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_expenses")}</div>
-          <div className="text-lg font-black text-violet-600 dark:text-violet-400 mt-1">{BDTshort(totalExpenses)}</div>
+        <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400 rounded-lg flex items-center justify-center border border-violet-200 dark:border-violet-500/20">
+              <Building2 size={16} />
+            </div>
+            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_expenses")}</div>
+          </div>
+          <div className="text-lg font-black text-violet-600 dark:text-violet-400">{BDTshort(totalExpenses)}</div>
         </div>
       </div>
       

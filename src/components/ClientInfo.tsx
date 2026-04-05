@@ -8,7 +8,7 @@ import { Trash2, Eye, EyeOff, Edit2, Camera, Printer, FileUp, Search, Filter, X 
 import { useLanguage } from "../lib/i18n";
 
 export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAddSingle, onDelete, projectId, plans }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -325,7 +325,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
 }
 
 function ClientDetailSheet({ client, onClose, onEdit }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [showPass, setShowPass] = useState(false);
 
   const totalShares = !client.planAssignments || client.planAssignments.length === 0 
@@ -354,7 +354,7 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
           {[
             [t("client_info.customer_id"), client.id], [t("client_info.name"), client.name], [t("client_info.father_husband"), client.fatherHusband], 
             [t("client_info.birth_date"), client.birthDate], [t("client_info.phone"), client.phone], [t("client_info.email"), client.email], 
-            [t("client_info.nid"), client.nid], [t("client_info.plot"), client.plot], [t("client_info.total_amount"), BDT(client.totalAmount)],
+            [t("client_info.nid"), client.nid], [t("client_info.plot"), client.plot], [t("client_info.total_amount"), BDT(client.totalAmount, lang === 'bn')],
             [t("client_info.share_count"), totalShares],
             [t("client_info.remarks"), client.remarks]
           ].map(([l, v], i) => (
@@ -385,7 +385,7 @@ function ClientDetailSheet({ client, onClose, onEdit }: any) {
 }
 
 function ClientEditSheet({ client, allClients, plans, onSave, onClose }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const isNew = !!client.__new;
   const originalId = client.id;
   const [f, setF] = useState({ ...client, planAssignments: client.planAssignments || [] });
@@ -541,7 +541,7 @@ function ClientEditSheet({ client, allClients, plans, onSave, onClose }: any) {
 }
 
 function ImportPreviewSheet({ data, onConfirm, onClose }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   return (
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <motion.div 

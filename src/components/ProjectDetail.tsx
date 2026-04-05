@@ -274,7 +274,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                       <div className="relative mt-2 flex items-center">
                         <Search size={12} className="absolute left-2 text-white/60" />
                         <input 
-                          className="w-full pl-7 pr-7 py-1 bg-white/10 border border-white/20 rounded-lg text-[10px] focus:outline-none focus:ring-1 focus:ring-white/40 placeholder:text-white/40 text-white transition-all"
+                          className="w-full pl-7 pr-7 py-1 !bg-white/10 !border-white/20 rounded-lg text-[10px] focus:outline-none focus:ring-1 focus:ring-white/40 placeholder:text-white/40 !text-white transition-all"
                           placeholder={t("client_info.search_ph")}
                           value={search}
                           onChange={e => setSearch(e.target.value)}

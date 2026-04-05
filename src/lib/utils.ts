@@ -8,14 +8,40 @@ export function cn(...inputs: ClassValue[]) {
 export const dotJoin = (...parts: (string | number | undefined | null)[]) => 
   parts.filter(p => p !== undefined && p !== null && String(p).trim() !== "").join(" · ");
 
-export const BDT = (n: number | string) => "৳ " + Number(n || 0).toLocaleString("en-IN");
-export const BDTshort = (n: number | string) => {
+export const BDT = (n: number | string, isBn: boolean = false) => {
   const v = Number(n || 0);
-  if (v < 0) return "-" + BDTshort(-v);
-  if (v >= 10000000) return "৳" + (v / 10000000).toFixed(1) + "Cr";
-  if (v >= 100000) return "৳" + (v / 100000).toFixed(v % 100000 === 0 ? 0 : 1) + "L";
-  if (v >= 1000) return "৳" + (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + "K";
-  return "৳" + v;
+  const s = v.toLocaleString("en-IN");
+  if (!isBn) return "৳ " + s;
+  const digits: Record<string, string> = {
+    '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪', '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'
+  };
+  return "৳ " + s.replace(/[0-9]/g, w => digits[w]);
+};
+export const BDTshort = (n: number | string, isBn: boolean = false) => {
+  const v = Number(n || 0);
+  if (v < 0) return "-" + BDTshort(-v, isBn);
+  
+  const toBn = (s: string) => {
+    if (!isBn) return s;
+    const digits: Record<string, string> = {
+      '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪', '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'
+    };
+    return s.replace(/[0-9]/g, w => digits[w]);
+  };
+
+  if (v >= 10000000) {
+    const val = (v / 10000000).toFixed(1);
+    return "৳" + toBn(val) + (isBn ? " কোটি" : "Cr");
+  }
+  if (v >= 100000) {
+    const val = (v / 100000).toFixed(v % 100000 === 0 ? 0 : 1);
+    return "৳" + toBn(val) + (isBn ? " লাখ" : "L");
+  }
+  if (v >= 1000) {
+    const val = (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1);
+    return "৳" + toBn(val) + (isBn ? " কে" : "K");
+  }
+  return "৳" + toBn(String(v));
 };
 
 export const uid = (p: string) => p + Date.now().toString(36).toUpperCase().slice(-6);
