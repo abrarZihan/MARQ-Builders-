@@ -719,12 +719,20 @@ export default function App() {
     };
   }, []);
 
-  // Set loading to false only when essential data is loaded
+    // Set loading to false only when essential data is loaded
   useEffect(() => {
     if (dataLoaded.projects && dataLoaded.plans && dataLoaded.clients && dataLoaded.instDefs && dataLoaded.payments) {
       setLoading(false);
     }
   }, [dataLoaded]);
+
+  // Fallback to stop loading after 10 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Keep client auth user in sync with clients collection
   useEffect(() => {

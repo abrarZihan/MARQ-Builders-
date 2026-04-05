@@ -75,7 +75,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   }
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  // Do not throw the error, just log it so the app can continue
 }
 
 // Validate Connection to Firestore
