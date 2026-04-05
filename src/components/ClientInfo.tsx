@@ -44,34 +44,56 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
         const get = (targetKeys: string[]) => {
           for (const k of targetKeys) {
             const foundKey = Object.keys(r).find(rk => {
-              const normalized = rk.toLowerCase().replace(/[\s_]/g, "");
+              // Normalize: remove spaces, special characters, and convert to lowercase
+              const normalized = rk.toLowerCase().replace(/[^a-z0-9]/g, "");
               return normalized === k || normalized.includes(k);
             });
-            if (foundKey && r[foundKey]) return { key: foundKey, value: String(r[foundKey]) };
+            if (foundKey && r[foundKey] !== undefined && r[foundKey] !== null) return { key: foundKey, value: String(r[foundKey]) };
           }
           return null;
         };
 
-        const name = get(["customername", "name", "fullname", "clientname"])?.value || "";
+        const name = get(["customername", "name", "fullname", "clientname", "clientname"])?.value || "";
         const phone = get(["phone", "mobile", "contact", "cell", "number"])?.value || "";
         const nid = get(["nid", "nationalid", "national"])?.value || "";
         
         if (!name) return;
 
         // Identity key: Name + Phone + NID
-        const identity = `${name}|${phone}|${nid}`.toLowerCase().replace(/[\s_]/g, "");
-        const planName = get(["plan", "plantype", "category", "type"])?.value || "Default";
-        const shareCount = parseInt(get(["sharecount", "shares", "count", "share"])?.value) || 1;
+        const identity = `${name}|${phone}|${nid}`.toLowerCase().replace(/[^a-z0-9]/g, "");
+        
+        // Dynamic Plan Detection
+        const plansFromRow: Record<string, number> = {};
+        Object.keys(r).forEach(key => {
+          if (key.toLowerCase().includes("shares")) {
+            const planName = key.replace(/shares/i, "").trim();
+            const shareCount = parseInt(String(r[key])) || 0;
+            if (shareCount > 0) {
+              plansFromRow[planName] = (plansFromRow[planName] || 0) + shareCount;
+            }
+          }
+        });
+
+        // Fallback if no dynamic plans found
+        if (Object.keys(plansFromRow).length === 0) {
+          const planName = get(["plan", "plantype", "category", "type"])?.value || "Default";
+          const shareCount = parseInt(get(["sharecount", "shares", "count", "share"])?.value) || 1;
+          plansFromRow[planName] = shareCount;
+        }
+
+        const totalShares = Object.values(plansFromRow).reduce((a: number, b: number) => a + b, 0);
 
         if (clientMap.has(identity)) {
           const existing = clientMap.get(identity);
-          existing.totalShares += shareCount;
-          existing.plans[planName] = (existing.plans[planName] || 0) + shareCount;
+          existing.totalShares += totalShares;
+          Object.entries(plansFromRow).forEach(([pName, count]) => {
+            existing.plans[pName] = (existing.plans[pName] || 0) + count;
+          });
         } else {
           clientMap.set(identity, {
             row: r,
-            totalShares: shareCount,
-            plans: { [planName]: shareCount },
+            totalShares: totalShares,
+            plans: plansFromRow,
             firstIndex: i
           });
         }
@@ -85,10 +107,10 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
         const getVal = (targetKeys: string[]) => {
           for (const k of targetKeys) {
             const foundKey = Object.keys(r).find(rk => {
-              const normalized = rk.toLowerCase().replace(/[\s_]/g, "");
+              const normalized = rk.toLowerCase().replace(/[^a-z0-9]/g, "");
               return normalized === k || normalized.includes(k);
             });
-            if (foundKey && r[foundKey]) {
+            if (foundKey && r[foundKey] !== undefined && r[foundKey] !== null) {
               usedKeys.add(foundKey);
               return String(r[foundKey]);
             }
@@ -96,24 +118,22 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
           return "";
         };
 
-        const phone = getVal(["phone", "mobile", "contact", "cell", "number"]);
-        const id = getVal(["customerid", "clientid", "id", "sl", "serial"]) || phone || genClientId([...allClients]);
-        
-        // Map plan names to actual plan IDs
+        // Map plan names to actual plan IDs or mark as new
         const planAssignments = Object.entries(g.plans).map(([pName, count]) => {
-          const matchedPlan = plans.find((p: any) => p.name.toLowerCase().includes(pName.toLowerCase()) || pName.toLowerCase().includes(p.name.toLowerCase()));
+          const matchedPlan = plans.find((p: any) => p.name.toLowerCase() === pName.toLowerCase());
           return {
-            planId: matchedPlan ? matchedPlan.id : (plans[0]?.id || "default"),
+            planId: matchedPlan ? matchedPlan.id : `NEW_PLAN_${pName}`,
+            planName: pName, // Keep name for reference
             shareCount: count
           };
         });
 
         const client: any = {
-          id,
+          id: getVal(["customerid", "clientid", "id", "sl", "serial"]) || getVal(["phone", "mobile", "contact", "cell", "number"]) || genClientId([...allClients]),
           name: getVal(["customername", "name", "fullname", "clientname"]),
           fatherHusband: getVal(["father", "husband", "parent", "guardian"]),
           birthDate: getVal(["birth", "dob", "dateofbirth"]),
-          phone,
+          phone: getVal(["phone", "mobile", "contact", "cell", "number"]),
           email: getVal(["email", "mail", "gmail"]),
           nid: getVal(["nid", "nationalid", "national"]),
           plot: getVal(["plot", "flat", "unit", "apartment", "plotno", "flatno"]),
@@ -126,15 +146,8 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
           remarks: "",
           _row: i + 2
         };
-
-        const otherInfo: string[] = [];
-        Object.keys(r).forEach(key => {
-          if (!usedKeys.has(key) && r[key]) otherInfo.push(`${key}: ${r[key]}`);
-        });
-        if (otherInfo.length > 0) client.remarks = otherInfo.join(" | ");
-
-        return client;
       });
+
 
       setImportData(mapped);
       setImportSheet(true);

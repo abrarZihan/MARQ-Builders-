@@ -24,6 +24,12 @@ const app = initializeApp(firebaseConfig);
 // Use the database ID from environment variables if available, otherwise fall back to local config
 const dbId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || localConfig.firestoreDatabaseId;
 
+console.log("Firebase Config Initialized:", {
+  projectId: firebaseConfig.projectId,
+  dbId: dbId,
+  usingEnv: !!import.meta.env.VITE_FIREBASE_API_KEY
+});
+
 export const db = getFirestore(app, dbId);
 export const auth = getAuth(app);
 
