@@ -3,12 +3,28 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 
-// Import the Firebase configuration
-import firebaseConfig from '../firebase-applet-config.json';
+// Import the local config as a fallback
+import localConfig from '../firebase-applet-config.json';
+
+// Use environment variables if available, otherwise fall back to local config
+const firebaseConfig = import.meta.env.VITE_FIREBASE_API_KEY
+  ? {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+      appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    }
+  : localConfig;
 
 // Initialize Firebase SDK
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Use the database ID from environment variables if available, otherwise fall back to local config
+const dbId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || localConfig.firestoreDatabaseId;
+
+export const db = getFirestore(app, dbId);
 export const auth = getAuth(app);
 
 export enum OperationType {
