@@ -5,12 +5,12 @@ import { FG, ConfirmDelete, ClientAvatar, PassCell, PBar, CategoryIcon, Category
 import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
 import { ClientInfoPage } from "./ClientInfo";
-import { CellPaySheet, AddDefSheet, AddExpSheet, ReceiptSheet } from "./ProjectModals";
+import { CellPaySheet, AddDefSheet, EditDefSheet, AddExpSheet, ReceiptSheet } from "./ProjectModals";
 import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText, Edit2, Search, Filter, X } from "lucide-react";
 
 import { useLanguage } from "../lib/i18n";
 
-export function ProjectDetail({ project, clients, allClients, instDefs, plans, payments, expenses, logs, isSuperAdmin, onBack, onAddPlan, onUpdatePlan, onDeletePlan, onAddDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
+export function ProjectDetail({ project, clients, allClients, instDefs, plans, payments, expenses, logs, isSuperAdmin, onBack, onAddPlan, onUpdatePlan, onDeletePlan, onAddDef, onUpdateInstDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
   const { t } = useLanguage();
   const [tab, setTab] = useState("sheet");
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
@@ -29,6 +29,26 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   const [deletePlanTarget, setDeletePlanTarget] = useState<any>(null);
   const [defTaps, setDefTaps] = useState<any>({});
   
+  const [editDefModal, setEditDefModal] = useState<any>(null);
+  const [longPressDefTimer, setLongPressDefTimer] = useState<any>(null);
+  const [isDefLongPress, setIsDefLongPress] = useState(false);
+
+  const handleDefLongPressStart = (def: any) => {
+    setIsDefLongPress(false);
+    const timer = setTimeout(() => {
+      setIsDefLongPress(true);
+      setEditDefModal(def);
+    }, 600);
+    setLongPressDefTimer(timer);
+  };
+
+  const handleDefLongPressEnd = () => {
+    if (longPressDefTimer) {
+      clearTimeout(longPressDefTimer);
+      setLongPressDefTimer(null);
+    }
+  };
+
   const prjPlans = plans.filter((pl: any) => pl.projectId === project.id);
   useEffect(() => {
     if (prjPlans.length > 0 && !activePlanId) setActivePlanId(prjPlans[0].id);
@@ -48,7 +68,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   const prjClients = basePrjClients.filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
   
   const allPrjClients = clients.filter((c: any) => c.projectId === project.id).filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
-  const prjDefs = instDefs.filter((d: any) => d.planId === activePlanId);
+  const prjDefs = instDefs.filter((d: any) => d.planId === activePlanId || (d.projectId === project.id && d.isGlobal));
   const prjExpenses = expenses.filter((e: any) => e.projectId === project.id);
   const prjLogs = [...logs].filter(l => l.projectId === project.id).sort((a, b) => b.ts.localeCompare(a.ts));
   
@@ -60,7 +80,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   const totalTarget = prjClients.reduce((s: number, c: any) => {
     const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
     const sc = assignment ? assignment.shareCount : (c.shareCount || 1);
-    return s + sc * prjDefs.reduce((ss: number, d: any) => ss + d.targetAmount, 0);
+    return s + prjDefs.reduce((ss: number, d: any) => ss + (d.isGlobal ? 1 : sc) * d.targetAmount, 0);
   }, 0);
   const totalDue = Math.max(0, totalTarget - totalCollected);
   
@@ -293,33 +313,23 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                       </div>
                     </th>
                     {prjDefs.map((d: any, i: number) => {
-                      const taps = defTaps[d.id] || 0;
-                      const tapColor = taps === 0 ? "text-rose-600 dark:text-rose-400" : taps === 1 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400";
-                      const tapBg = taps === 0 ? "bg-rose-500/20" : taps === 1 ? "bg-amber-500/20" : "bg-emerald-500/20";
-                      const tapLabel = taps === 0 ? t("project_detail.delete") : taps === 1 ? t("project_detail.confirm_2_3") : t("project_detail.delete_3_3");
-                      
                       return (
-                        <th key={`${d.id}-${i}`} className="sticky top-0 z-10 bg-app-nav-bg text-white p-3 min-w-[120px] font-bold border-r border-b border-app-border/30 text-center transition-colors">
-                          <div className="text-[11px] mb-1">{d.title}</div>
+                        <th 
+                          key={`${d.id}-${i}`} 
+                          className="sticky top-0 z-10 bg-app-nav-bg text-white p-3 min-w-[120px] font-bold border-r border-b border-app-border/30 text-center transition-colors cursor-pointer select-none group relative"
+                          onMouseDown={() => handleDefLongPressStart(d)}
+                          onMouseUp={handleDefLongPressEnd}
+                          onMouseLeave={handleDefLongPressEnd}
+                          onTouchStart={() => handleDefLongPressStart(d)}
+                          onTouchEnd={handleDefLongPressEnd}
+                        >
+                          <div className="text-[11px] mb-1 flex items-center justify-center gap-1">
+                            {d.title}
+                            {d.isGlobal && <span className="text-[8px] bg-blue-500/20 text-blue-400 px-1 rounded border border-blue-500/30">BASIC</span>}
+                          </div>
                           <div className="text-[9px] text-white/70 font-medium">{BDT(d.targetAmount)}</div>
                           {d.dueDate && <div className="text-[8px] text-white/50 mt-0.5">{d.dueDate}</div>}
-                          {isSuperAdmin && (
-                            <button
-                              onClick={() => {
-                                const cur = defTaps[d.id] || 0;
-                                if (cur >= 2) {
-                                  onDeleteInstDef(d.id);
-                                  setDefTaps((p: any) => { const n = { ...p }; delete n[d.id]; return n; });
-                                } else {
-                                  setDefTaps((p: any) => ({ ...p, [d.id]: cur + 1 }));
-                                  setTimeout(() => setDefTaps((p: any) => { const n = { ...p }; if (n[d.id] === cur + 1) delete n[d.id]; return n; }), 3000);
-                                }
-                              }}
-                              className={cn("mt-2 px-2 py-1 rounded-md text-[9px] font-bold w-full transition-colors flex items-center justify-center gap-1", tapBg, tapColor)}
-                            >
-                              <Trash2 size={10} /> {tapLabel}
-                            </button>
-                          )}
+                          <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                         </th>
                       );
                     })}
@@ -338,7 +348,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                       const assignment = client.planAssignments?.find((pa: any) => pa.planId === activePlanId);
                       const shareCount = assignment ? assignment.shareCount : (client.shareCount || 1);
                       const rowTotal = prjDefs.reduce((s: number, d: any) => s + clientPaidForDef(client.id, d.id, payments), 0);
-                      const rowTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
+                      const rowTarget = prjDefs.reduce((s: number, d: any) => s + (d.isGlobal ? 1 : shareCount) * d.targetAmount, 0);
                       
                       return (
                         <tr key={client.id} className="group hover:bg-app-bg transition-colors">
@@ -352,7 +362,8 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                             </div>
                           </td>
                           {prjDefs.map((d: any, i: number) => {
-                            const cellTarget = d.targetAmount * shareCount;
+                            const sc = d.isGlobal ? 1 : shareCount;
+                            const cellTarget = d.targetAmount * sc;
                             const paid = clientPaidForDef(client.id, d.id, payments);
                             const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
                             const st = cellStatus(paid, cellTarget);
@@ -397,7 +408,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                       const ct = prjClients.reduce((s: number, c: any) => s + clientPaidForDef(c.id, d.id, payments), 0);
                       const cT = prjClients.reduce((s: number, c: any) => {
                         const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
-                        const sc = assignment ? assignment.shareCount : (c.shareCount || 1);
+                        const sc = d.isGlobal ? 1 : (assignment ? assignment.shareCount : (c.shareCount || 1));
                         return s + sc * d.targetAmount;
                       }, 0);
                       return (
@@ -437,7 +448,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
             const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
             const shareCount = assignment ? assignment.shareCount : (c.shareCount || 1);
             const cPaid = payments.filter((p: any) => p.clientId === c.id && p.status === "approved" && prjDefs.find(d => d.id === p.instDefId)).reduce((s: number, p: any) => s + p.amount, 0);
-            const cTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
+            const cTarget = prjDefs.reduce((s: number, d: any) => s + (d.isGlobal ? 1 : shareCount) * d.targetAmount, 0);
             return (
               <div key={c.id} className="bg-app-surface rounded-2xl border border-app-border p-5 shadow-sm transition-colors">
                 <div className="flex items-center gap-4 mb-4">
@@ -608,6 +619,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
         )}
         {cellModal && <CellPaySheet client={cellModal.client} instDef={cellModal.instDef} payments={payments} project={project} isSuperAdmin={isSuperAdmin} onSave={(p: any) => { onAddPayment(p); setCellModal(null); }} onDelete={(id: string) => onDeletePayment(id)} onClose={() => setCellModal(null)} />}
         {addDefModal && <AddDefSheet projectId={project.id} planId={activePlanId} onSave={(d: any) => { onAddDef(d); setAddDefModal(false); }} onClose={() => setAddDefModal(false)} />}
+        {editDefModal && <EditDefSheet def={editDefModal} onSave={(d: any) => { onUpdateInstDef(d); setEditDefModal(null); }} onDelete={(id: string) => { onDeleteInstDef(id, activePlanId); setEditDefModal(null); }} onClose={() => setEditDefModal(null)} />}
         {addExpModal && <AddExpSheet projectId={project.id} onSave={(e: any) => { onAddExpense(e); setAddExpModal(false); }} onClose={() => setAddExpModal(false)} />}
         {editExpModal && <AddExpSheet projectId={project.id} expense={editExpModal} onSave={(e: any) => { onUpdateExpense(e); setEditExpModal(null); }} onClose={() => setEditExpModal(null)} />}
         {delExp && <ConfirmDelete message={<><b>{delExp.category}</b> — {BDT(delExp.amount)}{t("project_detail.will_be_deleted")}</>} onConfirm={() => { onDeleteExpense(delExp.id); setDelExp(null); }} onClose={() => setDelExp(null)} />}

@@ -9,7 +9,7 @@ import { useLanguage } from "../lib/i18n";
 export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin, onSave, onDelete, onClose }: any) {
   const { t, lang } = useLanguage();
   const assignment = client.planAssignments?.find((pa: any) => pa.planId === instDef.planId);
-  const shareCount = assignment ? assignment.shareCount : (client.shareCount || 1);
+  const shareCount = instDef.isGlobal ? 1 : (assignment ? assignment.shareCount : (client.shareCount || 1));
   const targetAmount = instDef.targetAmount * shareCount;
   const existPays = payments.filter((p: any) => p.clientId === client.id && p.instDefId === instDef.id);
   const approvedPays = existPays.filter((p: any) => p.status === "approved");
@@ -149,8 +149,8 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
 
 export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
   const { t, lang } = useLanguage();
-  const [f, setF] = useState({ title: "", dueDate: "", targetAmount: "" });
-  const s = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
+  const [f, setF] = useState({ title: "", dueDate: "", targetAmount: "", isGlobal: false });
+  const s = (k: string, v: any) => setF(p => ({ ...p, [k]: v }));
   
   return (
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
@@ -170,13 +170,26 @@ export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
           <FG label={t("project_modals.target_bdt")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="number" value={f.targetAmount} onChange={e => s("targetAmount", e.target.value)} /></FG>
           <FG label={t("project_modals.due_date")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="date" value={f.dueDate} onChange={e => s("dueDate", e.target.value)} /></FG>
         </div>
+
+        <div className="flex items-center gap-3 mb-6 p-3 bg-app-bg border border-app-border rounded-xl">
+          <input 
+            type="checkbox" id="isGlobal" className="w-5 h-5 rounded-lg border-app-border text-app-tab-active focus:ring-app-tab-active" 
+            checked={f.isGlobal} onChange={e => s("isGlobal", e.target.checked)} 
+          />
+          <label htmlFor="isGlobal" className="text-sm font-bold text-app-text-primary cursor-pointer select-none">
+            {lang === 'bn' ? "সবার জন্য (Basic Payment)" : "Global (Basic Payment for all)"}
+            <div className="text-[10px] text-app-text-muted font-medium mt-0.5">
+              {lang === 'bn' ? "এটি সব প্ল্যানে দেখাবে এবং শেয়ার সংখ্যা দিয়ে গুণ হবে না।" : "Shows in all plans and doesn't multiply by share count."}
+            </div>
+          </label>
+        </div>
         
         <div className="flex gap-3 mt-4">
           <button 
             className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors" 
             onClick={() => {
               if (!f.title || !f.targetAmount) { alert(t("project_modals.add_inst_err")); return; }
-              onSave({ id: uid("D-"), projectId, planId, title: f.title, dueDate: f.dueDate, targetAmount: parseFloat(f.targetAmount) });
+              onSave({ id: uid("D-"), projectId, planId, title: f.title, dueDate: f.dueDate, targetAmount: parseFloat(f.targetAmount), isGlobal: f.isGlobal });
               onClose();
             }}
           >
@@ -184,6 +197,75 @@ export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
           </button>
           <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>{t("project_modals.cancel")}</button>
         </div>
+      </motion.div>
+    </div>
+  );
+}
+
+export function EditDefSheet({ def, onSave, onDelete, onClose }: any) {
+  const { t, lang } = useLanguage();
+  const [f, setF] = useState({ ...def, targetAmount: def.targetAmount.toString() });
+  const s = (k: string, v: any) => setF(p => ({ ...p, [k]: v }));
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={onClose}>
+      <motion.div 
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="bg-app-surface-elevated rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe border border-app-border" 
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
+        <div className="text-xl font-black text-app-text-primary mb-6">{lang === 'bn' ? "কিস্তি এডিট" : "Edit Installment"}</div>
+        
+        <FG label={t("project_modals.inst_name")}>
+          <input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" placeholder={t("project_modals.inst_name_ph")} value={f.title} onChange={e => s("title", e.target.value)} />
+        </FG>
+        <div className="grid grid-cols-2 gap-4">
+          <FG label={t("project_modals.target_bdt")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="number" value={f.targetAmount} onChange={e => s("targetAmount", e.target.value)} /></FG>
+          <FG label={t("project_modals.due_date")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="date" value={f.dueDate} onChange={e => s("dueDate", e.target.value)} /></FG>
+        </div>
+
+        <div className="flex items-center gap-3 mb-6 p-3 bg-app-bg border border-app-border rounded-xl">
+          <input 
+            type="checkbox" id="isGlobalEdit" className="w-5 h-5 rounded-lg border-app-border text-app-tab-active focus:ring-app-tab-active" 
+            checked={f.isGlobal} onChange={e => s("isGlobal", e.target.checked)} 
+          />
+          <label htmlFor="isGlobalEdit" className="text-sm font-bold text-app-text-primary cursor-pointer select-none">
+            {lang === 'bn' ? "সবার জন্য (Basic Payment)" : "Global (Basic Payment for all)"}
+          </label>
+        </div>
+        
+        <div className="flex flex-col gap-3 mt-4">
+          <div className="flex gap-3">
+            <button 
+              className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors" 
+              onClick={() => {
+                if (!f.title || !f.targetAmount) { alert(t("project_modals.add_inst_err")); return; }
+                onSave({ ...f, targetAmount: parseFloat(f.targetAmount) });
+                onClose();
+              }}
+            >
+              {t("modal.update")}
+            </button>
+            <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>{t("project_modals.cancel")}</button>
+          </div>
+          <button 
+            className="w-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold py-3 rounded-xl hover:bg-rose-500/20 transition-colors border border-rose-500/20 flex items-center justify-center gap-2"
+            onClick={() => setShowConfirm(true)}
+          >
+            <Trash2 size={16} /> {t("project_detail.delete")}
+          </button>
+        </div>
+
+        {showConfirm && (
+          <ConfirmDelete 
+            message={lang === 'bn' ? "এই কিস্তি কলামটি মুছে ফেলবেন? এর সব পেমেন্ট রেকর্ডও মুছে যাবে।" : "Delete this installment column? All associated payment records will also be deleted."}
+            onConfirm={() => { onDelete(def.id); onClose(); }}
+            onClose={() => setShowConfirm(false)}
+          />
+        )}
       </motion.div>
     </div>
   );
@@ -240,21 +322,21 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="relative p-10 bg-white text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
+    <div className="relative p-6 sm:p-10 bg-white dark:bg-white text-slate-900 dark:text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-full sm:min-w-[850px] print:min-w-0 overflow-hidden">
       {/* Header */}
       {/* Logo in top-left corner */}
-      <div className="absolute top-6 left-10">
+      <div className="absolute top-4 sm:top-6 left-6 sm:left-10">
         <img 
           src={LOGO_URL} 
           alt="Logo" 
-          className="h-20 w-auto object-contain"
+          className="h-12 sm:h-20 w-auto object-contain"
           referrerPolicy="no-referrer"
         />
       </div>
 
       <div className="flex flex-col items-center mb-6 w-full">
-        <h1 className="text-3xl font-black text-[#0f172a] tracking-tight">MARQ BUILDERS</h1>
-        <p className="text-[11px] font-bold text-slate-800 mt-2 text-center w-full">
+        <h1 className="text-xl sm:text-3xl font-black text-[#0f172a] dark:text-[#0f172a] tracking-tight">MARQ BUILDERS</h1>
+        <p className="text-[9px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-800 mt-1 sm:mt-2 text-center w-full">
           216/8, Baganbari, North Vasantek Dhaka Cantt, Dhaka- 1206
         </p>
       </div>
@@ -267,20 +349,20 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
       </div>
 
       {/* Sl No & Date */}
-      <div className="flex justify-between text-[13px] font-bold mb-6 px-2">
-        <div className="flex items-baseline gap-1">
-          <span>Sl. No.</span>
-          <span className="border-b border-dotted border-slate-900 min-w-[120px] px-2 text-center">
-            {payment?.id ? (payment.id.split('-')[1] || payment.id) : ""}
-          </span>
+        <div className="flex justify-between text-[13px] font-bold mb-6 px-2 text-slate-900 dark:text-slate-900">
+          <div className="flex items-baseline gap-1">
+            <span>Sl. No.</span>
+            <span className="border-b border-dotted border-slate-900 dark:border-slate-900 min-w-[120px] px-2 text-center">
+              {payment?.id ? (payment.id.split('-')[1] || payment.id) : ""}
+            </span>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span>Date:</span>
+            <span className="border-b border-dotted border-slate-900 dark:border-slate-900 min-w-[180px] px-2 text-center">
+              {payment.date}
+            </span>
+          </div>
         </div>
-        <div className="flex items-baseline gap-1">
-          <span>Date:</span>
-          <span className="border-b border-dotted border-slate-900 min-w-[180px] px-2 text-center">
-            {payment.date}
-          </span>
-        </div>
-      </div>
 
       {/* Title */}
       <div className="text-center mb-8">
@@ -290,50 +372,50 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
       </div>
 
       {/* Fields */}
-      <div className="space-y-5 text-[13px] px-2">
+      <div className="space-y-5 text-[13px] px-2 text-slate-900 dark:text-slate-900">
         <div className="flex gap-8">
           <div className="flex-1 flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{client?.name}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{client?.name}</span>
           </div>
           <div className="w-[280px] flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Customer ID:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{client?.id}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{client?.id}</span>
           </div>
         </div>
 
         <div className="flex gap-8">
           <div className="flex-1 flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Project Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{project?.name || "N/A"}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{project?.name || "N/A"}</span>
           </div>
           <div className="w-[280px] flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Instalment No.:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{instDef?.title}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{instDef?.title}</span>
           </div>
         </div>
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Amount =</span>
-          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-black text-base">{payment.amount.toLocaleString()}/-</span>
+          <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-black text-base">{payment.amount.toLocaleString()}/-</span>
         </div>
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Amount in word:</span>
-          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{numberToWords(payment.amount)} TK</span>
+          <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{numberToWords(payment.amount)} TK</span>
         </div>
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Deposit By:</span>
-          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">Cash/Cheque/Bank</span>
+          <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">Cash/Cheque/Bank</span>
         </div>
       </div>
 
       {/* Footer Signatures */}
-      <div className="flex justify-between mt-24 px-4 text-[11px] font-bold text-center">
-        <div className="w-48 border-t border-slate-900 pt-1.5">Prepared By</div>
-        <div className="w-48 border-t border-slate-900 pt-1.5">Accounts Officer</div>
-        <div className="w-48 border-t border-slate-900 pt-1.5">Authorised Signature</div>
+      <div className="flex justify-between mt-24 px-4 text-[11px] font-bold text-center text-slate-900 dark:text-slate-900">
+        <div className="w-48 border-t border-slate-900 dark:border-slate-900 pt-1.5">Prepared By</div>
+        <div className="w-48 border-t border-slate-900 dark:border-slate-900 pt-1.5">Accounts Officer</div>
+        <div className="w-48 border-t border-slate-900 dark:border-slate-900 pt-1.5">Authorised Signature</div>
       </div>
 
       {/* Watermark */}
@@ -355,10 +437,10 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none border border-slate-200" 
+        className="bg-white dark:bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none border border-slate-200" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible relative">
+        <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible relative bg-white">
           {isSuperAdmin && onDelete && (
             <button 
               className="absolute top-4 right-4 z-50 w-10 h-10 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-rose-600 transition-colors no-print"
@@ -386,14 +468,14 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           )}
         </div>
         
-        <div className="p-6 bg-slate-50 border-t border-slate-200 flex gap-3 no-print">
+        <div className="p-6 bg-slate-50 dark:bg-slate-50 border-t border-slate-200 flex flex-wrap gap-3 no-print">
           <button 
-            className="flex-1 bg-app-tab-active text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
+            className="flex-1 bg-[#5c5fc8] dark:bg-[#5c5fc8] text-white dark:text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
             onClick={() => window.print()}
           >
             <Printer size={18} /> {t("project_modals.print")}
           </button>
-          <button className="flex-1 bg-white text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200" onClick={onClose}>
+          <button className="flex-1 bg-white dark:bg-white text-slate-600 dark:text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200" onClick={onClose}>
             {t("project_modals.close")}
           </button>
         </div>

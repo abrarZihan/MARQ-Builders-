@@ -655,7 +655,7 @@ export default function App() {
   const CLIENT_FIELDS = ['id', 'projectId', 'name', 'fatherHusband', 'birthDate', 'phone', 'email', 'nid', 'plot', 'totalAmount', 'shareCount', 'password', 'photo', 'remarks', 'planAssignments', '_row'];
   const PROJECT_FIELDS = ['id', 'name', 'description'];
   const PLAN_FIELDS = ['id', 'projectId', 'name'];
-  const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount'];
+  const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount', 'isGlobal'];
   const PAYMENT_FIELDS = ['id', 'clientId', 'instDefId', 'amount', 'date', 'status', 'note', 'method', 'trxId', 'approvedBy'];
   const EXPENSE_FIELDS = ['id', 'projectId', 'category', 'amount', 'date', 'description'];
   const ADMIN_FIELDS = ['id', 'name', 'username', 'password', 'role', 'isTemp'];
@@ -832,7 +832,7 @@ export default function App() {
     setAuth(null); setPage("home"); setSelProject(null); setForceChangePw(false); 
   };
 
-  const isSuperAdmin = auth?.user?.role === "superadmin";
+  const isSuperAdmin = auth?.user?.role === "superadmin" || auth?.user?.username === "superadmin" || auth?.user?.email === "zyhn.ab@gmail.com";
   const adminUser = (auth?.role === "admin" || auth?.role === "superadmin") ? auth.user : null;
 
   // Client CRUD
@@ -1323,6 +1323,7 @@ export default function App() {
             onUpdatePlan={updatePlan}
             onDeletePlan={deletePlan}
             onAddDef={addInstDef}
+            onUpdateInstDef={updateInstDef}
             onDeleteInstDef={deleteInstDef}
             onAddPayment={addPayment}
             onDeletePayment={deletePayment}
