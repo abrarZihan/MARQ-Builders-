@@ -322,21 +322,21 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="relative p-6 sm:p-10 bg-white dark:bg-white text-slate-900 dark:text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-full sm:min-w-[850px] print:min-w-0 overflow-hidden">
+    <div className="relative p-10 bg-white text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
       {/* Header */}
       {/* Logo in top-left corner */}
-      <div className="absolute top-4 sm:top-6 left-6 sm:left-10">
+      <div className="absolute top-6 left-10">
         <img 
           src={LOGO_URL} 
           alt="Logo" 
-          className="h-12 sm:h-20 w-auto object-contain"
+          className="h-20 w-auto object-contain"
           referrerPolicy="no-referrer"
         />
       </div>
 
       <div className="flex flex-col items-center mb-6 w-full">
-        <h1 className="text-xl sm:text-3xl font-black text-[#0f172a] dark:text-[#0f172a] tracking-tight">MARQ BUILDERS</h1>
-        <p className="text-[9px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-800 mt-1 sm:mt-2 text-center w-full">
+        <h1 className="text-3xl font-black text-[#0f172a] tracking-tight">MARQ BUILDERS</h1>
+        <p className="text-[11px] font-bold text-slate-800 mt-2 text-center w-full">
           216/8, Baganbari, North Vasantek Dhaka Cantt, Dhaka- 1206
         </p>
       </div>
@@ -349,20 +349,20 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
       </div>
 
       {/* Sl No & Date */}
-        <div className="flex justify-between text-[13px] font-bold mb-6 px-2 text-slate-900 dark:text-slate-900">
-          <div className="flex items-baseline gap-1">
-            <span>Sl. No.</span>
-            <span className="border-b border-dotted border-slate-900 dark:border-slate-900 min-w-[120px] px-2 text-center">
-              {payment?.id ? (payment.id.split('-')[1] || payment.id) : ""}
-            </span>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span>Date:</span>
-            <span className="border-b border-dotted border-slate-900 dark:border-slate-900 min-w-[180px] px-2 text-center">
-              {payment.date}
-            </span>
-          </div>
+      <div className="flex justify-between text-[13px] font-bold mb-6 px-2">
+        <div className="flex items-baseline gap-1">
+          <span>Sl. No.</span>
+          <span className="border-b border-dotted border-slate-900 min-w-[120px] px-2 text-center">
+            {payment?.id ? (payment.id.split('-')[1] || payment.id) : ""}
+          </span>
         </div>
+        <div className="flex items-baseline gap-1">
+          <span>Date:</span>
+          <span className="border-b border-dotted border-slate-900 min-w-[180px] px-2 text-center">
+            {payment.date}
+          </span>
+        </div>
+      </div>
 
       {/* Title */}
       <div className="text-center mb-8">
@@ -372,50 +372,50 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
       </div>
 
       {/* Fields */}
-      <div className="space-y-5 text-[13px] px-2 text-slate-900 dark:text-slate-900">
+      <div className="space-y-5 text-[13px] px-2">
         <div className="flex gap-8">
           <div className="flex-1 flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{client?.name}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{client?.name}</span>
           </div>
           <div className="w-[280px] flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Customer ID:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{client?.id}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{client?.id}</span>
           </div>
         </div>
 
         <div className="flex gap-8">
           <div className="flex-1 flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Project Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{project?.name || "N/A"}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{project?.name || "N/A"}</span>
           </div>
           <div className="w-[280px] flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Instalment No.:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{instDef?.title}</span>
+            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{instDef?.title}</span>
           </div>
         </div>
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Amount =</span>
-          <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-black text-base">{payment.amount.toLocaleString()}/-</span>
+          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-black text-base">{payment.amount.toLocaleString()}/-</span>
         </div>
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Amount in word:</span>
-          <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">{numberToWords(payment.amount)} TK</span>
+          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{numberToWords(payment.amount)} TK</span>
         </div>
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Deposit By:</span>
-          <span className="flex-1 border-b border-dotted border-slate-900 dark:border-slate-900 px-2 font-bold">Cash/Cheque/Bank</span>
+          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">Cash/Cheque/Bank</span>
         </div>
       </div>
 
       {/* Footer Signatures */}
-      <div className="flex justify-between mt-24 px-4 text-[11px] font-bold text-center text-slate-900 dark:text-slate-900">
-        <div className="w-48 border-t border-slate-900 dark:border-slate-900 pt-1.5">Prepared By</div>
-        <div className="w-48 border-t border-slate-900 dark:border-slate-900 pt-1.5">Accounts Officer</div>
-        <div className="w-48 border-t border-slate-900 dark:border-slate-900 pt-1.5">Authorised Signature</div>
+      <div className="flex justify-between mt-24 px-4 text-[11px] font-bold text-center">
+        <div className="w-48 border-t border-slate-900 pt-1.5">Prepared By</div>
+        <div className="w-48 border-t border-slate-900 pt-1.5">Accounts Officer</div>
+        <div className="w-48 border-t border-slate-900 pt-1.5">Authorised Signature</div>
       </div>
 
       {/* Watermark */}
@@ -468,9 +468,9 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           )}
         </div>
         
-        <div className="p-6 bg-slate-50 dark:bg-slate-50 border-t border-slate-200 flex flex-wrap gap-3 no-print">
+        <div className="p-6 bg-slate-50 dark:bg-slate-100 border-t border-slate-200 flex flex-wrap gap-3 no-print">
           <button 
-            className="flex-1 bg-[#5c5fc8] dark:bg-[#5c5fc8] text-white dark:text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
+            className="flex-1 bg-app-tab-active text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
             onClick={() => window.print()}
           >
             <Printer size={18} /> {t("project_modals.print")}
