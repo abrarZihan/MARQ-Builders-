@@ -22,17 +22,25 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   const activePlan = activePlanId === "all" ? null : plans.find((p: any) => p.id === activePlanId);
   const prjDefs = activePlanId === "all"
     ? (() => {
-        const allDefs = (client.planAssignments || []).flatMap((pa: any) => 
-          instDefs.filter((d: any) => d.planId === pa.planId || (d.projectId === client.projectId && d.isGlobal))
-            .map(d => ({ ...d, _shareCount: d.isGlobal ? 1 : (pa.shareCount || 1) }))
-        );
-        const seen = new Set();
-        return allDefs.filter(d => {
-          if (!d.isGlobal) return true;
-          if (seen.has(d.id)) return false;
-          seen.add(d.id);
-          return true;
+        const defs: any[] = [];
+        const globalSeen = new Set();
+        
+        // Add global installments once
+        instDefs.filter((d: any) => d.projectId === client.projectId && d.isGlobal).forEach((d: any) => {
+          if (!globalSeen.has(d.id)) {
+            defs.push({ ...d, _shareCount: 1 });
+            globalSeen.add(d.id);
+          }
         });
+        
+        // Add plan-specific installments
+        (client.planAssignments || []).forEach((pa: any) => {
+          instDefs.filter((d: any) => d.planId === pa.planId && !d.isGlobal).forEach((d: any) => {
+            defs.push({ ...d, _shareCount: pa.shareCount || 1 });
+          });
+        });
+        
+        return defs;
       })()
     : instDefs.filter((d: any) => d.planId === activePlanId || (d.projectId === client.projectId && d.isGlobal))
         .map(d => {
@@ -651,13 +659,25 @@ export function ClientProfile({ client, instDefs, onUpdateClient }: any) {
             [t('client.father_husband'), client.fatherHusband || "—"], [t('client.birth_date'), client.birthDate || "—"], 
             [t('client.email'), client.email || "—"], [t('client.nid'), client.nid || "—"], 
             [t('common.total_price_label'), BDT((() => {
-              const clientPlanIds = (client.planAssignments || []).map((pa: any) => pa.planId);
-              const relevantDefs = instDefs.filter((d: any) => clientPlanIds.includes(d.planId) || (d.projectId === client.projectId && d.isGlobal));
-              return relevantDefs.reduce((s: number, d: any) => {
-                if (d.isGlobal) return s + d.targetAmount;
-                const pa = client.planAssignments?.find((p: any) => p.planId === d.planId);
-                return s + d.targetAmount * (pa?.shareCount || 1);
-              }, 0);
+              let total = 0;
+              const globalSeen = new Set();
+              
+              // Sum global installments once
+              instDefs.filter((d: any) => d.projectId === client.projectId && d.isGlobal).forEach((d: any) => {
+                if (!globalSeen.has(d.id)) {
+                  total += d.targetAmount;
+                  globalSeen.add(d.id);
+                }
+              });
+              
+              // Sum plan installments multiplied by their share counts
+              (client.planAssignments || []).forEach((pa: any) => {
+                instDefs.filter((d: any) => d.planId === pa.planId && !d.isGlobal).forEach((d: any) => {
+                  total += d.targetAmount * (pa.shareCount || 1);
+                });
+              });
+              
+              return total;
             })(), lang === 'bn')]
           ].map(([l, v], i) => (
             <div key={`${l}-${i}`} className="flex items-center py-2 border-b border-app-border last:border-0">
