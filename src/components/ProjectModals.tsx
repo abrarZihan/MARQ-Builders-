@@ -131,7 +131,15 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
             />
           )}
           {viewR && (
-            <ReceiptSheet payment={viewR} instDef={instDef} client={client} project={project} onClose={() => setViewR(null)} />
+            <ReceiptSheet 
+              payment={viewR} 
+              instDef={instDef} 
+              client={client} 
+              project={project} 
+              isSuperAdmin={isSuperAdmin}
+              onDelete={onDelete}
+              onClose={() => setViewR(null)} 
+            />
           )}
         </AnimatePresence>
       </motion.div>
@@ -227,8 +235,9 @@ export function AddExpSheet({ projectId, expense, onSave, onClose }: any) {
   );
 }
 
-export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy, onClose }: any) {
+export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy, isSuperAdmin, onDelete, onClose }: any) {
   const { t, lang } = useLanguage();
+  const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
     <div className="relative p-10 bg-white text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
@@ -349,7 +358,25 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
         className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none border border-slate-200" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible">
+        <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible relative">
+          {isSuperAdmin && onDelete && (
+            <button 
+              className="absolute top-4 right-4 z-50 w-10 h-10 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-rose-600 transition-colors no-print"
+              onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
+              title="Delete Receipt"
+            >
+              <Trash2 size={20} />
+            </button>
+          )}
+
+          {showConfirm && (
+            <ConfirmDelete 
+              message={t("project_modals.confirm_delete_receipt") || "Are you sure you want to delete this payment receipt? This will remove the payment record permanently."}
+              onConfirm={() => { onDelete(payment.id); onClose(); }}
+              onClose={() => setShowConfirm(false)}
+            />
+          )}
+
           <ReceiptContent type="Customer" />
           {!hideOfficeCopy && (
             <>

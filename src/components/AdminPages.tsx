@@ -120,7 +120,7 @@ export function AdminProfile({ admin, onUpdate }: any) {
 }
 
 
-export function AdminPaymentsPage({ payments, clients, instDefs, projects }: any) {
+export function AdminPaymentsPage({ payments, clients, instDefs, projects, isSuperAdmin, onDeletePayment }: any) {
   const { t } = useLanguage();
   const [selPay, setSelPay] = useState<any>(null);
   const [search, setSearch] = useState("");
@@ -198,6 +198,8 @@ export function AdminPaymentsPage({ payments, clients, instDefs, projects }: any
             client={clients.find((c: any) => c.id === selPay.clientId)} 
             project={projects.find((pr: any) => pr.id === clients.find((c: any) => c.id === selPay.clientId)?.projectId)}
             instDef={instDefs.find((d: any) => d.id === selPay.instDefId)}
+            isSuperAdmin={isSuperAdmin}
+            onDelete={onDeletePayment}
             onClose={() => setSelPay(null)} 
           />
         )}

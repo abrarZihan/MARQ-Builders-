@@ -595,7 +595,17 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
       )}
 
       <AnimatePresence mode="wait">
-        {viewR && <ReceiptSheet payment={viewR.payment} instDef={viewR.instDef} client={viewR.client} project={project} onClose={() => setViewR(null)} />}
+        {viewR && (
+          <ReceiptSheet 
+            payment={viewR.payment} 
+            instDef={viewR.instDef} 
+            client={viewR.client} 
+            project={project} 
+            isSuperAdmin={isSuperAdmin}
+            onDelete={onDeletePayment}
+            onClose={() => setViewR(null)} 
+          />
+        )}
         {cellModal && <CellPaySheet client={cellModal.client} instDef={cellModal.instDef} payments={payments} project={project} isSuperAdmin={isSuperAdmin} onSave={(p: any) => { onAddPayment(p); setCellModal(null); }} onDelete={(id: string) => onDeletePayment(id)} onClose={() => setCellModal(null)} />}
         {addDefModal && <AddDefSheet projectId={project.id} planId={activePlanId} onSave={(d: any) => { onAddDef(d); setAddDefModal(false); }} onClose={() => setAddDefModal(false)} />}
         {addExpModal && <AddExpSheet projectId={project.id} onSave={(e: any) => { onAddExpense(e); setAddExpModal(false); }} onClose={() => setAddExpModal(false)} />}

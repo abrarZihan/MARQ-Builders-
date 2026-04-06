@@ -1313,7 +1313,7 @@ export default function App() {
         )}
         
         {(role === "admin" || role === "superadmin") && !selProject && page === "profile" && <AdminProfile admin={adminUser} onUpdate={changeMyPw} />}
-        {(role === "admin" || role === "superadmin") && !selProject && page === "payments" && <AdminPaymentsPage payments={payments} clients={clients} instDefs={instDefs} projects={projects} />}
+        {(role === "admin" || role === "superadmin") && !selProject && page === "payments" && <AdminPaymentsPage payments={payments} clients={clients} instDefs={instDefs} projects={projects} isSuperAdmin={isSuperAdmin} onDeletePayment={deletePayment} />}
         {(role === "admin" || role === "superadmin") && !selProject && page === "admins" && isSuperAdmin && <AdminManagePage admins={admins} onAdd={addAdmin} onUpdate={addAdmin} onDelete={removeAdmin} onResetPw={resetAdminPw} currentAdminId={adminUser.id} />}
         {(role === "admin" || role === "superadmin") && selProject && curProject && (
           <ProjectDetail 
