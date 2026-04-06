@@ -322,7 +322,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="relative p-10 bg-white text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
+    <div className="relative p-10 bg-white dark:bg-white text-slate-900 dark:text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
       {/* Header */}
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-10">
@@ -468,14 +468,14 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           )}
         </div>
         
-        <div className="p-6 bg-slate-50 border-t border-slate-200 flex gap-3 no-print">
+        <div className="p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex gap-3 no-print">
           <button 
-            className="flex-1 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
+            className="flex-1 bg-app-tab-active text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
             onClick={() => window.print()}
           >
             <Printer size={18} /> {t("project_modals.print")}
           </button>
-          <button className="flex-1 bg-white text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200" onClick={onClose}>
+          <button className="flex-1 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold py-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-700" onClick={onClose}>
             {t("project_modals.close")}
           </button>
         </div>
