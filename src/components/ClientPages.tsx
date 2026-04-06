@@ -20,15 +20,31 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   const clientPlans = (client.planAssignments || []).map((pa: any) => plans.find((p: any) => p.id === pa.planId)).filter(Boolean);
   
   const activePlan = activePlanId === "all" ? null : plans.find((p: any) => p.id === activePlanId);
-  const prjDefs = activePlanId === "all" 
-    ? (client.planAssignments || []).flatMap((pa: any) => instDefs.filter((d: any) => d.planId === pa.planId).map(d => ({ ...d, _shareCount: pa.shareCount || 1 })))
-    : instDefs.filter((d: any) => d.planId === activePlanId).map(d => ({ ...d, _shareCount: client.planAssignments?.find((pa: any) => pa.planId === activePlanId)?.shareCount || client.shareCount || 1 }));
+  const prjDefs = activePlanId === "all"
+    ? (() => {
+        const allDefs = (client.planAssignments || []).flatMap((pa: any) => 
+          instDefs.filter((d: any) => d.planId === pa.planId || (d.projectId === client.projectId && d.isGlobal))
+            .map(d => ({ ...d, _shareCount: d.isGlobal ? 1 : (pa.shareCount || 1) }))
+        );
+        const seen = new Set();
+        return allDefs.filter(d => {
+          if (!d.isGlobal) return true;
+          if (seen.has(d.id)) return false;
+          seen.add(d.id);
+          return true;
+        });
+      })()
+    : instDefs.filter((d: any) => d.planId === activePlanId || (d.projectId === client.projectId && d.isGlobal))
+        .map(d => {
+          const pa = client.planAssignments?.find((p: any) => p.planId === activePlanId);
+          return { ...d, _shareCount: d.isGlobal ? 1 : (pa?.shareCount || 1) };
+        });
 
   const totalPaid = payments.filter((p: any) => p.clientId === client.id && prjDefs.find((d: any) => d.id === p.instDefId) && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
   const totalTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount * (d._shareCount || 1), 0);
   const currentShareCount = activePlanId === "all"
     ? Math.max(1, ...(client.planAssignments || []).map((pa: any) => pa.shareCount || 1))
-    : (prjDefs[0]?._shareCount || 1);
+    : (client.planAssignments?.find((pa: any) => pa.planId === activePlanId)?.shareCount || client.shareCount || 1);
   const today = todayStr();
   const color = ac(client.id);
 
@@ -127,7 +143,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
         <ClientAvatar client={client} size={56} />
         <div className="flex-1 min-w-0">
           <div className="text-lg font-black text-app-text-primary truncate">{client.name}</div>
-          <div className="text-sm font-medium text-app-text-secondary mt-0.5">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span> {activePlanId !== "all" && (prjDefs[0]?._shareCount || 1) > 1 && <span className="text-blue-600 dark:text-blue-400 font-bold">({prjDefs[0]._shareCount} {t('client_info.shares')})</span>}</div>
+          <div className="text-sm font-medium text-app-text-secondary mt-0.5">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span> {activePlanId !== "all" && currentShareCount > 1 && <span className="text-blue-600 dark:text-blue-400 font-bold">({currentShareCount} {t('client_info.shares')})</span>}</div>
         </div>
         <div className="text-right shrink-0">
           <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-0.5">{t('common.total_price_label')}</div>
@@ -596,7 +612,7 @@ export function ClientExpenses({ client, expenses }: any) {
   );
 }
 
-export function ClientProfile({ client, onUpdateClient }: any) {
+export function ClientProfile({ client, instDefs, onUpdateClient }: any) {
   const { t, lang } = useLanguage();
   const [old, setOld] = useState("");
   const [nw, setNw] = useState("");
@@ -634,7 +650,15 @@ export function ClientProfile({ client, onUpdateClient }: any) {
             [t('common.customer_id'), client.id], [t('common.phone'), client.phone || "—"], 
             [t('client.father_husband'), client.fatherHusband || "—"], [t('client.birth_date'), client.birthDate || "—"], 
             [t('client.email'), client.email || "—"], [t('client.nid'), client.nid || "—"], 
-            [t('common.total_price_label'), BDT(client.totalAmount * (client.shareCount || 1), lang === 'bn')]
+            [t('common.total_price_label'), BDT((() => {
+              const clientPlanIds = (client.planAssignments || []).map((pa: any) => pa.planId);
+              const relevantDefs = instDefs.filter((d: any) => clientPlanIds.includes(d.planId) || (d.projectId === client.projectId && d.isGlobal));
+              return relevantDefs.reduce((s: number, d: any) => {
+                if (d.isGlobal) return s + d.targetAmount;
+                const pa = client.planAssignments?.find((p: any) => p.planId === d.planId);
+                return s + d.targetAmount * (pa?.shareCount || 1);
+              }, 0);
+            })(), lang === 'bn')]
           ].map(([l, v], i) => (
             <div key={`${l}-${i}`} className="flex items-center py-2 border-b border-app-border last:border-0">
               <span className="text-xs font-bold text-app-text-muted w-32 shrink-0">{l}</span>

@@ -1337,7 +1337,7 @@ export default function App() {
         {role === "client" && page === "installments" && <ClientInstallments client={auth.user} instDefs={instDefs} payments={payments} projects={projects} plans={plans} />}
         {role === "client" && page === "receipts" && <ClientReceipts client={auth.user} instDefs={instDefs} payments={payments} projects={projects} />}
         {role === "client" && page === "expenses" && <ClientExpenses client={auth.user} expenses={expenses} />}
-        {role === "client" && page === "profile" && <ClientProfile client={auth.user} onUpdateClient={(c: any) => { updateClient(c, c.id); setAuth({ ...auth, user: c }); }} />}
+        {role === "client" && page === "profile" && <ClientProfile client={auth.user} instDefs={instDefs} onUpdateClient={(c: any) => { updateClient(c, c.id); setAuth({ ...auth, user: c }); }} />}
       </main>
 
       <BottomBar role={role} page={page} setPage={setPage} />
