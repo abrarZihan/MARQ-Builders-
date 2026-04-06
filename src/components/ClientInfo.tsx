@@ -146,6 +146,7 @@ export function ClientInfoPage({ clients, allClients, onUpdate, onAddBulk, onAdd
           remarks: "",
           _row: i + 2
         };
+        return client;
       });
 
 

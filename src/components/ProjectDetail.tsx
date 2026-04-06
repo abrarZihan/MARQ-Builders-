@@ -34,7 +34,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
     if (prjPlans.length > 0 && !activePlanId) setActivePlanId(prjPlans[0].id);
   }, [prjPlans, activePlanId]);
 
-  const prjClients = clients.filter((c: any) => {
+  const basePrjClients = clients.filter((c: any) => {
     if (c.projectId !== project.id) return false;
     // If no plan assignments, they belong to the first/default plan
     const assignments = c.planAssignments || [];
@@ -43,7 +43,9 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
     }
     // Otherwise, show only if assigned to the active plan
     return assignments.some((pa: any) => pa.planId === activePlanId);
-  }).filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
+  });
+
+  const prjClients = basePrjClients.filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
   
   const allPrjClients = clients.filter((c: any) => c.projectId === project.id).filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
   const prjDefs = instDefs.filter((d: any) => d.planId === activePlanId);
@@ -256,7 +258,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
             )}
           </AnimatePresence>
           
-          {prjClients.length === 0 ? (
+          {basePrjClients.length === 0 ? (
             <div className="text-center py-12 bg-app-surface rounded-3xl border border-app-border text-app-text-muted font-bold text-sm">
               {t("project_detail.add_client_prompt")}
             </div>
@@ -325,62 +327,70 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                   </tr>
                 </thead>
                 <tbody>
-                  {prjClients.map((client: any) => {
-                    const assignment = client.planAssignments?.find((pa: any) => pa.planId === activePlanId);
-                    const shareCount = assignment ? assignment.shareCount : (client.shareCount || 1);
-                    const rowTotal = prjDefs.reduce((s: number, d: any) => s + clientPaidForDef(client.id, d.id, payments), 0);
-                    const rowTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
-                    
-                    return (
-                      <tr key={client.id} className="group hover:bg-app-bg transition-colors">
-                        <td className="sticky left-0 z-20 bg-app-surface group-hover:bg-app-bg border-r border-b border-app-border p-3 transition-colors shadow-[4px_0_8_rgba(0,0,0,0.03)]">
-                          <div className="flex items-center gap-3">
-                            <ClientAvatar client={client} size={32} />
-                            <div>
-                              <div className="text-xs font-bold text-app-text-primary">{client.name}</div>
-                              <div className="text-[10px] text-app-text-secondary font-medium">{client.plot} {shareCount > 1 && <span className="text-blue-600 dark:text-blue-400">({shareCount} {t("client_info.shares")})</span>}</div>
+                  {prjClients.length === 0 ? (
+                    <tr>
+                      <td colSpan={prjDefs.length + 2} className="p-12 text-center text-app-text-muted font-bold bg-app-surface">
+                        {t("client_info.no_results") || "No results found"}
+                      </td>
+                    </tr>
+                  ) : (
+                    prjClients.map((client: any) => {
+                      const assignment = client.planAssignments?.find((pa: any) => pa.planId === activePlanId);
+                      const shareCount = assignment ? assignment.shareCount : (client.shareCount || 1);
+                      const rowTotal = prjDefs.reduce((s: number, d: any) => s + clientPaidForDef(client.id, d.id, payments), 0);
+                      const rowTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount, 0) * shareCount;
+                      
+                      return (
+                        <tr key={client.id} className="group hover:bg-app-bg transition-colors">
+                          <td className="sticky left-0 z-20 bg-app-surface group-hover:bg-app-bg border-r border-b border-app-border p-3 transition-colors shadow-[4px_0_8_rgba(0,0,0,0.03)]">
+                            <div className="flex items-center gap-3">
+                              <ClientAvatar client={client} size={32} />
+                              <div>
+                                <div className="text-xs font-bold text-app-text-primary">{client.name}</div>
+                                <div className="text-[10px] text-app-text-secondary font-medium">{client.plot} {shareCount > 1 && <span className="text-blue-600 dark:text-blue-400">({shareCount} {t("client_info.shares")})</span>}</div>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        {prjDefs.map((d: any, i: number) => {
-                          const cellTarget = d.targetAmount * shareCount;
-                          const paid = clientPaidForDef(client.id, d.id, payments);
-                          const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
-                          const st = cellStatus(paid, cellTarget);
-                          const pct = Math.round((paid / cellTarget) * 100);
-                          const m = STATUS[st];
-                          
-                          return (
-                            <td key={`${d.id}-${i}`} className="p-2 border-r border-b border-app-border text-center align-middle transition-colors">
-                              <button 
-                                className={cn("w-full rounded-xl p-2 cursor-pointer transition-transform active:scale-95", m.bg)} 
-                                onClick={() => setCellModal({ client, instDef: d })}
-                              >
-                                <span className={cn("block text-xs font-black whitespace-nowrap", m.text)}>
-                                  {paid > 0 ? BDTshort(paid) : "—"}
-                                </span>
-                                <span className="block text-[9px] text-app-text-muted font-medium mt-0.5">
-                                  {BDTshort(cellTarget)}
-                                </span>
-                                {pendingAmt > 0 && <span className="block text-[9px] text-amber-600 dark:text-amber-400 font-bold mt-1 flex items-center justify-center gap-0.5"><Clock size={10} /> {BDTshort(pendingAmt)}</span>}
-                                {paid > 0 && (
-                                  <div className="h-1 bg-white/50 rounded-full mt-1.5 overflow-hidden">
-                                    <div className={cn("h-full rounded-full", m.bar)} style={{ width: `${pct}%` }} />
-                                  </div>
-                                )}
-                              </button>
-                            </td>
-                          );
-                        })}
-                        <td className="p-3 text-center align-middle border-r border-b border-app-border transition-colors">
-                          <div className={cn("text-xs font-black", rowTotal >= rowTarget ? "text-emerald-600 dark:text-emerald-400" : rowTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-app-text-muted")}>
-                            {BDTshort(rowTotal)}
-                          </div>
-                          <div className="text-[10px] text-app-text-muted font-medium mt-0.5">{BDTshort(rowTarget)}</div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          {prjDefs.map((d: any, i: number) => {
+                            const cellTarget = d.targetAmount * shareCount;
+                            const paid = clientPaidForDef(client.id, d.id, payments);
+                            const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
+                            const st = cellStatus(paid, cellTarget);
+                            const pct = Math.round((paid / cellTarget) * 100);
+                            const m = STATUS[st];
+                            
+                            return (
+                              <td key={`${d.id}-${i}`} className="p-2 border-r border-b border-app-border text-center align-middle transition-colors">
+                                <button 
+                                  className={cn("w-full rounded-xl p-2 cursor-pointer transition-transform active:scale-95", m.bg)} 
+                                  onClick={() => setCellModal({ client, instDef: d })}
+                                >
+                                  <span className={cn("block text-xs font-black whitespace-nowrap", m.text)}>
+                                    {paid > 0 ? BDTshort(paid) : "—"}
+                                  </span>
+                                  <span className="block text-[9px] text-app-text-muted font-medium mt-0.5">
+                                    {BDTshort(cellTarget)}
+                                  </span>
+                                  {pendingAmt > 0 && <span className="block text-[9px] text-amber-600 dark:text-amber-400 font-bold mt-1 flex items-center justify-center gap-0.5"><Clock size={10} /> {BDTshort(pendingAmt)}</span>}
+                                  {paid > 0 && (
+                                    <div className="h-1 bg-white/50 rounded-full mt-1.5 overflow-hidden">
+                                      <div className={cn("h-full rounded-full", m.bar)} style={{ width: `${pct}%` }} />
+                                    </div>
+                                  )}
+                                </button>
+                              </td>
+                            );
+                          })}
+                          <td className="p-3 text-center align-middle border-r border-b border-app-border transition-colors">
+                            <div className={cn("text-xs font-black", rowTotal >= rowTarget ? "text-emerald-600 dark:text-emerald-400" : rowTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-app-text-muted")}>
+                              {rowTotal > 0 ? BDTshort(rowTotal) : "—"}
+                            </div>
+                            <div className="text-[10px] text-app-text-muted font-medium mt-0.5">{BDTshort(rowTarget)}</div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                   <tr className="bg-app-nav-bg text-white font-bold transition-colors">
                     <td className="sticky left-0 z-20 bg-app-nav-bg border-r border-white/10 p-3 text-white text-xs shadow-[2px_0_5px_rgba(0,0,0,0.2)]">{t("project_detail.total_col")}</td>
                     {prjDefs.map((d: any, i: number) => {
