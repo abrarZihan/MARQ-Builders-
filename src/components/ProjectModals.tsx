@@ -468,14 +468,14 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           )}
         </div>
         
-        <div className="p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex gap-3 no-print">
+        <div className="p-6 bg-slate-50 border-t border-slate-200 flex gap-3 no-print">
           <button 
-            className="flex-1 bg-slate-800 dark:bg-slate-700 text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
+            className="flex-1 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
             onClick={() => window.print()}
           >
             <Printer size={18} /> {t("project_modals.print")}
           </button>
-          <button className="flex-1 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold py-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-700" onClick={onClose}>
+          <button className="flex-1 bg-white text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200" onClick={onClose}>
             {t("project_modals.close")}
           </button>
         </div>
