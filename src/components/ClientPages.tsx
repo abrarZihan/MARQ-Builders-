@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BDT, ac, initials, todayStr, clientPaidForDef, cellStatus, cn, tsNow } from "../lib/utils";
 import { FG, ClientAvatar, PBar, CategoryIcon, CategoryColor } from "./Shared";
@@ -53,8 +53,30 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   const totalPaid = payments.filter((p: any) => p.clientId === client.id && prjDefs.find((d: any) => d.id === p.instDefId) && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
   const totalTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount * (d._shareCount || 1), 0);
   const currentShareCount = activePlanId === "all"
-    ? Math.max(1, ...(client.planAssignments || []).map((pa: any) => pa.shareCount || 1))
+    ? (client.planAssignments || []).reduce((acc: number, pa: any) => acc + (pa.shareCount || 1), 0)
     : (client.planAssignments?.find((pa: any) => pa.planId === activePlanId)?.shareCount || client.shareCount || 1);
+
+  const shareSlots = useMemo(() => {
+    if (activePlanId !== "all") {
+      const count = client.planAssignments?.find((pa: any) => pa.planId === activePlanId)?.shareCount || client.shareCount || 1;
+      return Array.from({ length: count }).map((_, i) => ({
+        planId: activePlanId,
+        shareIndex: i,
+        label: `${t('client_info.shares')} ${i + 1}`
+      }));
+    }
+    
+    return (client.planAssignments || []).flatMap((pa: any) => {
+      const plan = plans.find((p: any) => p.id === pa.planId);
+      const planName = plan?.name || "";
+      return Array.from({ length: pa.shareCount || 1 }).map((_, i) => ({
+        planId: pa.planId,
+        shareIndex: i,
+        label: `${planName} - ${t('client_info.shares')} ${i + 1}`
+      }));
+    });
+  }, [activePlanId, client.planAssignments, client.shareCount, plans, t]);
+
   const today = todayStr();
   const color = ac(client.id);
 
@@ -397,20 +419,20 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
           </div>
         ) : (
           <div className="space-y-8">
-            {Array.from({ length: currentShareCount }).map((_, j) => (
+            {shareSlots.map((slot, j) => (
               <div key={j} className="space-y-3">
                 <div className="flex items-center gap-2 px-2">
                   <div className="w-6 h-6 bg-app-tab-active text-app-bg rounded-lg flex items-center justify-center text-[10px] font-black">{j + 1}</div>
-                  <div className="text-xs font-black text-app-text-primary uppercase tracking-widest">{t('client_info.shares')} {j + 1}</div>
+                  <div className="text-xs font-black text-app-text-primary uppercase tracking-widest">{slot.label}</div>
                 </div>
                 <div className="space-y-2">
-                  {prjDefs.filter((d: any) => d.isGlobal || (d._shareCount || 1) >= j + 1).map((d: any) => {
+                  {prjDefs.filter((d: any) => d.isGlobal || (d.planId === slot.planId && (d._shareCount || 1) >= slot.shareIndex + 1)).map((d: any) => {
                     const totalPaidForDef = clientPaidForDef(client.id, d.id, payments);
                     const sCount = d._shareCount || 1;
                     const sharePaid = d.isGlobal 
                       ? Math.min(d.targetAmount, totalPaidForDef)
                       : (distMode === "waterfall" 
-                          ? Math.min(d.targetAmount, Math.max(0, totalPaidForDef - j * d.targetAmount))
+                          ? Math.min(d.targetAmount, Math.max(0, totalPaidForDef - slot.shareIndex * d.targetAmount))
                           : Math.min(d.targetAmount, totalPaidForDef / sCount));
                     const st = cellStatus(sharePaid, d.targetAmount);
                     const m = STATUS[st];
