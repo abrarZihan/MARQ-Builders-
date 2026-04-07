@@ -16,6 +16,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   const [customAmount, setCustomAmount] = useState<string>("");
   const [paymentResult, setPaymentResult] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [distMode, setDistMode] = useState<"equal" | "waterfall">("equal");
 
   const clientPlans = (client.planAssignments || []).map((pa: any) => plans.find((p: any) => p.id === pa.planId)).filter(Boolean);
   const hasMultiple = clientPlans.length > 1 || (client.planAssignments || []).some((pa: any) => (pa.shareCount || 1) > 1);
@@ -233,19 +234,40 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
       </div>
 
       {currentShareCount > 1 && (
-        <div className="flex bg-app-bg p-1 rounded-xl mb-6 border border-app-border">
-          <button 
-            className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "combined" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary")}
-            onClick={() => setViewMode("combined")}
-          >
-            {t('client.view_combined')}
-          </button>
-          <button 
-            className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "shares" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary")}
-            onClick={() => setViewMode("shares")}
-          >
-            {t('client.view_per_share')}
-          </button>
+        <div className="space-y-3 mb-6">
+          <div className="flex bg-app-bg p-1 rounded-xl border border-app-border">
+            <button 
+              className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "combined" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary")}
+              onClick={() => setViewMode("combined")}
+            >
+              {t('client.view_combined')}
+            </button>
+            <button 
+              className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", viewMode === "shares" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary")}
+              onClick={() => setViewMode("shares")}
+            >
+              {t('client.view_per_share')}
+            </button>
+          </div>
+
+          {viewMode === "shares" && (
+            <div className="flex justify-center">
+              <div className="inline-flex bg-app-surface p-1 rounded-lg border border-app-border">
+                <button 
+                  onClick={() => setDistMode("equal")}
+                  className={cn("px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all", distMode === "equal" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-text-muted hover:text-app-text-primary")}
+                >
+                  {t('client.dist_equal')}
+                </button>
+                <button 
+                  onClick={() => setDistMode("waterfall")}
+                  className={cn("px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all", distMode === "waterfall" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-text-muted hover:text-app-text-primary")}
+                >
+                  {t('client.dist_waterfall')}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -384,9 +406,12 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                 <div className="space-y-2">
                   {prjDefs.filter((d: any) => d.isGlobal || (d._shareCount || 1) >= j + 1).map((d: any) => {
                     const totalPaidForDef = clientPaidForDef(client.id, d.id, payments);
+                    const sCount = d._shareCount || 1;
                     const sharePaid = d.isGlobal 
                       ? Math.min(d.targetAmount, totalPaidForDef)
-                      : Math.min(d.targetAmount, Math.max(0, totalPaidForDef - j * d.targetAmount));
+                      : (distMode === "waterfall" 
+                          ? Math.min(d.targetAmount, Math.max(0, totalPaidForDef - j * d.targetAmount))
+                          : Math.min(d.targetAmount, totalPaidForDef / sCount));
                     const st = cellStatus(sharePaid, d.targetAmount);
                     const m = STATUS[st];
                     
