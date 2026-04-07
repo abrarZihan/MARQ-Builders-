@@ -9,7 +9,7 @@ import { useLanguage } from "../lib/i18n";
 
 export function ClientInstallments({ client, instDefs, payments, projects, plans }: any) {
   const { t, lang } = useLanguage();
-  const [activePlanId, setActivePlanId] = useState<string>(client.planAssignments?.[0]?.planId || "");
+  const [activePlanId, setActivePlanId] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"combined" | "shares">("combined");
   const [payingId, setPayingId] = useState<string | null>(null);
   const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
@@ -80,11 +80,31 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   const today = todayStr();
   const color = ac(client.id);
 
+  const groupedDefs = useMemo(() => {
+    if (activePlanId !== "all") return [{ id: activePlanId, name: activePlan?.name || "", defs: prjDefs }];
+    
+    const groups: Record<string, any[]> = {};
+    prjDefs.forEach(d => {
+      const key = d.isGlobal ? 'global' : (d.planId || 'other');
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(d);
+    });
+    
+    return Object.entries(groups).map(([id, defs]) => {
+      const plan = plans.find((p: any) => p.id === id);
+      return {
+        id,
+        name: id === 'global' ? (t('common.basic_payments') || "Basic Payments") : (plan?.name || ""),
+        defs
+      };
+    });
+  }, [activePlanId, prjDefs, activePlan, plans, t]);
+
   const isProcessingPayment = paymentResult && (!instDefs.find((d: any) => d.id === paymentResult.instDefId) || !projects.find((p: any) => p.id === activePlan?.projectId));
 
   useEffect(() => {
     if (!activePlanId && clientPlans.length > 0) {
-      setActivePlanId(clientPlans[0].id);
+      setActivePlanId("all");
     }
   }, [clientPlans, activePlanId]);
 
@@ -171,15 +191,29 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
       {/* Client Info Card */}
-      <div className="bg-app-surface rounded-3xl border border-app-border p-5 flex items-center gap-4 mb-4 shadow-sm transition-colors">
-        <ClientAvatar client={client} size={56} />
-        <div className="flex-1 min-w-0">
-          <div className="text-lg font-black text-app-text-primary truncate">{client.name}</div>
-          <div className="text-sm font-medium text-app-text-secondary mt-0.5">{t('client.plot')}: <span className="font-bold" style={{ color }}>{client.plot}</span> {activePlanId !== "all" && currentShareCount > 1 && <span className="text-blue-600 dark:text-blue-400 font-bold">({currentShareCount} {t('client_info.shares')})</span>}</div>
-        </div>
-        <div className="text-right shrink-0">
-          <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-0.5">{t('common.total_price_label')}</div>
-          <div className="text-base font-black text-app-text-primary">{BDT(totalTarget, lang === 'bn')}</div>
+      <div className="bg-app-surface rounded-3xl border border-app-border p-6 flex flex-col gap-4 mb-4 shadow-sm transition-colors relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-app-tab-active/5 rounded-full -mr-12 -mt-12 blur-xl" />
+        
+        <div className="flex items-center gap-4 relative z-10">
+          <ClientAvatar client={client} size={64} />
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-bold text-app-text-muted uppercase tracking-widest mb-1">
+              {t('common.welcome_back') || "Welcome Back"}
+            </div>
+            <div className="text-2xl font-black text-app-text-primary truncate leading-tight">{client.name}</div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+              <div className="flex flex-wrap gap-1.5">
+                {(client.planAssignments || []).map((pa: any, i: number) => {
+                  const plan = plans.find((p: any) => p.id === pa.planId);
+                  return (
+                    <span key={pa.planId} className="inline-flex items-center px-2 py-0.5 rounded-md bg-app-bg border border-app-border text-[10px] font-black text-app-text-secondary uppercase tracking-tight">
+                      {plan?.name} ({pa.shareCount || 1} {t('client_info.shares')})
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -301,117 +335,116 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
 
       <div className="space-y-6">
         {viewMode === "combined" ? (
-          <div className="space-y-3">
-            {prjDefs.map((d: any) => {
-              const paid = clientPaidForDef(client.id, d.id, payments);
-              const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
-              const target = d.targetAmount * (d._shareCount || 1);
-              const st = cellStatus(paid, target);
-              const isDue = d.dueDate && d.dueDate < today && paid < target;
-              const m = STATUS[st];
-
+          <div className="space-y-8">
+            {groupedDefs.map((group) => {
+              const isAll = activePlanId === "all";
               return (
-                <div key={d.id}>
-                  {activePlanId === "all" && (
-                    <div className="mb-2 px-3 py-1 bg-app-bg rounded-lg text-[10px] font-black text-app-text-muted inline-block uppercase tracking-wider border border-app-border">
-                      {plans.find((p: any) => p.id === d.planId)?.name}
-                    </div>
-                  )}
-                  <div className="bg-app-surface rounded-2xl border border-app-border p-5 shadow-sm relative overflow-hidden transition-colors">
-                  <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", m.dot)} />
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="text-base font-black text-app-text-primary">
-                        {d.title}
-                        {d.isGlobal && hasMultiple && (
-                          <span className="ml-2 text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-800">
-                            {t('common.global_payment_note')}
-                          </span>
-                        )}
+                <div key={group.id} className={cn(isAll ? "bg-app-surface/50 rounded-3xl border border-app-border p-2 shadow-sm" : "")}>
+                  <div className={cn(isAll ? "flex flex-col md:flex-row gap-2" : "space-y-3")}>
+                    {/* Plan Label - Vertical style (only for All Plans) */}
+                    {isAll && (
+                      <div className="md:w-12 flex md:flex-col items-center justify-center bg-app-tab-active text-app-bg rounded-2xl py-4 px-2 shadow-md shrink-0">
+                        <div className="md:-rotate-90 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.2em]">
+                          {group.name}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-app-text-secondary font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
-                        {isDue && <span className="bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-md px-2 py-0.5 text-[10px] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Due</span>}
-                      </div>
-                    </div>
-                    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider", m.bg, m.text)}>
-                      {st === "paid" ? t('common.status.paid') : st === "partial" ? t('common.status.partial') : t('common.status.unpaid')}
-                    </span>
-                  </div>
-                  
-                  <PBar paid={paid} target={target} />
-                  
-                  {target - paid > 0 && (
-                    <div className="mt-3 pt-3 border-t border-app-border">
-                      {activePaymentId === d.id ? (
-                        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-app-text-muted uppercase tracking-wider">{t('common.payment_amount')}</span>
-                            <button 
-                              onClick={() => setActivePaymentId(null)}
-                              className="text-xs text-app-text-muted hover:text-app-text-secondary underline"
-                            >
-                              {t('common.cancel')}
-                            </button>
-                          </div>
-                          <div className="flex gap-2">
-                            <div className="relative flex-1">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-app-text-muted font-bold">৳</span>
-                              <input
-                                type="number"
-                                value={customAmount}
-                                onChange={(e) => setCustomAmount(e.target.value)}
-                                className="w-full pl-8 pr-3 py-2 bg-app-bg border border-app-border rounded-lg text-sm font-bold focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary"
-                                placeholder="0.00"
-                                autoFocus
-                              />
+                    )}
+
+                    {/* Installments Container (Scrollable only for All Plans) */}
+                    <div className={cn("flex-1 p-2 space-y-3", isAll ? "max-h-[480px] overflow-y-auto custom-scrollbar" : "")}>
+                      {group.defs.map((d: any) => {
+                        const paid = clientPaidForDef(client.id, d.id, payments);
+                        const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
+                        const target = d.targetAmount * (d._shareCount || 1);
+                        const st = cellStatus(paid, target);
+                        const isDue = d.dueDate && d.dueDate < today && paid < target;
+                        const m = STATUS[st];
+
+                        return (
+                          <div key={d.id} className="bg-app-surface rounded-2xl border border-app-border p-5 shadow-sm relative overflow-hidden transition-colors">
+                            <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", m.dot)} />
+                            <div className="flex justify-between items-start mb-4">
+                              <div>
+                                <div className="text-base font-black text-app-text-primary">
+                                  {d.title}
+                                  {d.isGlobal && hasMultiple && (
+                                    <span className="ml-2 text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-800">
+                                      {t('common.global_payment_note')}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-app-text-secondary font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
+                                  {isDue && <span className="bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-md px-2 py-0.5 text-[10px] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Due</span>}
+                                </div>
+                              </div>
+                              <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider", m.bg, m.text)}>
+                                {st === "paid" ? t('common.status.paid') : st === "partial" ? t('common.status.partial') : t('common.status.unpaid')}
+                              </span>
                             </div>
-                            <button 
-                              disabled={!!payingId || !customAmount || parseFloat(customAmount) <= 0}
-                              className="bg-app-tab-active text-app-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
-                              onClick={() => handlePayment(d, parseFloat(customAmount))}
-                            >
-                              {payingId === d.id ? <Loader2 size={14} className="animate-spin" /> : t('common.confirm_pay')}
-                            </button>
+                            
+                            <PBar paid={paid} target={target} />
+                            
+                            {target - paid > 0 && (
+                              <div className="mt-3 pt-3 border-t border-app-border">
+                                {activePaymentId === d.id ? (
+                                  <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-bold text-app-text-muted uppercase tracking-wider">{t('common.payment_amount')}</span>
+                                      <button 
+                                        onClick={() => setActivePaymentId(null)}
+                                        className="text-xs text-app-text-muted hover:text-app-text-secondary underline"
+                                      >
+                                        {t('common.cancel')}
+                                      </button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <div className="relative flex-1">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-app-text-muted font-bold">৳</span>
+                                        <input
+                                          type="number"
+                                          value={customAmount}
+                                          onChange={(e) => setCustomAmount(e.target.value)}
+                                          className="w-full pl-8 pr-3 py-2 bg-app-bg border border-app-border rounded-lg text-sm font-bold focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary"
+                                          placeholder="0.00"
+                                          autoFocus
+                                        />
+                                      </div>
+                                      <button 
+                                        disabled={!!payingId || !customAmount || parseFloat(customAmount) <= 0}
+                                        className="bg-app-tab-active text-app-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
+                                        onClick={() => handlePayment(d, parseFloat(customAmount))}
+                                      >
+                                        {payingId === d.id ? <Loader2 size={14} className="animate-spin" /> : t('common.confirm_pay')}
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-between items-center">
+                                    <div className="text-sm font-bold text-rose-600 dark:text-rose-400">{t('common.due')}: {BDT(target - paid, lang === 'bn')}</div>
+                                    <button 
+                                      disabled={!!payingId}
+                                      className="bg-app-tab-active text-app-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                      onClick={() => {
+                                        setActivePaymentId(d.id);
+                                        setCustomAmount((target - paid).toString());
+                                      }}
+                                    >
+                                      {t('common.pay_now')}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {pendingAmt > 0 && (
+                              <div className="mt-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                <Clock size={14} /> {t('common.pending_approval_amount', { amount: BDT(pendingAmt, lang === 'bn') })}
+                              </div>
+                            )}
                           </div>
-                          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                            {[0.25, 0.5, 1].map(ratio => {
-                              const amt = Math.round((target - paid) * ratio);
-                              if (amt <= 0) return null;
-                              return (
-                                <button
-                                  key={ratio}
-                                  onClick={() => setCustomAmount(amt.toString())}
-                                  className="text-[10px] font-bold px-2 py-1 bg-app-bg text-app-text-secondary rounded-md hover:bg-app-border transition-colors whitespace-nowrap border border-app-border"
-                                >
-                                  {ratio === 1 ? t('common.full_pay') : `${ratio * 100}%`} ({BDT(amt, lang === 'bn')})
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm font-bold text-rose-600 dark:text-rose-400">{t('common.due')}: {BDT(target - paid, lang === 'bn')}</div>
-                          <button 
-                            disabled={!!payingId}
-                            className="bg-app-tab-active text-app-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50"
-                            onClick={() => {
-                              setActivePaymentId(d.id);
-                              setCustomAmount((target - paid).toString());
-                            }}
-                          >
-                            {t('common.pay_now')}
-                          </button>
-                        </div>
-                      )}
+                        );
+                      })}
                     </div>
-                  )}
-                  {pendingAmt > 0 && (
-                    <div className="mt-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                      <Clock size={14} /> {t('common.pending_approval_amount', { amount: BDT(pendingAmt, lang === 'bn') })}
-                    </div>
-                  )}
                   </div>
                 </div>
               );
@@ -436,36 +469,84 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                           : Math.min(d.targetAmount, totalPaidForDef / sCount));
                     const st = cellStatus(sharePaid, d.targetAmount);
                     const m = STATUS[st];
+                    const isDue = d.dueDate && d.dueDate < today && sharePaid < d.targetAmount;
                     
                     return (
-                      <div key={`${d.id}-${j}`} className="bg-app-surface rounded-xl border border-app-border p-4 shadow-sm flex items-center gap-4 transition-colors">
-                        <div className="flex-1 min-w-0">
-                          {activePlanId === "all" && (
-                            <div className="mb-1 px-2 py-0.5 bg-app-bg rounded text-[8px] font-black text-app-text-muted inline-block uppercase tracking-wider border border-app-border">
-                              {plans.find((p: any) => p.id === d.planId)?.name}
+                      <div key={`${d.id}-${j}`} className="bg-app-surface rounded-2xl border border-app-border p-5 shadow-sm relative overflow-hidden transition-colors">
+                        <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", m.dot)} />
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <div className="text-base font-black text-app-text-primary">
+                              {d.title}
+                              {d.isGlobal && hasMultiple && (
+                                <span className="ml-2 text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-800">
+                                  {t('common.global_payment_note')}
+                                </span>
+                              )}
                             </div>
-                          )}
-                          <div className="text-xs font-bold text-app-text-primary">
-                            {d.title}
-                            {d.isGlobal && hasMultiple && (
-                              <div className="mt-0.5 text-[8px] font-bold text-blue-500 uppercase tracking-tight">
-                                {t('common.global_payment_note')}
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-app-text-secondary font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
+                              {isDue && <span className="bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-md px-2 py-0.5 text-[10px] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Due</span>}
+                            </div>
+                          </div>
+                          <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider", m.bg, m.text)}>
+                            {st === "paid" ? t('common.status.paid') : st === "partial" ? t('common.status.partial') : t('common.status.unpaid')}
+                          </span>
+                        </div>
+                        
+                        <PBar paid={sharePaid} target={d.targetAmount} />
+                        
+                        {d.targetAmount - sharePaid > 0 && (
+                          <div className="mt-3 pt-3 border-t border-app-border">
+                            {activePaymentId === `${d.id}-${j}` ? (
+                              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-bold text-app-text-muted uppercase tracking-wider">{t('common.payment_amount')}</span>
+                                  <button 
+                                    onClick={() => setActivePaymentId(null)}
+                                    className="text-xs text-app-text-muted hover:text-app-text-secondary underline"
+                                  >
+                                    {t('common.cancel')}
+                                  </button>
+                                </div>
+                                <div className="flex gap-2">
+                                  <div className="relative flex-1">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-app-text-muted font-bold">৳</span>
+                                    <input
+                                      type="number"
+                                      value={customAmount}
+                                      onChange={(e) => setCustomAmount(e.target.value)}
+                                      className="w-full pl-8 pr-3 py-2 bg-app-bg border border-app-border rounded-lg text-sm font-bold focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary"
+                                      placeholder="0.00"
+                                      autoFocus
+                                    />
+                                  </div>
+                                  <button 
+                                    disabled={!!payingId || !customAmount || parseFloat(customAmount) <= 0}
+                                    className="bg-app-tab-active text-app-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
+                                    onClick={() => handlePayment(d, parseFloat(customAmount))}
+                                  >
+                                    {payingId === d.id ? <Loader2 size={14} className="animate-spin" /> : t('common.confirm_pay')}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex justify-between items-center">
+                                <div className="text-sm font-bold text-rose-600 dark:text-rose-400">{t('common.due')}: {BDT(d.targetAmount - sharePaid, lang === 'bn')}</div>
+                                <button 
+                                  disabled={!!payingId}
+                                  className="bg-app-tab-active text-app-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                  onClick={() => {
+                                    setActivePaymentId(`${d.id}-${j}`);
+                                    setCustomAmount((d.targetAmount - sharePaid).toString());
+                                  }}
+                                >
+                                  {t('common.pay_now')}
+                                </button>
                               </div>
                             )}
                           </div>
-                          <div className="text-[10px] text-app-text-muted font-medium mt-0.5">{BDT(d.targetAmount, lang === 'bn')}</div>
-                        </div>
-                        <div className="flex flex-col items-end gap-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider", m.bg, m.text)}>
-                              {st === "paid" ? t('common.status.paid') : st === "partial" ? t('common.status.partial') : t('common.status.unpaid')}
-                            </span>
-                            <span className="text-xs font-black text-app-text-primary">{BDT(sharePaid, lang === 'bn')}</span>
-                          </div>
-                          <div className="w-24 h-1 bg-app-bg rounded-full overflow-hidden border border-app-border">
-                            <div className={cn("h-full rounded-full", m.bar)} style={{ width: `${(sharePaid / d.targetAmount) * 100}%` }} />
-                          </div>
-                        </div>
+                        )}
                       </div>
                     );
                   })}
