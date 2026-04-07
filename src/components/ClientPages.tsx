@@ -18,6 +18,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const clientPlans = (client.planAssignments || []).map((pa: any) => plans.find((p: any) => p.id === pa.planId)).filter(Boolean);
+  const hasMultiple = clientPlans.length > 1 || (client.planAssignments || []).some((pa: any) => (pa.shareCount || 1) > 1);
   
   const activePlan = activePlanId === "all" ? null : plans.find((p: any) => p.id === activePlanId);
   const prjDefs = activePlanId === "all"
@@ -276,7 +277,14 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                   <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", m.dot)} />
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <div className="text-base font-black text-app-text-primary">{d.title}</div>
+                      <div className="text-base font-black text-app-text-primary">
+                        {d.title}
+                        {d.isGlobal && hasMultiple && (
+                          <span className="ml-2 text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-800">
+                            {t('common.global_payment_note')}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-app-text-secondary font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
                         {isDue && <span className="bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-md px-2 py-0.5 text-[10px] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Due</span>}
@@ -374,9 +382,11 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                   <div className="text-xs font-black text-app-text-primary uppercase tracking-widest">{t('client_info.shares')} {j + 1}</div>
                 </div>
                 <div className="space-y-2">
-                  {prjDefs.filter((d: any) => (d._shareCount || 1) >= j + 1).map((d: any) => {
+                  {prjDefs.filter((d: any) => d.isGlobal || (d._shareCount || 1) >= j + 1).map((d: any) => {
                     const totalPaidForDef = clientPaidForDef(client.id, d.id, payments);
-                    const sharePaid = Math.min(d.targetAmount, Math.max(0, totalPaidForDef - j * d.targetAmount));
+                    const sharePaid = d.isGlobal 
+                      ? Math.min(d.targetAmount, totalPaidForDef)
+                      : Math.min(d.targetAmount, Math.max(0, totalPaidForDef - j * d.targetAmount));
                     const st = cellStatus(sharePaid, d.targetAmount);
                     const m = STATUS[st];
                     
@@ -388,7 +398,14 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                               {plans.find((p: any) => p.id === d.planId)?.name}
                             </div>
                           )}
-                          <div className="text-xs font-bold text-app-text-primary">{d.title}</div>
+                          <div className="text-xs font-bold text-app-text-primary">
+                            {d.title}
+                            {d.isGlobal && hasMultiple && (
+                              <div className="mt-0.5 text-[8px] font-bold text-blue-500 uppercase tracking-tight">
+                                {t('common.global_payment_note')}
+                              </div>
+                            )}
+                          </div>
                           <div className="text-[10px] text-app-text-muted font-medium mt-0.5">{BDT(d.targetAmount, lang === 'bn')}</div>
                         </div>
                         <div className="flex flex-col items-end gap-1.5">
@@ -447,6 +464,8 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
   const pendingPays = payments.filter((p: any) => p.clientId === client.id && p.status === "pending");
   const project = projects.find((p: any) => p.id === client.projectId);
 
+  const hasMultiple = (client.planAssignments || []).length > 1 || (client.planAssignments || []).some((pa: any) => (pa.shareCount || 1) > 1);
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
       <div className="flex items-center justify-between mb-6">
@@ -485,7 +504,14 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
                     </div>
                     <div>
                       <div className="text-[10px] text-app-text-muted font-mono font-bold tracking-widest uppercase mb-0.5">{p.id ? (p.id.split('-')[1] || p.id) : ""}</div>
-                      <div className="text-base font-black text-app-text-primary leading-tight">{def?.title || t('common.installment')}</div>
+                      <div className="text-base font-black text-app-text-primary leading-tight">
+                        {def?.title || t('common.installment')}
+                        {def?.isGlobal && hasMultiple && (
+                          <div className="text-[9px] font-bold text-blue-500 uppercase tracking-tight mt-0.5">
+                            {t('common.global_payment_note')}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">

@@ -15,7 +15,8 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
   const approvedPays = existPays.filter((p: any) => p.status === "approved");
   const pendingPays = existPays.filter((p: any) => p.status === "pending");
   const paid = approvedPays.reduce((s: number, p: any) => s + p.amount, 0);
-  const rem = Math.max(0, targetAmount - paid);
+  const pending = pendingPays.reduce((s: number, p: any) => s + p.amount, 0);
+  const rem = Math.max(0, targetAmount - (paid + pending));
   
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(todayStr());
@@ -32,6 +33,8 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
     onClose();
   };
 
+  const hasMultiple = (client.planAssignments || []).length > 1 || (client.planAssignments || []).some((pa: any) => (pa.shareCount || 1) > 1);
+
   return (
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm transition-colors" onClick={onClose}>
       <motion.div 
@@ -42,7 +45,15 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
       >
         <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
         <div className="text-xl font-black text-app-text-primary">{t("project_modals.payment_record")}</div>
-        <div className="text-xs font-bold text-app-text-secondary mt-1 mb-6">{dotJoin(client.name, client.plot, instDef.title)} {shareCount > 1 && <span className="text-blue-600 dark:text-blue-400">({shareCount} {t("client_info.shares")})</span>}</div>
+        <div className="text-xs font-bold text-app-text-secondary mt-1 mb-6">
+          {dotJoin(client.name, client.plot, instDef.title)} 
+          {shareCount > 1 && <span className="text-blue-600 dark:text-blue-400 ml-1">({shareCount} {t("client_info.shares")})</span>}
+          {instDef.isGlobal && hasMultiple && (
+            <div className="mt-1 text-[10px] font-bold text-blue-500 uppercase tracking-tight">
+              {t('common.global_payment_note')}
+            </div>
+          )}
+        </div>
         
         <div className="bg-app-bg border border-app-border rounded-2xl p-4 mb-6 transition-colors">
           <PBar paid={paid} target={targetAmount} />
@@ -391,7 +402,14 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           </div>
           <div className="w-[280px] flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Instalment No.:</span>
-            <span className="flex-1 receipt-border-bottom px-2 font-bold">{instDef?.title}</span>
+            <span className="flex-1 receipt-border-bottom px-2 font-bold">
+              {instDef?.title}
+              {instDef?.isGlobal && (
+                <span className="ml-2 text-[9px] font-bold text-blue-600 uppercase tracking-tight print:text-black">
+                  {t('common.global_payment_note')}
+                </span>
+              )}
+            </span>
           </div>
         </div>
 

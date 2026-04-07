@@ -28,7 +28,7 @@ import {
   query, where, getDocs, writeBatch, orderBy, limit, getDoc 
 } from "firebase/firestore";
 import { 
-  onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut 
+  onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, signInAnonymously 
 } from "firebase/auth";
 import { db, auth as fbAuth, handleFirestoreError, OperationType } from "./firebase";
 
@@ -689,6 +689,18 @@ export default function App() {
 
   const [toast, setToast] = useState<{ m: string, t: 's' | 'e' } | null>(null);
 
+  useEffect(() => {
+    // Silent anonymous sign-in to provide request.auth for security rules
+    const unsubAuth = onAuthStateChanged(fbAuth, (user) => {
+      if (!user) {
+        signInAnonymously(fbAuth).catch(() => {
+          // Silently fail if anonymous auth is disabled in console
+        });
+      }
+    });
+    return () => unsubAuth();
+  }, []);
+
   const showToast = (m: string, t: 's' | 'e' = 's') => {
     setToast({ m, t });
     setTimeout(() => setToast(null), 3000);
@@ -725,6 +737,7 @@ export default function App() {
     };
     init();
 
+    // Publicly readable (needed for basic app structure)
     const unsubProjects = onSnapshot(collection(db, "projects"), (s) => {
       setProjects(s.docs.map(d => ({ ...d.data(), id: d.id })));
       setDataLoaded(prev => ({ ...prev, projects: true }));
@@ -735,40 +748,72 @@ export default function App() {
       setDataLoaded(prev => ({ ...prev, plans: true }));
     }, (e) => handleFirestoreError(e, OperationType.LIST, "plans"));
 
-    const unsubClients = onSnapshot(collection(db, "clients"), (s) => {
-      setClients(s.docs.map(d => ({ ...d.data(), id: d.id })));
-      setDataLoaded(prev => ({ ...prev, clients: true }));
-    }, (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
-
     const unsubInstDefs = onSnapshot(collection(db, "instDefs"), (s) => {
       setInstDefs(s.docs.map(d => ({ ...d.data(), id: d.id })));
       setDataLoaded(prev => ({ ...prev, instDefs: true }));
     }, (e) => handleFirestoreError(e, OperationType.LIST, "instDefs"));
 
-    const unsubPayments = onSnapshot(collection(db, "payments"), (s) => {
-      setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
-      setDataLoaded(prev => ({ ...prev, payments: true }));
-    }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
+    let unsubClients = () => {};
+    let unsubPayments = () => {};
+    let unsubExpenses = () => {};
+    let unsubAdmins = () => {};
+    let unsubLogs = () => {};
 
-    const unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => {
-      setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id })));
-      setDataLoaded(prev => ({ ...prev, expenses: true }));
-    }, (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
+    if (auth?.role === "admin" || auth?.role === "superadmin") {
+      unsubClients = onSnapshot(collection(db, "clients"), (s) => {
+        setClients(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setDataLoaded(prev => ({ ...prev, clients: true }));
+      }, (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
 
-    const unsubAdmins = onSnapshot(collection(db, "admins"), (s) => {
-      setAdmins(s.docs.map(d => ({ ...d.data(), id: d.id })));
-      setDataLoaded(prev => ({ ...prev, admins: true }));
-    }, (e) => handleFirestoreError(e, OperationType.LIST, "admins"));
+      unsubPayments = onSnapshot(collection(db, "payments"), (s) => {
+        setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setDataLoaded(prev => ({ ...prev, payments: true }));
+      }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
 
-    const unsubLogs = onSnapshot(query(collection(db, "logs"), orderBy("ts", "desc"), limit(100)), (s) => {
-      setLogs(s.docs.map(d => ({ ...d.data(), id: d.id })));
-      setDataLoaded(prev => ({ ...prev, logs: true }));
-    }, (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
+      unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => {
+        setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setDataLoaded(prev => ({ ...prev, expenses: true }));
+      }, (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
+
+      unsubAdmins = onSnapshot(collection(db, "admins"), (s) => {
+        setAdmins(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setDataLoaded(prev => ({ ...prev, admins: true }));
+      }, (e) => handleFirestoreError(e, OperationType.LIST, "admins"));
+
+      unsubLogs = onSnapshot(query(collection(db, "logs"), orderBy("ts", "desc"), limit(100)), (s) => {
+        setLogs(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setDataLoaded(prev => ({ ...prev, logs: true }));
+      }, (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
+    } else if (auth?.role === "client" && auth?.user?.id) {
+      // Client only sees their own doc and payments
+      unsubClients = onSnapshot(doc(db, "clients", auth.user.id), (d) => {
+        if (d.exists()) {
+          setClients([{ ...d.data(), id: d.id }]);
+        }
+        setDataLoaded(prev => ({ ...prev, clients: true }));
+      }, (e) => handleFirestoreError(e, OperationType.GET, `clients/${auth.user.id}`));
+
+      unsubPayments = onSnapshot(query(collection(db, "payments"), where("clientId", "==", auth.user.id)), (s) => {
+        setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setDataLoaded(prev => ({ ...prev, payments: true }));
+      }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
+      
+      // Mark others as loaded to stop loading spinner
+      setDataLoaded(prev => ({ ...prev, expenses: true, admins: true, logs: true }));
+    } else {
+      // Not logged in yet - clear data or keep empty
+      setClients([]);
+      setPayments([]);
+      setExpenses([]);
+      setAdmins([]);
+      setLogs([]);
+      // We don't set dataLoaded to false here because we want the login screen to show
+    }
 
     return () => {
       unsubProjects(); unsubPlans(); unsubClients(); unsubInstDefs(); unsubPayments(); unsubExpenses(); unsubAdmins(); unsubLogs();
     };
-  }, []);
+  }, [auth]);
 
     // Set loading to false only when essential data is loaded
   useEffect(() => {
@@ -826,6 +871,15 @@ export default function App() {
   const login = async (role: string, id: string, pass: string) => {
     setLoading(true);
     try {
+      // Try to get an anonymous auth session for security rules, but don't block if it fails
+      if (!fbAuth.currentUser) {
+        try {
+          await signInAnonymously(fbAuth);
+        } catch (e) {
+          // Ignore error if anonymous auth is disabled
+        }
+      }
+
       // Hardcoded bypass for superadmin
       if (role === "admin" && id === "superadmin" && pass === "1234") {
         const superAdmin = { id: "superadmin", name: "Super Admin", username: "superadmin", password: "1234", role: "superadmin", isTemp: false };
@@ -850,6 +904,22 @@ export default function App() {
           setLoading(false);
           return { error: "পাসওয়ার্ড ভুল" };
         }
+        
+        // Link UID for security rules
+        if (fbAuth.currentUser) {
+          try {
+            if (userData.uid !== fbAuth.currentUser.uid) {
+              await updateDoc(doc(db, "admins", userData.id), { uid: fbAuth.currentUser.uid });
+            }
+            await setDoc(doc(db, "roles", fbAuth.currentUser.uid), { 
+              role: userData.role === "superadmin" ? "superadmin" : "admin", 
+              id: userData.id 
+            });
+          } catch (e) {
+            console.error("Role linking failed:", e);
+          }
+        }
+
         const userRole = userData.role === "superadmin" ? "superadmin" : role;
         setAuth({ role: userRole, user: userData });
         if (role === "admin" && userData.isTemp) setForceChangePw(true);
@@ -868,6 +938,22 @@ export default function App() {
           setLoading(false);
           return { error: "পাসওয়ার্ড ভুল" };
         }
+
+        // Link UID for security rules
+        if (fbAuth.currentUser) {
+          try {
+            if (userData.uid !== fbAuth.currentUser.uid) {
+              await updateDoc(doc(db, "clients", id), { uid: fbAuth.currentUser.uid });
+            }
+            await setDoc(doc(db, "roles", fbAuth.currentUser.uid), { 
+              role: "client", 
+              id: id 
+            });
+          } catch (e) {
+            console.error("Role linking failed:", e);
+          }
+        }
+
         setAuth({ role: "client", user: userData });
         setPage("installments");
       }
@@ -892,13 +978,21 @@ export default function App() {
       const clean = sanitize(c, CLIENT_FIELDS);
       await setDoc(doc(db, "clients", clean.id), clean);
       if (oldId && oldId !== clean.id) {
-        // Migrate payments
-        const batch = writeBatch(db);
+        // Migrate payments in chunks to avoid batch limits
         const clientPayments = payments.filter(p => p.clientId === oldId);
-        clientPayments.forEach(p => {
-          batch.update(doc(db, "payments", p.id), { clientId: clean.id });
-        });
-        await batch.commit();
+        const chunks = [];
+        for (let i = 0; i < clientPayments.length; i += 450) {
+          chunks.push(clientPayments.slice(i, i + 450));
+        }
+
+        for (const chunk of chunks) {
+          const batch = writeBatch(db);
+          chunk.forEach(p => {
+            batch.update(doc(db, "payments", p.id), { clientId: clean.id });
+          });
+          await batch.commit();
+        }
+
         await deleteDoc(doc(db, "clients", oldId));
         addLog(adminUser, "client_id_change", `${oldId} → ${clean.id}`, `${clean.name} এর ID পরিবর্তন`, clean.projectId);
       } else {
@@ -1088,9 +1182,24 @@ export default function App() {
   const deleteInstDef = async (id: string, planId: string) => {
     const d = instDefs.find(x => x.id === id);
     try {
+      // Cascade delete payments
+      const relatedPayments = payments.filter(p => p.instDefId === id);
+      const chunks = [];
+      for (let i = 0; i < relatedPayments.length; i += 450) {
+        chunks.push(relatedPayments.slice(i, i + 450));
+      }
+
+      for (const chunk of chunks) {
+        const batch = writeBatch(db);
+        chunk.forEach(p => {
+          batch.delete(doc(db, "payments", p.id));
+        });
+        await batch.commit();
+      }
+
       await deleteDoc(doc(db, "instDefs", id));
       const plan = plans.find(pl => pl.id === planId);
-      if (d) addLog(adminUser, "instdef_delete", d.title, "কিস্তি কলাম মুছে ফেলা হয়েছে", plan?.projectId || null);
+      if (d) addLog(adminUser, "instdef_delete", d.title, "কিস্তি কলাম মুছে ফেলা হয়েছে (সাথে সংশ্লিষ্ট সব পেমেন্ট)", plan?.projectId || null);
       showToast(t("common.success_deleted"));
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, `instDefs/${id}`);
