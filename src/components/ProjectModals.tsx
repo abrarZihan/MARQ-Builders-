@@ -322,7 +322,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="relative p-10 bg-white dark:bg-white text-slate-900 dark:text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
+    <div className="relative p-10 bg-white text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden" style={{ backgroundColor: 'white', color: '#1e293b' }}>
       {/* Header */}
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-10">
@@ -437,7 +437,8 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none border border-slate-200" 
+        className="rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none border border-slate-200" 
+        style={{ backgroundColor: 'white' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible relative">
@@ -468,14 +469,15 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           )}
         </div>
         
-        <div className="p-6 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex gap-3 no-print">
+        <div className="p-6 border-t border-slate-200 flex gap-3 no-print" style={{ backgroundColor: '#f8fafc' }}>
           <button 
-            className="flex-1 bg-app-tab-active text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
+            className="flex-1 text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
+            style={{ backgroundColor: '#5c5fc8', color: 'white' }}
             onClick={() => window.print()}
           >
             <Printer size={18} /> {t("project_modals.print")}
           </button>
-          <button className="flex-1 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold py-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-700" onClick={onClose}>
+          <button className="flex-1 bg-white text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200" onClick={onClose}>
             {t("project_modals.close")}
           </button>
         </div>

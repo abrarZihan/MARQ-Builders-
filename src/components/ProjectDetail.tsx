@@ -72,6 +72,35 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   const prjExpenses = expenses.filter((e: any) => e.projectId === project.id);
   const prjLogs = [...logs].filter(l => l.projectId === project.id).sort((a, b) => b.ts.localeCompare(a.ts));
   
+  const projectClientsForCalc = clients.filter((c: any) => c.projectId === project.id);
+  const allPrjDefs = instDefs.filter((d: any) => d.projectId === project.id);
+  
+  const projectCollected = payments.filter((p: any) => {
+    if (p.status !== "approved") return false;
+    const client = allPrjClients.find((c: any) => c.id === p.clientId);
+    if (!client) return false;
+    const def = allPrjDefs.find(d => d.id === p.instDefId);
+    if (!def) return false;
+    return true;
+  }).reduce((s: number, p: any) => s + p.amount, 0);
+
+  const projectTarget = projectClientsForCalc.reduce((s: number, c: any) => {
+    const assignments = c.planAssignments || [];
+    if (assignments.length > 0) {
+      return s + assignments.reduce((as: number, pa: any) => {
+        const pDefs = instDefs.filter((d: any) => d.planId === pa.planId);
+        return as + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * pa.shareCount);
+      }, 0);
+    } else {
+      const firstPlan = prjPlans[0];
+      if (!firstPlan) return s;
+      const pDefs = instDefs.filter((d: any) => d.planId === firstPlan.id);
+      return s + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (c.shareCount || 1));
+    }
+  }, 0);
+
+  const projectDue = Math.max(0, projectTarget - projectCollected);
+
   const totalCollected = payments.filter((p: any) => {
     if (p.status !== "approved") return false;
     const def = prjDefs.find(d => d.id === p.instDefId);
@@ -137,12 +166,12 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
         <div className="bg-app-surface rounded-2xl border border-app-border p-3 flex flex-col justify-center items-center text-center transition-colors shadow-sm">
           <div className="w-8 h-8 bg-slate-300/50 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-lg flex items-center justify-center mb-2 border border-emerald-300/30 dark:border-emerald-500/30"><CheckCircle2 size={16} /></div>
           <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-0.5">{t("project_detail.collected")}</div>
-          <div className="text-sm font-black text-app-text-primary">{BDTshort(totalCollected)}</div>
+          <div className="text-sm font-black text-app-text-primary">{BDTshort(projectCollected)}</div>
         </div>
         <div className="bg-app-surface rounded-2xl border border-app-border p-3 flex flex-col justify-center items-center text-center transition-colors shadow-sm">
           <div className="w-8 h-8 bg-slate-300/50 text-rose-800 dark:bg-rose-500/20 dark:text-rose-400 rounded-lg flex items-center justify-center mb-2 border border-rose-300/30 dark:border-rose-500/30"><Clock size={16} /></div>
           <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider mb-0.5">{t("project_detail.due")}</div>
-          <div className="text-sm font-black text-app-text-primary">{BDTshort(totalDue)}</div>
+          <div className="text-sm font-black text-app-text-primary">{BDTshort(projectDue)}</div>
         </div>
         <div className="bg-app-surface rounded-2xl border border-app-border p-3 flex flex-col justify-center items-center text-center transition-colors shadow-sm">
           <div className="w-8 h-8 bg-slate-300/50 text-violet-800 dark:bg-violet-500/20 dark:text-violet-400 rounded-lg flex items-center justify-center mb-2 border border-violet-300/30 dark:border-violet-500/30"><Building2 size={16} /></div>
@@ -447,8 +476,25 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
           {prjClients.map((c: any) => {
             const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
             const shareCount = assignment ? assignment.shareCount : (c.shareCount || 1);
-            const cPaid = payments.filter((p: any) => p.clientId === c.id && p.status === "approved" && prjDefs.find(d => d.id === p.instDefId)).reduce((s: number, p: any) => s + p.amount, 0);
-            const cTarget = prjDefs.reduce((s: number, d: any) => s + (d.isGlobal ? 1 : shareCount) * d.targetAmount, 0);
+            
+            // Project-wide client stats
+            const cPaid = payments.filter((p: any) => p.clientId === c.id && p.status === "approved" && allPrjDefs.some(d => d.id === p.instDefId)).reduce((s: number, p: any) => s + p.amount, 0);
+            
+            const cTarget = allPrjClients.filter(cl => cl.id === c.id).reduce((s: number, cl: any) => {
+              const assignments = cl.planAssignments || [];
+              if (assignments.length > 0) {
+                return s + assignments.reduce((as: number, pa: any) => {
+                  const pDefs = instDefs.filter((d: any) => d.planId === pa.planId);
+                  return as + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * pa.shareCount);
+                }, 0);
+              } else {
+                const firstPlan = prjPlans[0];
+                if (!firstPlan) return s;
+                const pDefs = instDefs.filter((d: any) => d.planId === firstPlan.id);
+                return s + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (cl.shareCount || 1));
+              }
+            }, 0);
+
             return (
               <div key={c.id} className="bg-app-surface rounded-2xl border border-app-border p-5 shadow-sm transition-colors">
                 <div className="flex items-center gap-4 mb-4">
@@ -491,17 +537,16 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold text-app-text-secondary uppercase tracking-wider mb-1 truncate">{t("project_detail.total_collected")}</div>
-              <div className="text-3xl font-black text-app-text-primary tracking-tight">{BDT(totalCollected)}</div>
+              <div className="text-3xl font-black text-app-text-primary tracking-tight">{BDT(projectCollected)}</div>
             </div>
           </div>
 
           <div className="space-y-3">
             {payments && payments.filter((p: any) => {
-              if (!prjClients.find((c: any) => c.id === p.clientId)) return false;
-              return !!prjDefs.find(d => d.id === p.instDefId);
+              return allPrjClients.some((c: any) => c.id === p.clientId);
             }).sort((a: any, b: any) => b.date.localeCompare(a.date)).map((p: any, i: number) => {
-              const client = prjClients.find((c: any) => c.id === p.clientId);
-              const def = prjDefs.find((d: any) => d.id === p.instDefId);
+              const client = allPrjClients.find((c: any) => c.id === p.clientId);
+              const def = allPrjDefs.find((d: any) => d.id === p.instDefId);
               return (
                 <div key={`${p.id}-${i}`} className="bg-app-surface rounded-2xl border border-app-border p-4 shadow-sm flex items-center gap-4 transition-colors">
                   <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border", p.status === "approved" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20")}>

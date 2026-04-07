@@ -80,7 +80,18 @@ function PendingApprovals({ payments, clients, instDefs, projects, onApprove, on
 
 function FinancialSummary({ projects, clients, instDefs, payments, expenses, plans }: any) {
   const { t } = useLanguage();
-  const approvedPays = payments.filter((p: any) => p.status === "approved");
+  const approvedPays = payments.filter((p: any) => {
+    if (p.status !== "approved") return false;
+    const client = clients.find((c: any) => c.id === p.clientId);
+    if (!client) return false;
+    const project = projects.find((prj: any) => prj.id === client.projectId);
+    if (!project) return false;
+    const def = instDefs.find((d: any) => d.id === p.instDefId);
+    if (!def) return false;
+    const plan = plans.find((pl: any) => pl.id === def.planId);
+    if (!plan) return false;
+    return true;
+  });
   const pendingPays = payments.filter((p: any) => p.status === "pending");
   const totalExpected = clients.reduce((s: number, c: any) => {
     const prjPlans = plans.filter((p: any) => p.projectId === c.projectId);
@@ -297,8 +308,41 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   
-  const allCollected = payments.filter((p: any) => p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
+  const allCollected = payments.filter((p: any) => {
+    if (p.status !== "approved") return false;
+    const client = clients.find((c: any) => c.id === p.clientId);
+    if (!client) return false;
+    const project = projects.find((prj: any) => prj.id === client.projectId);
+    if (!project) return false;
+    const def = instDefs.find((d: any) => d.id === p.instDefId);
+    if (!def) return false;
+    const plan = plans.find((pl: any) => pl.id === def.planId);
+    if (!plan) return false;
+    return true;
+  }).reduce((s: number, p: any) => s + p.amount, 0);
   const pendingCount = payments.filter((p: any) => p.status === "pending").length;
+
+  // Debugging discrepancies
+  useEffect(() => {
+    const approved = payments.filter((p: any) => p.status === "approved");
+    const linkedToClient = approved.filter((p: any) => clients.find((c: any) => c.id === p.clientId));
+    
+    // Check for payments that are linked to clients but might be "extra"
+    const breakdown: Record<string, number> = {};
+    linkedToClient.forEach(p => {
+      const def = instDefs.find(d => d.id === p.instDefId);
+      const planId = def ? def.planId : "no-plan";
+      breakdown[planId] = (breakdown[planId] || 0) + p.amount;
+    });
+
+    console.log("--- Collection Breakdown by Plan ---");
+    Object.entries(breakdown).forEach(([planId, amount]) => {
+      const plan = plans.find(pl => pl.id === planId);
+      console.log(`Plan: ${plan ? plan.name : planId}, Amount: ${amount}`);
+    });
+    console.log("Total Linked Amount:", linkedToClient.reduce((s: number, p: any) => s + p.amount, 0));
+    console.log("-----------------------------------");
+  }, [payments, clients, instDefs, plans]);
   
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-24">
@@ -363,7 +407,14 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
           <div className="space-y-3">
             {projects.map((prj: any) => {
               const prjClients = clients.filter((c: any) => c.projectId === prj.id);
-              const prjPaid = payments.filter((p: any) => p.status === "approved" && prjClients.find((c: any) => c.id === p.clientId)).reduce((s: number, p: any) => s + p.amount, 0);
+              const prjPaid = payments.filter((p: any) => {
+                if (p.status !== "approved") return false;
+                const client = prjClients.find((c: any) => c.id === p.clientId);
+                if (!client) return false;
+                const def = instDefs.find((d: any) => d.id === p.instDefId);
+                if (!def) return false;
+                return true;
+              }).reduce((s: number, p: any) => s + p.amount, 0);
               const color = ac(prj.id);
               
               return (
