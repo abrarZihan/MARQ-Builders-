@@ -80,6 +80,26 @@
   color-scheme: dark;
 }
 
+/* Force receipt to always look like white paper */
+.receipt-paper {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+}
+.receipt-paper .receipt-border-bottom {
+  border-bottom: 1px dotted #1e293b !important;
+}
+.receipt-paper .receipt-border-top {
+  border-top: 1px solid #1e293b !important;
+}
+.receipt-footer-bar {
+  background-color: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+.dark .receipt-footer-bar {
+  background-color: #0f172a !important;
+  border-top: 1px solid #1e293b !important;
+}
+
 body {
   @apply bg-app-bg text-app-text-primary antialiased transition-colors duration-200;
 }

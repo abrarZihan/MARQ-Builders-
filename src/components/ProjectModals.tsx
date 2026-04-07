@@ -177,9 +177,9 @@ export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
             checked={f.isGlobal} onChange={e => s("isGlobal", e.target.checked)} 
           />
           <label htmlFor="isGlobal" className="text-sm font-bold text-app-text-primary cursor-pointer select-none">
-            {lang === 'bn' ? "সবার জন্য (Basic Payment)" : "Global (Basic Payment for all)"}
+            {lang === 'bn' ? "সবার জন্য এক (সব প্ল্যান ও শেয়ারে সমান)" : "Same for all (across plans and shares)"}
             <div className="text-[10px] text-app-text-muted font-medium mt-0.5">
-              {lang === 'bn' ? "এটি সব প্ল্যানে দেখাবে এবং শেয়ার সংখ্যা দিয়ে গুণ হবে না।" : "Shows in all plans and doesn't multiply by share count."}
+              {lang === 'bn' ? "এটি সব প্ল্যানে একই থাকবে এবং শেয়ার সংখ্যা দিয়ে গুণ হবে না।" : "Shows same amount in all plans and doesn't multiply by share count."}
             </div>
           </label>
         </div>
@@ -233,7 +233,7 @@ export function EditDefSheet({ def, onSave, onDelete, onClose }: any) {
             checked={f.isGlobal} onChange={e => s("isGlobal", e.target.checked)} 
           />
           <label htmlFor="isGlobalEdit" className="text-sm font-bold text-app-text-primary cursor-pointer select-none">
-            {lang === 'bn' ? "সবার জন্য (Basic Payment)" : "Global (Basic Payment for all)"}
+            {lang === 'bn' ? "সবার জন্য এক (সব প্ল্যান ও শেয়ারে সমান)" : "Same for all (across plans and shares)"}
           </label>
         </div>
         
@@ -322,7 +322,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="relative p-10 bg-white text-slate-900 font-sans border-b border-dashed border-slate-300 last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden" style={{ backgroundColor: 'white', color: '#1e293b' }}>
+    <div className="receipt-paper relative p-10 font-sans border-b border-dashed last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
       {/* Header */}
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-10">
@@ -352,13 +352,13 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
       <div className="flex justify-between text-[13px] font-bold mb-6 px-2">
         <div className="flex items-baseline gap-1">
           <span>Sl. No.</span>
-          <span className="border-b border-dotted border-slate-900 min-w-[120px] px-2 text-center">
+          <span className="receipt-border-bottom min-w-[120px] px-2 text-center">
             {payment?.id ? (payment.id.split('-')[1] || payment.id) : ""}
           </span>
         </div>
         <div className="flex items-baseline gap-1">
           <span>Date:</span>
-          <span className="border-b border-dotted border-slate-900 min-w-[180px] px-2 text-center">
+          <span className="receipt-border-bottom min-w-[180px] px-2 text-center">
             {payment.date}
           </span>
         </div>
@@ -376,46 +376,46 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
         <div className="flex gap-8">
           <div className="flex-1 flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{client?.name}</span>
+            <span className="flex-1 receipt-border-bottom px-2 font-bold">{client?.name}</span>
           </div>
           <div className="w-[280px] flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Customer ID:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{client?.id}</span>
+            <span className="flex-1 receipt-border-bottom px-2 font-bold">{client?.id}</span>
           </div>
         </div>
 
         <div className="flex gap-8">
           <div className="flex-1 flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Project Name:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{project?.name || "N/A"}</span>
+            <span className="flex-1 receipt-border-bottom px-2 font-bold">{project?.name || "N/A"}</span>
           </div>
           <div className="w-[280px] flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Instalment No.:</span>
-            <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{instDef?.title}</span>
+            <span className="flex-1 receipt-border-bottom px-2 font-bold">{instDef?.title}</span>
           </div>
         </div>
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Amount =</span>
-          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-black text-base">{payment.amount.toLocaleString()}/-</span>
+          <span className="flex-1 receipt-border-bottom px-2 font-black text-base">{payment.amount.toLocaleString()}/-</span>
         </div>
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Amount in word:</span>
-          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">{numberToWords(payment.amount)} TK</span>
+          <span className="flex-1 receipt-border-bottom px-2 font-bold">{numberToWords(payment.amount)} TK</span>
         </div>
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Deposit By:</span>
-          <span className="flex-1 border-b border-dotted border-slate-900 px-2 font-bold">Cash/Cheque/Bank</span>
+          <span className="flex-1 receipt-border-bottom px-2 font-bold">Cash/Cheque/Bank</span>
         </div>
       </div>
 
       {/* Footer Signatures */}
       <div className="flex justify-between mt-24 px-4 text-[11px] font-bold text-center">
-        <div className="w-48 border-t border-slate-900 pt-1.5">Prepared By</div>
-        <div className="w-48 border-t border-slate-900 pt-1.5">Accounts Officer</div>
-        <div className="w-48 border-t border-slate-900 pt-1.5">Authorised Signature</div>
+        <div className="w-48 receipt-border-top pt-1.5">Prepared By</div>
+        <div className="w-48 receipt-border-top pt-1.5">Accounts Officer</div>
+        <div className="w-48 receipt-border-top pt-1.5">Authorised Signature</div>
       </div>
 
       {/* Watermark */}
@@ -437,8 +437,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[400] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none border border-slate-200" 
-        style={{ backgroundColor: 'white' }}
+        className="rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none bg-app-surface border border-app-border" 
         onClick={e => e.stopPropagation()}
       >
         <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible relative">
@@ -469,7 +468,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           )}
         </div>
         
-        <div className="p-6 border-t border-slate-200 flex gap-3 no-print" style={{ backgroundColor: '#f8fafc' }}>
+        <div className="receipt-footer-bar p-6 flex gap-3 no-print">
           <button 
             className="flex-1 text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2" 
             style={{ backgroundColor: '#5c5fc8', color: 'white' }}
@@ -477,7 +476,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           >
             <Printer size={18} /> {t("project_modals.print")}
           </button>
-          <button className="flex-1 bg-white text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200" onClick={onClose}>
+          <button className="flex-1 bg-app-bg text-app-text-secondary font-bold py-3.5 rounded-xl hover:bg-app-border transition-colors border border-app-border" onClick={onClose}>
             {t("project_modals.close")}
           </button>
         </div>

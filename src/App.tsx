@@ -250,17 +250,17 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
             </div>
             
             <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="bg-app-banner-success-bg rounded-xl p-2.5">
+              <div className="bg-app-bg rounded-xl p-2.5 border border-app-border">
                 <div className="text-[9px] text-app-text-muted font-bold uppercase">{t("dashboard.collected_short")}</div>
-                <div className="text-sm font-black text-app-banner-success-text mt-0.5">{BDTshort(collected)}</div>
+                <div className="text-sm font-black text-app-text-primary mt-0.5">{BDTshort(collected)}</div>
               </div>
-              <div className="bg-app-banner-error-bg rounded-xl p-2.5">
+              <div className="bg-app-bg rounded-xl p-2.5 border border-app-border">
                 <div className="text-[9px] text-app-text-muted font-bold uppercase">{t("dashboard.due_short")}</div>
-                <div className="text-sm font-black text-app-banner-error-text mt-0.5">{BDTshort(due)}</div>
+                <div className="text-sm font-black text-app-text-primary mt-0.5">{BDTshort(due)}</div>
               </div>
               <div className="bg-app-bg rounded-xl p-2.5 border border-app-border">
                 <div className="text-[9px] text-app-text-muted font-bold uppercase">{t("dashboard.expense_short")}</div>
-                <div className="text-sm font-black text-violet-600 dark:text-violet-400 mt-0.5">{BDTshort(spent)}</div>
+                <div className="text-sm font-black text-app-text-primary mt-0.5">{BDTshort(spent)}</div>
               </div>
             </div>
             
