@@ -337,12 +337,17 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
         {viewMode === "combined" ? (
           <div className="space-y-8">
             {groupedDefs.map((group) => {
-              const isAll = activePlanId === "all";
+              const showBox = activePlanId === "all" && clientPlans.length > 1;
               return (
-                <div key={group.id} className={cn(isAll ? "bg-app-surface/50 rounded-3xl border border-app-border p-2 shadow-sm" : "")}>
-                  <div className={cn(isAll ? "flex flex-col md:flex-row gap-2" : "space-y-3")}>
-                    {/* Plan Label - Vertical style (only for All Plans) */}
-                    {isAll && (
+                <div key={group.id} className={cn(showBox ? "bg-app-surface/50 rounded-3xl border border-app-border p-2 shadow-sm" : "")}>
+                  {!showBox && activePlanId === "all" && (
+                    <div className="mb-2 px-3 py-1 bg-app-bg rounded-lg text-[10px] font-black text-app-text-muted inline-block uppercase tracking-wider border border-app-border">
+                      {group.name}
+                    </div>
+                  )}
+                  <div className={cn(showBox ? "flex flex-col md:flex-row gap-2" : "space-y-3")}>
+                    {/* Plan Label - Vertical style (only for All Plans with multiple plans) */}
+                    {showBox && (
                       <div className="md:w-12 flex md:flex-col items-center justify-center bg-app-tab-active text-app-bg rounded-2xl py-4 px-2 shadow-md shrink-0">
                         <div className="md:-rotate-90 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.2em]">
                           {group.name}
@@ -350,8 +355,8 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                       </div>
                     )}
 
-                    {/* Installments Container (Scrollable only for All Plans) */}
-                    <div className={cn("flex-1 p-2 space-y-3", isAll ? "max-h-[480px] overflow-y-auto custom-scrollbar" : "")}>
+                    {/* Installments Container (Scrollable only for All Plans with multiple plans) */}
+                    <div className={cn("flex-1 p-2 space-y-3", showBox ? "max-h-[480px] overflow-y-auto custom-scrollbar" : "")}>
                       {group.defs.map((d: any) => {
                         const paid = clientPaidForDef(client.id, d.id, payments);
                         const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
