@@ -10,7 +10,7 @@ import { useLanguage } from "../lib/i18n";
 export function ClientInstallments({ client, instDefs, payments, projects, plans }: any) {
   const { t, lang } = useLanguage();
   const [activePlanId, setActivePlanId] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"combined" | "shares">("combined");
+  const [viewModes, setViewModes] = useState<Record<string, "combined" | "shares">>({});
   const [payingId, setPayingId] = useState<string | null>(null);
   const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState<string>("");
@@ -79,6 +79,15 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
 
   const today = todayStr();
   const color = ac(client.id);
+
+  const viewMode = viewModes[activePlanId] || "combined";
+  const setViewMode = (mode: "combined" | "shares") => {
+    setViewModes(prev => ({ ...prev, [activePlanId]: mode }));
+  };
+
+  const showViewToggle = activePlanId === "all"
+    ? (client.planAssignments || []).some((pa: any) => (pa.shareCount || 1) > 1)
+    : (client.planAssignments?.find((pa: any) => pa.planId === activePlanId)?.shareCount || 1) > 1;
 
   const groupedDefs = useMemo(() => {
     if (activePlanId !== "all") return [{ id: activePlanId, name: activePlan?.name || "", defs: prjDefs }];
@@ -295,8 +304,8 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
         </div>
       </div>
 
-      {/* View Mode Toggle - Only show if multiple shares exist in at least one plan */}
-      {(client.planAssignments || []).some((pa: any) => (pa.shareCount || 1) > 1) && (
+      {/* View Mode Toggle - Only show if current view has multiple shares */}
+      {showViewToggle && (
         <div className="space-y-3 mb-6">
           <div className="flex bg-app-bg p-1 rounded-xl border border-app-border">
             <button 
