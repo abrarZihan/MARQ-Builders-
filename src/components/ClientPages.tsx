@@ -217,30 +217,32 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
         </div>
       </div>
 
-      {/* Plan Selection Tabs */}
-      <div className="flex bg-app-bg p-1 rounded-xl mb-6 overflow-x-auto scrollbar-hide transition-colors border border-app-border">
-        <button 
-          className={cn(
-            "py-2.5 px-4 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1", 
-            activePlanId === "all" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary"
-          )} 
-          onClick={() => setActivePlanId("all")}
-        >
-          {t('common.all_plans') || "All Plans"}
-        </button>
-        {clientPlans.map((pl: any) => (
+      {/* Plan Selection Tabs - Only show if multiple plans exist */}
+      {clientPlans.length > 1 && (
+        <div className="flex bg-app-bg p-1 rounded-xl mb-6 overflow-x-auto scrollbar-hide transition-colors border border-app-border">
           <button 
-            key={pl.id} 
             className={cn(
               "py-2.5 px-4 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1", 
-              activePlanId === pl.id ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary"
+              activePlanId === "all" ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary"
             )} 
-            onClick={() => setActivePlanId(pl.id)}
+            onClick={() => setActivePlanId("all")}
           >
-            {pl.name}
+            {t('common.all_plans') || "All Plans"}
           </button>
-        ))}
-      </div>
+          {clientPlans.map((pl: any) => (
+            <button 
+              key={pl.id} 
+              className={cn(
+                "py-2.5 px-4 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1", 
+                activePlanId === pl.id ? "bg-app-tab-active text-app-bg shadow-sm" : "text-app-tab-inactive hover:text-app-text-primary"
+              )} 
+              onClick={() => setActivePlanId(pl.id)}
+            >
+              {pl.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Global Summary Card */}
       <div className="bg-app-surface-elevated rounded-3xl p-6 mb-6 text-app-text-primary shadow-xl relative overflow-hidden border border-app-border">
@@ -250,10 +252,14 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-4">
             <div className="text-xs font-bold text-app-text-muted uppercase tracking-widest">
-              {activePlanId === "all" ? (t('common.all_total_summary') || "All Plans Summary") : (activePlan?.name || "Plan Summary")}
+              {activePlanId === "all" 
+                ? (clientPlans.length > 1 ? (t('common.all_total_summary') || "All Plans Summary") : (clientPlans[0]?.name || "Plan Summary"))
+                : (activePlan?.name || "Plan Summary")}
             </div>
             <div className="bg-app-bg px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter text-app-text-secondary border border-app-border">
-              {activePlanId === "all" ? `${clientPlans.length} ${t('common.plans') || "Plans"}` : `${currentShareCount} ${t('client_info.shares') || "Shares"}`}
+              {activePlanId === "all" 
+                ? (clientPlans.length > 1 ? `${clientPlans.length} ${t('common.plans') || "Plans"}` : `${currentShareCount} ${t('client_info.shares') || "Shares"}`)
+                : `${currentShareCount} ${t('client_info.shares') || "Shares"}`}
             </div>
           </div>
           
@@ -289,7 +295,8 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
         </div>
       </div>
 
-      {currentShareCount > 1 && (
+      {/* View Mode Toggle - Only show if multiple shares exist in at least one plan */}
+      {(client.planAssignments || []).some((pa: any) => (pa.shareCount || 1) > 1) && (
         <div className="space-y-3 mb-6">
           <div className="flex bg-app-bg p-1 rounded-xl border border-app-border">
             <button 
