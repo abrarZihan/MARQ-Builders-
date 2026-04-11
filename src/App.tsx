@@ -12,15 +12,25 @@ import {
 import { ThemeToggle } from './components/ThemeToggle.tsx';
 import { 
   Badge, PBar, FG, ClientAvatar, PassCell, ConfirmDelete, 
-  Drawer, BottomBar, Login, ForceChangePw 
+  Drawer, BottomBar 
 } from "./components/Shared";
-import { AuditLogPage, LogRow } from "./components/Admin";
-import { AdminProfile, AdminManagePage, AdminPaymentsPage } from "./components/AdminPages";
+import Login from "./pages/Login";
+import ForceChangePw from "./pages/ForceChangePw";
+import AdminHome from "./pages/AdminHome";
+import AuditLogPage from "./pages/AuditLogPage";
+import AdminProfile from "./pages/AdminProfile";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
+import { LogRow } from "./components/Admin";
+import { AdminManagePage, AdminPaymentsPage } from "./components/AdminPages";
 import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
 import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle, MoreVertical, Edit2, AlertCircle, ClipboardList, CircleDollarSign } from "lucide-react";
 import { CategoryIcon, CategoryColor } from "./components/Shared";
 import { useLanguage } from "./lib/i18n";
+import { useAppStore } from "./store/appStore";
+import { 
+  Project, Plan, Client, InstDef, Payment, Expense, Admin, Log, AuthUser 
+} from "./types";
 
 // Firebase
 import { 
@@ -32,561 +42,19 @@ import {
 } from "firebase/auth";
 import { db, auth as fbAuth, handleFirestoreError, OperationType } from "./firebase";
 
-// --- Components that were in App.tsx ---
+// --- Protected Route Component ---
+function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
+  const { auth, loading } = useAppStore();
+  const location = useLocation();
 
-function PendingApprovals({ payments, clients, instDefs, projects, onApprove, onReject }: any) {
-  const { t } = useLanguage();
-  const pending = payments.filter((p: any) => p.status === "pending");
-  if (pending.length === 0) return (
-    <div className="bg-app-banner-success-bg border border-app-border rounded-2xl p-4 mb-4 flex items-center gap-3 transition-colors">
-      <CheckCircle2 size={24} className="text-app-banner-success-text" />
-      <span className="text-sm font-bold text-app-banner-success-text">{t("dashboard.no_pending")}</span>
-    </div>
-  );
-  return (
-    <div className="mb-6">
-      <div className="text-sm font-extrabold text-app-banner-error-text mb-3 flex items-center gap-2">
-        <span className="bg-app-banner-error-bg text-app-banner-error-text rounded-full px-2.5 py-0.5 text-xs">{pending.length}</span>
-        {t("dashboard.pending_approval")}
-      </div>
-      {pending.map((p: any) => {
-        const client = clients.find((c: any) => c.id === p.clientId);
-        const def = instDefs.find((d: any) => d.id === p.instDefId);
-        const prj = projects.find((pr: any) => pr.id === client?.projectId);
-        return (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            key={p.id} 
-            className="bg-app-banner-warning-bg border-2 border-app-border rounded-2xl p-4 mb-3 transition-colors"
-          >
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <div className="text-sm font-extrabold text-app-text-primary">{client?.name || p.clientId}</div>
-                <div className="text-xs text-app-text-muted mt-0.5">{dotJoin(prj?.name, def?.title)}</div>
-                <div className="text-xs text-app-text-muted mt-0.5">{dotJoin(p.date, p.note)}</div>
-              </div>
-              <div className="text-xl font-black text-app-banner-warning-text">{BDT(p.amount)}</div>
-            </div>
-            <div className="flex gap-2">
-              <button className="flex-1 bg-app-banner-success-bg text-app-banner-success-text font-bold py-2.5 rounded-xl hover:opacity-80 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onApprove(p.id)}><CheckCircle2 size={16} /> {t("dashboard.approve")}</button>
-              <button className="flex-1 bg-app-banner-error-bg text-app-banner-error-text font-bold py-2.5 rounded-xl hover:opacity-80 transition-colors text-sm flex items-center justify-center gap-2" onClick={() => onReject(p.id)}><XCircle size={16} /> {t("dashboard.reject")}</button>
-            </div>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-app-bg"><div className="w-10 h-10 border-4 border-app-tab-active border-t-transparent rounded-full animate-spin" /></div>;
+  if (!auth) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (allowedRoles && !allowedRoles.includes(auth.role)) return <Navigate to="/" replace />;
+
+  return <>{children}</>;
 }
 
-function FinancialSummary({ projects, clients, instDefs, payments, expenses, plans }: any) {
-  const { t } = useLanguage();
-  const approvedPays = payments.filter((p: any) => {
-    if (p.status !== "approved") return false;
-    const client = clients.find((c: any) => c.id === p.clientId);
-    if (!client) return false;
-    const project = projects.find((prj: any) => prj.id === client.projectId);
-    if (!project) return false;
-    const def = instDefs.find((d: any) => d.id === p.instDefId);
-    if (!def) return false;
-    const plan = plans.find((pl: any) => pl.id === def.planId);
-    if (!plan) return false;
-    return true;
-  });
-  const pendingPays = payments.filter((p: any) => p.status === "pending");
-  const totalExpected = clients.reduce((s: number, c: any) => {
-    const prjPlans = plans.filter((p: any) => p.projectId === c.projectId);
-    // If client has assignments, use them. Otherwise use the first plan found for the project.
-    const assignments = c.planAssignments || [];
-    if (assignments.length > 0) {
-      return s + assignments.reduce((as: number, pa: any) => {
-        const pDefs = instDefs.filter((d: any) => d.planId === pa.planId);
-        return as + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * pa.shareCount);
-      }, 0);
-    } else {
-      // Fallback to first plan if no assignment
-      const firstPlan = prjPlans[0];
-      if (!firstPlan) return s;
-      const pDefs = instDefs.filter((d: any) => d.planId === firstPlan.id);
-      return s + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (c.shareCount || 1));
-    }
-  }, 0);
-  const totalCollected = approvedPays.reduce((s: number, p: any) => s + p.amount, 0);
-  const totalExpenses = expenses.reduce((s: number, e: any) => s + e.amount, 0);
-  const totalPending = pendingPays.reduce((s: number, p: any) => s + p.amount, 0);
-  const totalDue = Math.max(0, totalExpected - totalCollected);
-  const netProfit = totalCollected - totalExpenses;
-  const collectPct = totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0;
-  
-  return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 rounded-lg flex items-center justify-center border border-blue-200 dark:border-blue-500/20">
-            <Wallet size={18} />
-          </div>
-          <h1 className="text-xl font-black text-app-text-primary">{t("dashboard.financial_summary")}</h1>
-        </div>
-        <p className="text-xs font-medium text-app-text-muted">{t("dashboard.overall_analysis")}</p>
-      </div>
-      
-      <div className="bg-app-surface-elevated rounded-3xl p-6 mb-4 text-app-text-primary shadow-xl border border-app-border relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-app-tab-active/5 rounded-full -mr-16 -mt-16 blur-2xl" />
-        <div className="relative z-10">
-          <div className="text-xs text-app-text-muted font-bold mb-1 tracking-wider">{t("dashboard.net_profit_loss")}</div>
-          <div className={cn("text-4xl font-black tracking-tighter", netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
-            {netProfit >= 0 ? "+" : ""}{BDT(netProfit)}
-          </div>
-          <div className="text-xs text-app-text-muted mt-2 font-medium">{t("dashboard.collection_minus_expense")}</div>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-lg flex items-center justify-center border border-slate-200 dark:border-slate-700">
-              <ClipboardList size={16} />
-            </div>
-            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_expected")}</div>
-          </div>
-          <div className="text-lg font-black text-app-text-primary">{BDTshort(totalExpected)}</div>
-        </div>
-        <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-lg flex items-center justify-center border border-slate-200 dark:border-slate-700">
-              <CircleDollarSign size={16} />
-            </div>
-            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_collected")}</div>
-          </div>
-          <div className="text-lg font-black text-app-text-primary">{BDTshort(totalCollected)}</div>
-        </div>
-        <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-lg flex items-center justify-center border border-slate-200 dark:border-slate-700">
-              <Clock size={16} />
-            </div>
-            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_due")}</div>
-          </div>
-          <div className="text-lg font-black text-app-text-primary">{BDTshort(totalDue)}</div>
-        </div>
-        <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-lg flex items-center justify-center border border-slate-200 dark:border-slate-700">
-              <Building2 size={16} />
-            </div>
-            <div className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">{t("dashboard.total_expenses")}</div>
-          </div>
-          <div className="text-lg font-black text-app-text-primary">{BDTshort(totalExpenses)}</div>
-        </div>
-      </div>
-      
-      <div className="bg-app-surface rounded-2xl border border-app-border p-5 mb-6">
-        <div className="flex justify-between items-end mb-2">
-          <span className="text-sm font-bold text-app-text-primary">{t("dashboard.collection_progress")}</span>
-          <span className="text-lg font-black text-app-tab-active">{collectPct}%</span>
-        </div>
-        <div className="h-3 bg-app-bg rounded-full overflow-hidden mb-3 border border-app-border">
-          <motion.div 
-            initial={{ width: 0 }} animate={{ width: `${collectPct}%` }} 
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full" 
-          />
-        </div>
-        <div className="flex justify-between text-xs text-app-text-muted font-medium">
-          <span>{t("dashboard.collected_label")} {BDT(totalCollected)}</span>
-          <span>{t("dashboard.due_label")} {BDT(totalDue)}</span>
-        </div>
-        {totalPending > 0 && (
-          <div className="mt-4 text-xs text-app-banner-warning-text font-bold bg-app-banner-warning-bg rounded-xl p-3 border border-app-border flex items-center gap-2">
-            <Clock size={14} /> {t("dashboard.pending_approval_label")} {BDT(totalPending)}
-          </div>
-        )}
-      </div>
-      
-      <div className="text-lg font-black text-app-text-primary mb-4">{t("dashboard.project_analysis")}</div>
-      
-      {projects.map((prj: any, idx: number) => {
-        const prjClients = clients.filter((c: any) => c.projectId === prj.id);
-        const prjDefs = instDefs.filter((d: any) => d.projectId === prj.id);
-        const prjExpenses = expenses.filter((e: any) => e.projectId === prj.id);
-        const prjPays = approvedPays.filter((p: any) => prjClients.find((c: any) => c.id === p.clientId));
-        
-        const expected = prjClients.reduce((s: number, c: any) => {
-          const assignments = c.planAssignments || [];
-          if (assignments.length > 0) {
-            return s + assignments.reduce((as: number, pa: any) => {
-              const pDefs = instDefs.filter((d: any) => d.planId === pa.planId);
-              return as + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * pa.shareCount);
-            }, 0);
-          } else {
-            const prjPlans = plans.filter((p: any) => p.projectId === prj.id);
-            const firstPlan = prjPlans[0];
-            if (!firstPlan) return s;
-            const pDefs = instDefs.filter((d: any) => d.planId === firstPlan.id);
-            return s + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (c.shareCount || 1));
-          }
-        }, 0);
-        const collected = prjPays.reduce((s: number, p: any) => s + p.amount, 0);
-        const spent = prjExpenses.reduce((s: number, e: any) => s + e.amount, 0);
-        const due = Math.max(0, expected - collected);
-        const net = collected - spent;
-        const pct = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 0;
-        
-        const color = ac(prj.id);
-        const catMap: Record<string, number> = {};
-        prjExpenses.forEach((e: any) => { catMap[e.category] = (catMap[e.category] || 0) + e.amount; });
-        const topCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 3);
-        
-        return (
-          <div key={prj.id} className="bg-app-surface rounded-2xl border border-app-border p-5 mb-4 relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: color }} />
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <div className="text-base font-black text-app-text-primary">{prj.name}</div>
-                <div className="text-xs text-app-text-muted mt-0.5">{t("dashboard.stats", { clients: prjClients.length, insts: prjDefs.length })}</div>
-              </div>
-              <span className={cn("text-sm font-black", net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
-                {net >= 0 ? "+" : ""}{BDTshort(net)}
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="bg-app-bg rounded-xl p-2.5 border border-app-border">
-                <div className="text-[9px] text-app-text-muted font-bold uppercase">{t("dashboard.collected_short")}</div>
-                <div className="text-sm font-black text-app-text-primary mt-0.5">{BDTshort(collected)}</div>
-              </div>
-              <div className="bg-app-bg rounded-xl p-2.5 border border-app-border">
-                <div className="text-[9px] text-app-text-muted font-bold uppercase">{t("dashboard.due_short")}</div>
-                <div className="text-sm font-black text-app-text-primary mt-0.5">{BDTshort(due)}</div>
-              </div>
-              <div className="bg-app-bg rounded-xl p-2.5 border border-app-border">
-                <div className="text-[9px] text-app-text-muted font-bold uppercase">{t("dashboard.expense_short")}</div>
-                <div className="text-sm font-black text-app-text-primary mt-0.5">{BDTshort(spent)}</div>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-end mb-1.5">
-              <span className="text-xs text-app-text-muted font-medium">{t("dashboard.collection_progress")}</span>
-              <span className="text-xs font-black" style={{ color }}>{pct}%</span>
-            </div>
-            <div className="h-2 bg-app-bg rounded-full overflow-hidden mb-4 border border-app-border">
-              <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} className="h-full rounded-full" style={{ backgroundColor: color }} />
-            </div>
-            
-            {topCats.length > 0 && (
-              <div>
-                <div className="text-[10px] text-app-text-muted font-bold mb-2 uppercase tracking-wider">{t("dashboard.top_expenses")}</div>
-                {topCats.map(([cat, amt], i) => (
-                  <div key={`${cat}-${i}`} className="flex justify-between items-center text-xs mb-1.5 text-app-text-secondary">
-                    <span className="font-medium flex items-center gap-1.5">
-                      <div className={cn("w-5 h-5 rounded-md flex items-center justify-center", CategoryColor(cat))}>
-                        <CategoryIcon category={cat} size={12} />
-                      </div>
-                      {cat}
-                    </span>
-                    <span className="font-bold text-app-text-primary">{BDT(amt)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </motion.div>
-  );
-}
-
-function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onSelect, onAddProject, onUpdateProject, onDeleteProject, isSuperAdmin, onApprovePayment, onRejectPayment }: any) {
-  const { t } = useLanguage();
-  const [addModal, setAddModal] = useState(false);
-  const [editModal, setEditModal] = useState<any>(null);
-  const [delProject, setDelProject] = useState<any>(null);
-  const [menuOpen, setMenuOpen] = useState<string | null>(null);
-  const [view, setView] = useState("projects");
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  
-  const [editName, setEditName] = useState("");
-  const [editDesc, setEditDesc] = useState("");
-  
-  const allCollected = payments.filter((p: any) => {
-    if (p.status !== "approved") return false;
-    const client = clients.find((c: any) => c.id === p.clientId);
-    if (!client) return false;
-    const project = projects.find((prj: any) => prj.id === client.projectId);
-    if (!project) return false;
-    const def = instDefs.find((d: any) => d.id === p.instDefId);
-    if (!def) return false;
-    const plan = plans.find((pl: any) => pl.id === def.planId);
-    if (!plan) return false;
-    return true;
-  }).reduce((s: number, p: any) => s + p.amount, 0);
-  const pendingCount = payments.filter((p: any) => p.status === "pending").length;
-
-  // Debugging discrepancies
-  useEffect(() => {
-    const approved = payments.filter((p: any) => p.status === "approved");
-    const linkedToClient = approved.filter((p: any) => clients.find((c: any) => c.id === p.clientId));
-    
-    // Check for payments that are linked to clients but might be "extra"
-    const breakdown: Record<string, number> = {};
-    linkedToClient.forEach(p => {
-      const def = instDefs.find(d => d.id === p.instDefId);
-      const planId = def ? def.planId : "no-plan";
-      breakdown[planId] = (breakdown[planId] || 0) + p.amount;
-    });
-
-    console.log("--- Collection Breakdown by Plan ---");
-    Object.entries(breakdown).forEach(([planId, amount]) => {
-      const plan = plans.find(pl => pl.id === planId);
-      console.log(`Plan: ${plan ? plan.name : planId}, Amount: ${amount}`);
-    });
-    console.log("Total Linked Amount:", linkedToClient.reduce((s: number, p: any) => s + p.amount, 0));
-    console.log("-----------------------------------");
-  }, [payments, clients, instDefs, plans]);
-  
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-24">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-black text-app-text-primary tracking-tight">MARQ Builders</h1>
-          <p className="text-sm font-medium text-app-text-muted">{t("admin_home.projects_count", { count: projects.length })}</p>
-        </div>
-        <button 
-          className="bg-app-tab-active text-app-surface px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-colors shadow-sm" 
-          onClick={() => setAddModal(true)}
-        >
-          {t("admin_home.add_project")}
-        </button>
-      </div>
-      
-      <div className="flex bg-app-bg p-1 rounded-xl mb-6 border border-app-border">
-        <button 
-          className={cn("flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2", view === "projects" ? "bg-app-surface text-app-text-primary shadow-sm" : "text-app-text-muted hover:text-app-text-secondary")} 
-          onClick={() => setView("projects")}
-        >
-          <Building2 size={16} /> {t("admin_home.projects_tab")}
-        </button>
-        <button 
-          className={cn("flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2", view === "financial" ? "bg-app-surface text-app-text-primary shadow-sm" : "text-app-text-muted hover:text-app-text-secondary")} 
-          onClick={() => setView("financial")}
-        >
-          <Wallet size={16} /> {t("admin_home.financial_tab")}
-        </button>
-      </div>
-      
-      {view === "financial" && <FinancialSummary projects={projects} clients={clients} instDefs={instDefs} payments={payments} expenses={expenses} plans={plans} />}
-      
-      {view === "projects" && (
-        <>
-          {isSuperAdmin && <PendingApprovals payments={payments} clients={clients} instDefs={instDefs} projects={projects} onApprove={onApprovePayment} onReject={onRejectPayment} />}
-          
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-center">
-              <div className="w-10 h-10 bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 rounded-xl flex items-center justify-center mb-3 border border-blue-200 dark:border-blue-500/20">
-                <Building2 size={20} />
-              </div>
-              <div className="text-xs text-app-text-muted font-bold mb-1">{t("admin_home.total_projects")}</div>
-              <div className="text-xl font-black text-app-text-primary">{t("admin_home.count_with_suffix", { count: projects.length })}</div>
-            </div>
-            <div className="bg-app-surface rounded-2xl border border-app-border p-4 flex flex-col justify-center">
-              <div className="w-10 h-10 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-xl flex items-center justify-center mb-3 border border-emerald-200 dark:border-emerald-500/20">
-                <Wallet size={20} />
-              </div>
-              <div className="text-xs text-app-text-muted font-bold mb-1">{t("admin_home.total_collected")}</div>
-              <div className="text-xl font-black text-app-text-primary">{BDTshort(allCollected)}</div>
-            </div>
-          </div>
-          
-          {pendingCount > 0 && (
-            <div className="bg-app-banner-warning-bg border border-app-border rounded-2xl p-4 mb-6 flex justify-between items-center">
-              <span className="text-sm font-bold text-app-banner-warning-text flex items-center gap-2"><Clock size={16} /> {pendingCount}{t("admin_home.pending_payments")}</span>
-              {!isSuperAdmin && <span className="text-xs font-medium text-app-banner-warning-text opacity-80">{t("admin_home.super_admin_approve")}</span>}
-            </div>
-          )}
-          
-          <div className="space-y-3">
-            {projects.map((prj: any) => {
-              const prjClients = clients.filter((c: any) => c.projectId === prj.id);
-              const prjPaid = payments.filter((p: any) => {
-                if (p.status !== "approved") return false;
-                const client = prjClients.find((c: any) => c.id === p.clientId);
-                if (!client) return false;
-                const def = instDefs.find((d: any) => d.id === p.instDefId);
-                if (!def) return false;
-                return true;
-              }).reduce((s: number, p: any) => s + p.amount, 0);
-              const color = ac(prj.id);
-              
-              return (
-                <motion.div 
-                  whileHover={{ scale: 0.98 }} whileTap={{ scale: 0.95 }}
-                  key={prj.id} 
-                  className="bg-app-surface rounded-2xl border border-app-border p-5 cursor-pointer shadow-sm hover:shadow-md transition-all" 
-                  onClick={() => onSelect(prj.id)}
-                >
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border" style={{ backgroundColor: color + "15", color, borderColor: color + "30" }}>
-                      <Building2 size={24} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-lg font-black text-app-text-primary truncate">{prj.name}</div>
-                      <div className="text-xs text-app-text-muted font-medium mt-1 line-clamp-2">{prj.description}</div>
-                    </div>
-                    <div className="text-app-text-muted flex items-center justify-center w-6 h-6">
-                      <ChevronRight size={20} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex gap-2">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ backgroundColor: color + "15", color }}>{prjClients.length} জন</span>
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-app-banner-success-bg text-app-banner-success-text">{BDTshort(prjPaid)}</span>
-                    </div>
-                    
-                    <div className="relative">
-                      <button 
-                        className="p-2 hover:bg-app-bg rounded-full transition-colors text-app-text-muted"
-                        onClick={e => { e.stopPropagation(); setMenuOpen(menuOpen === prj.id ? null : prj.id); }}
-                      >
-                        <MoreVertical size={20} />
-                      </button>
-                      
-                      <AnimatePresence>
-                        {menuOpen === prj.id && (
-                          <>
-                            <div className="fixed inset-0 z-[100]" onClick={e => { e.stopPropagation(); setMenuOpen(null); }} />
-                            <motion.div 
-                              initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                              className="absolute right-0 bottom-full mb-2 w-36 bg-app-surface rounded-xl shadow-xl border border-app-border py-1.5 z-[110] overflow-hidden"
-                              onClick={e => e.stopPropagation()}
-                            >
-                              <button 
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-bold text-app-text-primary hover:bg-app-bg transition-colors"
-                                onClick={() => {
-                                  setEditModal(prj);
-                                  setEditName(prj.name);
-                                  setEditDesc(prj.description || "");
-                                  setMenuOpen(null);
-                                }}
-                              >
-                                <Edit2 size={16} className="text-blue-500" /> {t("common.edit")}
-                              </button>
-                              <button 
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-bold text-rose-600 hover:bg-app-banner-error-bg transition-colors"
-                                onClick={() => {
-                                  setDelProject(prj);
-                                  setMenuOpen(null);
-                                }}
-                              >
-                                <Trash2 size={16} /> {t("project_detail.delete")}
-                              </button>
-                            </motion.div>
-                          </>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </>
-      )}
-      
-      <AnimatePresence>
-        {addModal && (
-          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[300] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={() => setAddModal(false)}>
-            <motion.div 
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-app-surface rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe border-t sm:border border-app-border" 
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
-              <div className="text-xl font-black text-app-text-primary mb-6">{t("admin_home.new_project")}</div>
-              <FG label={t("admin_home.project_name")}>
-                <input 
-                  className="w-full px-4 py-3 bg-app-input-bg border border-app-input-border rounded-xl text-sm focus:outline-none focus:border-app-tab-active focus:ring-1 focus:ring-app-tab-active transition-all text-app-text-primary" 
-                  placeholder={t("admin_home.project_name_ph")} 
-                  value={newName} onChange={e => setNewName(e.target.value)} 
-                />
-              </FG>
-              <FG label={t("admin_home.project_desc")}>
-                <input 
-                  className="w-full px-4 py-3 bg-app-input-bg border border-app-input-border rounded-xl text-sm focus:outline-none focus:border-app-tab-active focus:ring-1 focus:ring-app-tab-active transition-all text-app-text-primary" 
-                  value={newDesc} onChange={e => setNewDesc(e.target.value)} 
-                />
-              </FG>
-              <button 
-                className="w-full bg-app-tab-active text-app-surface font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors mt-2" 
-                onClick={() => {
-                  if (newName.trim()) {
-                    onAddProject({ id: uid("PRJ-"), name: newName.trim(), description: newDesc.trim() });
-                    setAddModal(false); setNewName(""); setNewDesc("");
-                  }
-                }}
-              >
-                {t("admin_home.add_btn")}
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {editModal && (
-          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 z-[300] flex items-end sm:items-center justify-center backdrop-blur-sm" onClick={() => setEditModal(null)}>
-            <motion.div 
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-app-surface rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 pb-safe border-t sm:border border-app-border" 
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="w-10 h-1 bg-app-border rounded-full mx-auto mb-6 sm:hidden" />
-              <div className="text-xl font-black text-app-text-primary mb-6">{t("common.edit")} {t("admin_home.projects_tab")}</div>
-              <FG label={t("admin_home.project_name")}>
-                <input 
-                  className="w-full px-4 py-3 bg-app-input-bg border border-app-input-border rounded-xl text-sm focus:outline-none focus:border-app-tab-active focus:ring-1 focus:ring-app-tab-active transition-all text-app-text-primary" 
-                  value={editName} onChange={e => setEditName(e.target.value)} 
-                />
-              </FG>
-              <FG label={t("admin_home.project_desc")}>
-                <input 
-                  className="w-full px-4 py-3 bg-app-input-bg border border-app-input-border rounded-xl text-sm focus:outline-none focus:border-app-tab-active focus:ring-1 focus:ring-app-tab-active transition-all text-app-text-primary" 
-                  value={editDesc} onChange={e => setEditDesc(e.target.value)} 
-                />
-              </FG>
-              <button 
-                className="w-full bg-app-tab-active text-app-surface font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors mt-2" 
-                onClick={() => {
-                  if (editName.trim()) {
-                    onUpdateProject({ ...editModal, name: editName.trim(), description: editDesc.trim() });
-                    setEditModal(null);
-                  }
-                }}
-              >
-                {t("common.save")}
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-      
-      <AnimatePresence>
-        {delProject && (
-          <ConfirmDelete 
-            message={<><b>{delProject.name}</b> {t("admin_home.delete_warning")}</>} 
-            onConfirm={() => { onDeleteProject(delProject.id); setDelProject(null); }} 
-            onClose={() => setDelProject(null)} 
-          />
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-// Error Boundary Component
+// --- Main App Component ---
 interface ErrorBoundaryProps {
   children: React.ReactNode;
 }
@@ -644,88 +112,58 @@ class ErrorBoundary extends (Component as any) {
   }
 }
 
+// Helper to sanitize data before Firestore
+const sanitize = (data: any, allowedFields: string[]) => {
+  const clean: any = {};
+  allowedFields.forEach(f => {
+    if (data[f] !== undefined) clean[f] = data[f];
+  });
+  return clean;
+};
+
+const CLIENT_FIELDS = ['id', 'projectId', 'name', 'fatherHusband', 'birthDate', 'phone', 'email', 'nid', 'plot', 'totalAmount', 'shareCount', 'password', 'photo', 'remarks', 'planAssignments', '_row'];
+const PROJECT_FIELDS = ['id', 'name', 'description'];
+const PLAN_FIELDS = ['id', 'projectId', 'name'];
+const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount', 'isGlobal'];
+const PAYMENT_FIELDS = ['id', 'clientId', 'instDefId', 'amount', 'date', 'status', 'note', 'method', 'trxId', 'approvedBy'];
+const EXPENSE_FIELDS = ['id', 'projectId', 'category', 'amount', 'date', 'description'];
+const ADMIN_FIELDS = ['id', 'name', 'username', 'password', 'role', 'isTemp'];
+
 // ROOT APP COMPONENT
 export default function App() {
+  return (
+    <BrowserRouter>
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
+    </BrowserRouter>
+  );
+}
+
+function AppContent() {
   const { t } = useLanguage();
-  const [auth, setAuth] = useState<any>(() => {
-    const saved = localStorage.getItem("marq_auth");
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  useEffect(() => {
-    if (auth) localStorage.setItem("marq_auth", JSON.stringify(auth));
-    else localStorage.removeItem("marq_auth");
-  }, [auth]);
-  const [page, setPage] = useState(() => {
-    const saved = localStorage.getItem("marq_auth");
-    if (saved) {
-      const authData = JSON.parse(saved);
-      return authData.role === "client" ? "installments" : "home";
-    }
-    return "home";
-  });
-  const [projects, setProjects] = useState<any[]>([]);
-  const [plans, setPlans] = useState<any[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
-  const [instDefs, setInstDefs] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [admins, setAdmins] = useState<any[]>([]);
-  const [logs, setLogs] = useState<any[]>([]);
-  const [drawer, setDrawer] = useState(false);
-  const [selProject, setSelProject] = useState<string | null>(null);
-  const [forceChangePw, setForceChangePw] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [dataLoaded, setDataLoaded] = useState({
-    projects: false,
-    plans: false,
-    clients: false,
-    instDefs: false,
-    payments: false,
-    expenses: false,
-    admins: false,
-    logs: false
-  });
-
-  const [toast, setToast] = useState<{ m: string, t: 's' | 'e' } | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const {
+    auth, setAuth,
+    projects, setProjects,
+    plans, setPlans,
+    clients, setClients,
+    instDefs, setInstDefs,
+    payments, setPayments,
+    expenses, setExpenses,
+    admins, setAdmins,
+    logs, setLogs,
+    drawer, setDrawer,
+    selProject, setSelProject,
+    forceChangePw, setForceChangePw,
+    loading, setLoading,
+    dataLoaded, setDataLoaded,
+    toast, setToast
+  } = useAppStore();
 
   useEffect(() => {
     // Silent anonymous sign-in to provide request.auth for security rules
-    const unsubAuth = onAuthStateChanged(fbAuth, (user) => {
-      if (!user) {
-        signInAnonymously(fbAuth).catch(() => {
-          // Silently fail if anonymous auth is disabled in console
-        });
-      }
-    });
-    return () => unsubAuth();
-  }, []);
-
-  const showToast = (m: string, t: 's' | 'e' = 's') => {
-    setToast({ m, t });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  // Helper to sanitize data before Firestore
-  const sanitize = (data: any, allowedFields: string[]) => {
-    const clean: any = {};
-    allowedFields.forEach(f => {
-      if (data[f] !== undefined) clean[f] = data[f];
-    });
-    return clean;
-  };
-
-  const CLIENT_FIELDS = ['id', 'projectId', 'name', 'fatherHusband', 'birthDate', 'phone', 'email', 'nid', 'plot', 'totalAmount', 'shareCount', 'password', 'photo', 'remarks', 'planAssignments', '_row'];
-  const PROJECT_FIELDS = ['id', 'name', 'description'];
-  const PLAN_FIELDS = ['id', 'projectId', 'name'];
-  const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount', 'isGlobal'];
-  const PAYMENT_FIELDS = ['id', 'clientId', 'instDefId', 'amount', 'date', 'status', 'note', 'method', 'trxId', 'approvedBy'];
-  const EXPENSE_FIELDS = ['id', 'projectId', 'category', 'amount', 'date', 'description'];
-  const ADMIN_FIELDS = ['id', 'name', 'username', 'password', 'role', 'isTemp'];
-
-  // Firestore Real-time Listeners
-  useEffect(() => {
-    // Initial data load and superadmin bootstrap
     const init = async () => {
       try {
         // Always ensure superadmin exists
@@ -739,17 +177,17 @@ export default function App() {
 
     // Publicly readable (needed for basic app structure)
     const unsubProjects = onSnapshot(collection(db, "projects"), (s) => {
-      setProjects(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setProjects(s.docs.map(d => ({ ...d.data(), id: d.id } as Project)));
       setDataLoaded(prev => ({ ...prev, projects: true }));
     }, (e) => handleFirestoreError(e, OperationType.LIST, "projects"));
 
     const unsubPlans = onSnapshot(collection(db, "plans"), (s) => {
-      setPlans(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setPlans(s.docs.map(d => ({ ...d.data(), id: d.id } as Plan)));
       setDataLoaded(prev => ({ ...prev, plans: true }));
     }, (e) => handleFirestoreError(e, OperationType.LIST, "plans"));
 
     const unsubInstDefs = onSnapshot(collection(db, "instDefs"), (s) => {
-      setInstDefs(s.docs.map(d => ({ ...d.data(), id: d.id })));
+      setInstDefs(s.docs.map(d => ({ ...d.data(), id: d.id } as InstDef)));
       setDataLoaded(prev => ({ ...prev, instDefs: true }));
     }, (e) => handleFirestoreError(e, OperationType.LIST, "instDefs"));
 
@@ -761,40 +199,40 @@ export default function App() {
 
     if (auth?.role === "admin" || auth?.role === "superadmin") {
       unsubClients = onSnapshot(collection(db, "clients"), (s) => {
-        setClients(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setClients(s.docs.map(d => ({ ...d.data(), id: d.id } as Client)));
         setDataLoaded(prev => ({ ...prev, clients: true }));
       }, (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
 
       unsubPayments = onSnapshot(collection(db, "payments"), (s) => {
-        setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setPayments(s.docs.map(d => ({ ...d.data(), id: d.id } as Payment)));
         setDataLoaded(prev => ({ ...prev, payments: true }));
       }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
 
       unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => {
-        setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id } as Expense)));
         setDataLoaded(prev => ({ ...prev, expenses: true }));
       }, (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
 
       unsubAdmins = onSnapshot(collection(db, "admins"), (s) => {
-        setAdmins(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setAdmins(s.docs.map(d => ({ ...d.data(), id: d.id } as Admin)));
         setDataLoaded(prev => ({ ...prev, admins: true }));
       }, (e) => handleFirestoreError(e, OperationType.LIST, "admins"));
 
       unsubLogs = onSnapshot(query(collection(db, "logs"), orderBy("ts", "desc"), limit(100)), (s) => {
-        setLogs(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setLogs(s.docs.map(d => ({ ...d.data(), id: d.id } as Log)));
         setDataLoaded(prev => ({ ...prev, logs: true }));
       }, (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
     } else if (auth?.role === "client" && auth?.user?.id) {
       // Client only sees their own doc and payments
       unsubClients = onSnapshot(doc(db, "clients", auth.user.id), (d) => {
         if (d.exists()) {
-          setClients([{ ...d.data(), id: d.id }]);
+          setClients([{ ...d.data(), id: d.id } as Client]);
         }
         setDataLoaded(prev => ({ ...prev, clients: true }));
       }, (e) => handleFirestoreError(e, OperationType.GET, `clients/${auth.user.id}`));
 
       unsubPayments = onSnapshot(query(collection(db, "payments"), where("clientId", "==", auth.user.id)), (s) => {
-        setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setPayments(s.docs.map(d => ({ ...d.data(), id: d.id } as Payment)));
         setDataLoaded(prev => ({ ...prev, payments: true }));
       }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
       
@@ -835,7 +273,7 @@ export default function App() {
     if (auth?.role === "client" && auth?.user?.id && clients.length > 0) {
       const updatedUser = clients.find(c => c.id === auth.user.id);
       if (updatedUser && JSON.stringify(updatedUser) !== JSON.stringify(auth.user)) {
-        setAuth({ ...auth, user: updatedUser });
+        setAuth({ ...auth, user: { ...updatedUser, role: "client", username: updatedUser.id } as AuthUser });
       }
     }
   }, [clients, auth]);
@@ -856,6 +294,84 @@ export default function App() {
     }
   }, [dataLoaded, plans, instDefs]);
 
+  if (loading && !auth) return (
+    <div className="min-h-screen flex items-center justify-center bg-app-bg">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-app-border border-t-app-tab-active rounded-full animate-spin" />
+        <div className="text-sm font-bold text-app-text-muted">লোডিং...</div>
+      </div>
+    </div>
+  );
+
+  return (
+    <Routes>
+      <Route path="/login" element={!auth ? <Login /> : <Navigate to="/" replace />} />
+      <Route path="/force-change-pw" element={
+        <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+          <ForceChangePw />
+        </ProtectedRoute>
+      } />
+      <Route path="/*" element={
+        <ProtectedRoute>
+          <MainLayout />
+        </ProtectedRoute>
+      } />
+    </Routes>
+  );
+}
+
+function MainLayout() {
+  const { t } = useLanguage();
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Extract projectId from URL manually since useParams() won't see it in the layout shell
+  const pathParts = location.pathname.split("/");
+  const projectIdFromUrl = pathParts[1] === "project" ? pathParts[2] : null;
+
+  const {
+    auth, setAuth,
+    projects, setProjects,
+    plans, setPlans,
+    clients, setClients,
+    instDefs, setInstDefs,
+    payments, setPayments,
+    expenses, setExpenses,
+    admins, setAdmins,
+    logs, setLogs,
+    drawer, setDrawer,
+    selProject, setSelProject,
+    setForceChangePw,
+    loading, setLoading,
+    dataLoaded, setDataLoaded,
+    toast, setToast
+  } = useAppStore();
+
+  const role = auth?.role;
+  const adminUser = auth?.role !== "client" ? auth?.user : null;
+  const isSuperAdmin = role === "superadmin";
+
+  const page = location.pathname.split("/")[1] || "home";
+
+  const curProject = projectIdFromUrl ? projects.find(p => p.id === projectIdFromUrl) : null;
+  const PAGE_TITLES: Record<string, string> = { 
+    "/": t("nav.projects"), 
+    "/log": t("nav.log"), 
+    "/admins": t("nav.admin_manage"), 
+    "/profile": t("nav.profile"), 
+    "/installments": t("nav.my_installments"), 
+    "/receipts": t("nav.receipts"), 
+    "/expenses": t("nav.expenses"),
+    "/payments": t("nav.payments")
+  };
+  const topTitle = curProject ? curProject.name : (PAGE_TITLES[location.pathname] || "");
+  const pendingCount = payments.filter((p: any) => p.status === "pending").length;
+
+  const showToast = (m: string, t: 's' | 'e' = 's') => {
+    setToast({ m, t });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const addLog = async (adminUser: any, action: string, target: any, detail: any, projectId: string | null = null) => {
     if (!adminUser) return;
     const sTarget = typeof target === 'object' ? JSON.stringify(target) : String(target || "");
@@ -868,109 +384,10 @@ export default function App() {
     }
   };
 
-  const login = async (role: string, id: string, pass: string) => {
-    setLoading(true);
-    try {
-      // Try to get an anonymous auth session for security rules, but don't block if it fails
-      if (!fbAuth.currentUser) {
-        try {
-          await signInAnonymously(fbAuth);
-        } catch (e) {
-          // Ignore error if anonymous auth is disabled
-        }
-      }
-
-      // Hardcoded bypass for superadmin
-      if (role === "admin" && id === "superadmin" && pass === "1234") {
-        const superAdmin = { id: "superadmin", name: "Super Admin", username: "superadmin", password: "1234", role: "superadmin", isTemp: false };
-        setAuth({ role: "superadmin", user: superAdmin });
-        setPage("home");
-        setLoading(false);
-        return;
-      }
-
-      const collectionName = role === "admin" ? "admins" : "clients";
-      
-      if (role === "admin") {
-        const q = query(collection(db, collectionName), where("username", "==", id));
-        const snap = await getDocs(q);
-        
-        if (snap.empty) {
-          setLoading(false);
-          return { error: "অ্যাকাউন্টটি খুঁজে পাওয়া যায়নি" };
-        }
-        const userData = snap.docs[0].data();
-        if (userData.password !== pass) {
-          setLoading(false);
-          return { error: "পাসওয়ার্ড ভুল" };
-        }
-        
-        // Link UID for security rules
-        if (fbAuth.currentUser) {
-          try {
-            if (userData.uid !== fbAuth.currentUser.uid) {
-              await updateDoc(doc(db, "admins", userData.id), { uid: fbAuth.currentUser.uid });
-            }
-            await setDoc(doc(db, "roles", fbAuth.currentUser.uid), { 
-              role: userData.role === "superadmin" ? "superadmin" : "admin", 
-              id: userData.id 
-            });
-          } catch (e) {
-            console.error("Role linking failed:", e);
-          }
-        }
-
-        const userRole = userData.role === "superadmin" ? "superadmin" : role;
-        setAuth({ role: userRole, user: userData });
-        if (role === "admin" && userData.isTemp) setForceChangePw(true);
-        setPage(userRole === "admin" || userRole === "superadmin" ? "home" : "installments");
-      } else {
-        // Client login
-        const docRef = doc(db, collectionName, id);
-        const snap = await getDoc(docRef);
-        
-        if (!snap.exists()) {
-          setLoading(false);
-          return { error: "অ্যাকাউন্টটি খুঁজে পাওয়া যায়নি" };
-        }
-        const userData = snap.data();
-        if (userData.password !== pass) {
-          setLoading(false);
-          return { error: "পাসওয়ার্ড ভুল" };
-        }
-
-        // Link UID for security rules
-        if (fbAuth.currentUser) {
-          try {
-            if (userData.uid !== fbAuth.currentUser.uid) {
-              await updateDoc(doc(db, "clients", id), { uid: fbAuth.currentUser.uid });
-            }
-            await setDoc(doc(db, "roles", fbAuth.currentUser.uid), { 
-              role: "client", 
-              id: id 
-            });
-          } catch (e) {
-            console.error("Role linking failed:", e);
-          }
-        }
-
-        setAuth({ role: "client", user: userData });
-        setPage("installments");
-      }
-    } catch (e) {
-      console.error("Login error:", e);
-      return { error: "লগইন করতে সমস্যা হয়েছে" };
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   const logout = () => { 
-    setAuth(null); setPage("home"); setSelProject(null); setForceChangePw(false); 
+    setAuth(null); setSelProject(null); setForceChangePw(false); 
+    navigate("/login");
   };
-
-  const isSuperAdmin = auth?.user?.role === "superadmin" || auth?.user?.username === "superadmin" || auth?.user?.email === "zyhn.ab@gmail.com";
-  const adminUser = (auth?.role === "admin" || auth?.role === "superadmin") ? auth.user : null;
 
   // Client CRUD
   const updateClient = async (c: any, oldId: string) => {
@@ -1249,7 +666,7 @@ export default function App() {
   };
   const approvePayment = async (id: string) => {
     try {
-      await updateDoc(doc(db, "payments", id), { status: "approved", approvedBy: adminUser.id });
+      await updateDoc(doc(db, "payments", id), { status: "approved", approvedBy: adminUser?.id });
       const p = payments.find(x => x.id === id);
       if (p) {
         const c = clients.find(cl => cl.id === p.clientId);
@@ -1379,53 +796,6 @@ export default function App() {
     }
   };
 
-  const changeMyPw = async (newPw: string, wasTemp: boolean) => {
-    if (!auth?.user?.username) return;
-    try {
-      // Find the doc by username since that's our unique ID for admins
-      const q = query(collection(db, "admins"), where("username", "==", auth.user.username));
-      const snap = await getDocs(q);
-      if (snap.empty) throw new Error("Admin not found");
-      
-      const docId = snap.docs[0].id;
-      await updateDoc(doc(db, "admins", docId), { password: newPw, isTemp: false });
-      
-      const updatedUser = { ...auth.user, password: newPw, isTemp: false };
-      setAuth({ ...auth, user: updatedUser });
-      setForceChangePw(false);
-      addLog(updatedUser, "pw_change", updatedUser.name, wasTemp ? "Temporary password পরিবর্তন" : "পাসওয়ার্ড পরিবর্তন");
-    } catch (e) {
-      handleFirestoreError(e, OperationType.UPDATE, `admins/${auth.user.username}`);
-    }
-  };
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-app-bg">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-app-border border-t-app-tab-active rounded-full animate-spin" />
-        <div className="text-sm font-bold text-app-text-muted">লোডিং...</div>
-      </div>
-    </div>
-  );
-
-  if (!auth) return <Login onLogin={login} />;
-  if (forceChangePw && adminUser) return <ForceChangePw admin={adminUser} onDone={changeMyPw} />;
-
-  const { role, user } = auth;
-
-  const curProject = selProject ? projects.find(p => p.id === selProject) : null;
-  const PAGE_TITLES: Record<string, string> = { 
-    home: t("nav.projects"), 
-    log: t("nav.log"), 
-    admins: t("nav.admin_manage"), 
-    profile: t("nav.profile"), 
-    installments: t("nav.my_installments"), 
-    receipts: t("nav.receipts"), 
-    expenses: t("nav.expenses") 
-  };
-  const topTitle = curProject ? curProject.name : (PAGE_TITLES[page] || "");
-  const pendingCount = payments.filter((p: any) => p.status === "pending").length;
-
   return (
     <div className="min-h-screen bg-app-bg">
       <div className="fixed top-0 left-0 right-0 h-16 bg-app-nav-bg border-b border-app-nav-text/10 flex items-center px-4 gap-3 z-[100] shadow-sm no-print transition-colors">
@@ -1452,55 +822,52 @@ export default function App() {
       </div>
 
       <Drawer 
-        role={role} page={selProject ? "project" : page} setPage={(p: string) => { setPage(p); setSelProject(null); }} 
-        user={user} onLogout={logout} open={drawer} onClose={() => setDrawer(false)} 
-        isSuperAdmin={isSuperAdmin} pendingCount={pendingCount} 
+        role={role} 
+        user={auth?.user} 
+        onLogout={logout} 
+        open={drawer} 
+        onClose={() => setDrawer(false)} 
+        isSuperAdmin={isSuperAdmin} 
+        pendingCount={pendingCount} 
       />
 
       <main className="pt-20 px-4 pb-24 max-w-4xl mx-auto">
-        {(role === "admin" || role === "superadmin") && !selProject && page === "home" && (
-          <AdminHome 
-            projects={projects} clients={clients} payments={payments} instDefs={instDefs} expenses={expenses} plans={plans}
-            onSelect={(id: string) => setSelProject(id)} onAddProject={addProject} onUpdateProject={updateProject} onDeleteProject={deleteProject} 
-            isSuperAdmin={isSuperAdmin} onApprovePayment={approvePayment} onRejectPayment={rejectPayment} 
-          />
-        )}
-        {(role === "admin" || role === "superadmin") && !selProject && page === "log" && (
-          <AuditLogPage 
-            logs={logs} projects={projects} 
-            isSuperAdmin={isSuperAdmin} onClearLogs={clearLogs} 
-          />
-        )}
-        
-        {(role === "admin" || role === "superadmin") && !selProject && page === "profile" && <AdminProfile admin={adminUser} onUpdate={changeMyPw} />}
-        {(role === "admin" || role === "superadmin") && !selProject && page === "payments" && <AdminPaymentsPage payments={payments} clients={clients} instDefs={instDefs} projects={projects} isSuperAdmin={isSuperAdmin} onDeletePayment={deletePayment} />}
-        {(role === "admin" || role === "superadmin") && !selProject && page === "admins" && isSuperAdmin && <AdminManagePage admins={admins} onAdd={addAdmin} onUpdate={addAdmin} onDelete={removeAdmin} onResetPw={resetAdminPw} currentAdminId={adminUser.id} />}
-        {(role === "admin" || role === "superadmin") && selProject && curProject && (
-          <ProjectDetail 
-            project={curProject} clients={clients} allClients={clients} instDefs={instDefs} plans={plans} payments={payments} expenses={expenses} logs={logs} isSuperAdmin={isSuperAdmin}
-            onBack={() => setSelProject(null)}
-            onAddPlan={addPlan}
-            onUpdatePlan={updatePlan}
-            onDeletePlan={deletePlan}
-            onAddDef={addInstDef}
-            onUpdateInstDef={updateInstDef}
-            onDeleteInstDef={deleteInstDef}
-            onAddPayment={addPayment}
-            onDeletePayment={deletePayment}
-            onAddExpense={addExpense}
-            onUpdateExpense={updateExpense}
-            onDeleteExpense={deleteExpense}
-            onUpdateClient={updateClient} onAddBulkClients={addBulkClients} onAddClient={addClient} onDeleteClient={deleteClient}
-          />
-        )}
-        
-        {role === "client" && page === "installments" && <ClientInstallments client={auth.user} instDefs={instDefs} payments={payments} projects={projects} plans={plans} />}
-        {role === "client" && page === "receipts" && <ClientReceipts client={auth.user} instDefs={instDefs} payments={payments} projects={projects} />}
-        {role === "client" && page === "expenses" && <ClientExpenses client={auth.user} expenses={expenses} />}
-        {role === "client" && page === "profile" && <ClientProfile client={auth.user} instDefs={instDefs} onUpdateClient={(c: any) => { updateClient(c, c.id); setAuth({ ...auth, user: c }); }} />}
+        <Routes>
+          <Route path="/" element={
+            role === "client" ? <Navigate to="/installments" replace /> :
+            <AdminHome 
+              projects={projects} clients={clients} payments={payments} instDefs={instDefs} expenses={expenses} plans={plans}
+              onSelect={(id: string) => navigate(`/project/${id}`)} onAddProject={addProject} onUpdateProject={updateProject} onDeleteProject={deleteProject} 
+              isSuperAdmin={isSuperAdmin} onApprovePayment={approvePayment} onRejectPayment={rejectPayment} 
+            />
+          } />
+          <Route path="/log" element={<AuditLogPage logs={logs} projects={projects} isSuperAdmin={isSuperAdmin} onClearLogs={clearLogs} />} />
+          <Route path="/admins" element={isSuperAdmin ? <AdminManagePage admins={admins} onAdd={addAdmin} onUpdate={addAdmin} onDelete={removeAdmin} onResetPw={resetAdminPw} currentAdminId={adminUser?.id} /> : <Navigate to="/" replace />} />
+          <Route path="/profile" element={
+            role === "client" ? <ClientProfile client={auth?.user} instDefs={instDefs} onUpdateClient={(c: any) => { updateClient(c, c.id); setAuth({ ...auth!, user: c }); }} /> :
+            <AdminProfile />
+          } />
+          <Route path="/payments" element={<AdminPaymentsPage payments={payments} clients={clients} instDefs={instDefs} projects={projects} isSuperAdmin={isSuperAdmin} onDeletePayment={deletePayment} />} />
+          <Route path="/project/:projectId" element={
+            curProject ? (
+              <ProjectDetail 
+                project={curProject} clients={clients} allClients={clients} instDefs={instDefs} plans={plans} payments={payments} expenses={expenses} logs={logs} isSuperAdmin={isSuperAdmin}
+                onBack={() => navigate("/")}
+                onAddPlan={addPlan} onUpdatePlan={updatePlan} onDeletePlan={deletePlan}
+                onAddDef={addInstDef} onUpdateInstDef={updateInstDef} onDeleteInstDef={deleteInstDef}
+                onAddPayment={addPayment} onDeletePayment={deletePayment}
+                onAddExpense={addExpense} onUpdateExpense={updateExpense} onDeleteExpense={deleteExpense}
+                onUpdateClient={updateClient} onAddBulkClients={addBulkClients} onAddClient={addClient} onDeleteClient={deleteClient}
+              />
+            ) : <Navigate to="/" replace />
+          } />
+          <Route path="/installments" element={<ClientInstallments client={auth?.user} instDefs={instDefs} payments={payments} projects={projects} plans={plans} />} />
+          <Route path="/receipts" element={<ClientReceipts client={auth?.user} instDefs={instDefs} payments={payments} projects={projects} />} />
+          <Route path="/expenses" element={<ClientExpenses client={auth?.user} expenses={expenses} />} />
+        </Routes>
       </main>
 
-      <BottomBar role={role} page={page} setPage={setPage} />
+      <BottomBar role={role} />
     </div>
   );
 }

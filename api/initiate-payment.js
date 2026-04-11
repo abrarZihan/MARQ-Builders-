@@ -16,8 +16,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing required fields (installmentId, clientId, amount)" });
     }
 
-    const STORE_ID = "marqb69c56224e0f27";
-    const STORE_PASSWORD = "marqb69c56224e0f27@ssl";
+    const STORE_ID = process.env.SSLCOMMERZ_STORE_ID;
+    const STORE_PASSWORD = process.env.SSLCOMMERZ_STORE_PASSWORD;
     const BASE_URL = "https://sandbox.sslcommerz.com";
     const APP_URL = process.env.APP_URL || "https://marq-builders.vercel.app";
     const transactionId = `TXN_${Date.now()}`;

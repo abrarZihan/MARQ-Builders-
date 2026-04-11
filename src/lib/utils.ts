@@ -87,3 +87,9 @@ export const numberToWords = (num: number): string => {
   str += (Number(n[5]) !== 0) ? ((str !== '') ? 'and ' : '') + (a[Number(n[5])] || b[parseInt(n[5][0])] + ' ' + a[parseInt(n[5][1])]) : '';
   return str.trim();
 };
+
+export const sanitize = (obj: any, fields: string[]) => {
+  const res: any = {};
+  fields.forEach(f => { if (obj[f] !== undefined) res[f] = obj[f]; });
+  return res;
+};
