@@ -766,11 +766,13 @@ export default function App() {
       }, (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
 
       unsubPayments = onSnapshot(collection(db, "payments"), (s) => {
+        console.log("Payments updated:", s.docs.length);
         setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
         setDataLoaded(prev => ({ ...prev, payments: true }));
       }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
 
       unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => {
+        console.log("Expenses updated:", s.docs.length);
         setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id })));
         setDataLoaded(prev => ({ ...prev, expenses: true }));
       }, (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
@@ -797,9 +799,14 @@ export default function App() {
         setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
         setDataLoaded(prev => ({ ...prev, payments: true }));
       }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
+
+      unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => {
+        setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id })));
+        setDataLoaded(prev => ({ ...prev, expenses: true }));
+      }, (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
       
       // Mark others as loaded to stop loading spinner
-      setDataLoaded(prev => ({ ...prev, expenses: true, admins: true, logs: true }));
+      setDataLoaded(prev => ({ ...prev, admins: true, logs: true }));
     } else {
       // Not logged in yet - clear data or keep empty
       setClients([]);
