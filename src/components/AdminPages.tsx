@@ -6,6 +6,120 @@ import { FG, ConfirmDelete } from "./Shared";
 import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Search, Receipt } from "lucide-react";
 import { ReceiptSheet } from "./ProjectModals";
 
+export function AdminProfile({ admin, onUpdate }: any) {
+  const { t } = useLanguage();
+  if (!admin) return null;
+  const [old, setOld] = useState("");
+  const [nw, setNw] = useState("");
+  const [conf, setConf] = useState("");
+  const [showO, setShowO] = useState(false);
+  const [showN, setShowN] = useState(false);
+  const [msg, setMsg] = useState<any>(null);
+  
+  const color = admin.role === "superadmin" ? "#f59e0b" : ac(admin.id);
+  const isSuper = admin.role === "superadmin";
+  
+  const save = () => {
+    setMsg(null);
+    if (!old) return setMsg({ t: "e", v: t('common.error_enter_current_pw') });
+    if (old !== admin.password) return setMsg({ t: "e", v: t('common.error_wrong_current_pw') });
+    if (!nw || nw.length < 4) return setMsg({ t: "e", v: t('common.error_min_chars', { count: 4 }) });
+    if (nw !== conf) return setMsg({ t: "e", v: t('common.error_pw_mismatch') });
+    onUpdate(nw, false);
+    setOld(""); setNw(""); setConf("");
+    setMsg({ t: "s", v: t('common.success_pw_changed') });
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-20">
+      <div className="bg-app-surface rounded-3xl border border-app-border p-6 mb-6 shadow-sm transition-colors">
+        <div className="flex items-center gap-5">
+          <div 
+            style={{ backgroundColor: isSuper ? "rgba(245, 158, 11, 0.15)" : color + "20", color: isSuper ? undefined : color }} 
+            className={cn(
+              "w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black shrink-0",
+              isSuper && "text-amber-600 dark:text-amber-400 bg-amber-500/15"
+            )}
+          >
+            {initials(admin.name)}
+          </div>
+          <div>
+            <div className="text-2xl font-black text-app-text-primary">{admin.name}</div>
+            <div className="text-sm font-bold text-app-text-secondary mt-1">@{admin.username}</div>
+            <span className={cn(
+              "px-3 py-1 rounded-lg text-xs font-bold inline-block mt-3",
+              admin.role === "superadmin" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-app-bg text-app-text-secondary"
+            )}>
+              {admin.role === "superadmin" ? t('common.super_admin') : t('common.admin')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-app-surface rounded-3xl border border-app-border p-6 shadow-sm transition-colors">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 rounded-xl flex items-center justify-center border border-blue-200 dark:border-blue-500/20">
+            <KeyRound size={20} />
+          </div>
+          <h2 className="text-lg font-black text-app-text-primary">{t('common.change_password')}</h2>
+        </div>
+        
+        <FG label={t('common.current_password')}>
+          <div className="relative">
+            <input 
+              className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all pr-12 text-app-text-primary" 
+              type={showO ? "text" : "password"} 
+              value={old} onChange={e => setOld(e.target.value)} 
+            />
+            <button onClick={() => setShowO(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-app-text-muted hover:text-app-text-secondary p-1">
+              {showO ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </FG>
+        
+        <FG label={t('common.new_password')}>
+          <div className="relative">
+            <input 
+              className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all pr-12 text-app-text-primary" 
+              type={showN ? "text" : "password"} 
+              value={nw} onChange={e => setNw(e.target.value)} 
+            />
+            <button onClick={() => setShowN(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-app-text-muted hover:text-app-text-secondary p-1">
+              {showN ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </FG>
+        
+        <FG label={t('common.confirm_password')}>
+          <input 
+            className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all text-app-text-primary" 
+            type="password" 
+            value={conf} onChange={e => setConf(e.target.value)} 
+          />
+        </FG>
+        
+        <AnimatePresence>
+          {msg && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
+              <div className={cn(
+                "p-4 rounded-xl mb-6 text-sm font-bold border",
+                msg.t === "s" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-rose-100 text-rose-800 dark:bg-rose-500/10 dark:text-rose-400 border-rose-200 dark:border-rose-500/20"
+              )}>
+                {msg.v}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <button className="w-full bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors mt-2" onClick={save}>
+          {t('common.change_password')}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+
 export function AdminPaymentsPage({ payments, clients, instDefs, projects, isSuperAdmin, onDeletePayment }: any) {
   const { t } = useLanguage();
   const [selPay, setSelPay] = useState<any>(null);

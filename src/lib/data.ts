@@ -127,11 +127,3 @@ export const ACTION_META: Record<string, any> = {
   pw_change:        { icon: "Key", color: "text-cyan-700 dark:text-cyan-400", bg: "bg-cyan-100 dark:bg-cyan-500/10" },
   admin_clear_logs: { icon: "Trash2", color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-100 dark:bg-rose-500/10" },
 };
-
-export const PROJECT_FIELDS = ['id', 'name', 'description'];
-export const PLAN_FIELDS = ['id', 'projectId', 'name'];
-export const CLIENT_FIELDS = ['id', 'projectId', 'name', 'fatherHusband', 'birthDate', 'phone', 'email', 'nid', 'plot', 'totalAmount', 'password', 'photo', 'planAssignments', 'shareCount'];
-export const INST_DEF_FIELDS = ['id', 'planId', 'title', 'dueDate', 'targetAmount'];
-export const PAYMENT_FIELDS = ['id', 'clientId', 'instDefId', 'amount', 'date', 'note', 'status', 'approvedBy'];
-export const EXPENSE_FIELDS = ['id', 'projectId', 'date', 'category', 'description', 'amount'];
-export const ADMIN_FIELDS = ['id', 'name', 'username', 'password', 'role', 'isTemp'];

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { BDT, BDTshort, dotJoin, ac, initials, uid, todayStr, cn, clientPaidForDef, cellStatus } from "../lib/utils";
 import { FG, ConfirmDelete, ClientAvatar, PassCell, PBar, CategoryIcon, CategoryColor, ConfirmDeletePlan } from "./Shared";
@@ -10,20 +9,9 @@ import { CellPaySheet, AddDefSheet, EditDefSheet, AddExpSheet, ReceiptSheet } fr
 import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText, Edit2, Search, Filter, X } from "lucide-react";
 
 import { useLanguage } from "../lib/i18n";
-import { useAppStore } from "../store/appStore";
 
-export function ProjectDetail({ onAddPlan, onUpdatePlan, onDeletePlan, onAddDef, onUpdateInstDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
+export function ProjectDetail({ project, clients, allClients, instDefs, plans, payments, expenses, logs, isSuperAdmin, onBack, onAddPlan, onUpdatePlan, onDeletePlan, onAddDef, onUpdateInstDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
   const { t } = useLanguage();
-  const { projectId } = useParams();
-  const navigate = useNavigate();
-  const { 
-    projects, clients, instDefs, plans, payments, expenses, logs, auth 
-  } = useAppStore();
-
-  const project = projects.find(p => p.id === projectId);
-  const isSuperAdmin = auth?.role === "superadmin";
-  const allClients = clients;
-
   const [tab, setTab] = useState("sheet");
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [showAddPlan, setShowAddPlan] = useState(false);
@@ -159,19 +147,12 @@ export function ProjectDetail({ onAddPlan, onUpdatePlan, onDeletePlan, onAddDef,
     }
   };
 
-  if (!project) return (
-    <div className="text-center py-20">
-      <div className="text-app-text-muted font-bold mb-4">Project not found</div>
-      <button onClick={() => navigate("/")} className="text-blue-500 font-bold hover:underline">Go Back</button>
-    </div>
-  );
-
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-24">
       <div className="flex items-center gap-4 mb-6">
         <button 
           className="w-10 h-10 bg-app-surface border border-app-border rounded-xl flex items-center justify-center text-app-text-secondary hover:bg-app-bg transition-colors shadow-sm shrink-0" 
-          onClick={() => navigate("/")}
+          onClick={onBack}
         >
           <ArrowLeft size={20} />
         </button>
