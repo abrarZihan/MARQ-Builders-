@@ -68,7 +68,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   const prjClients = basePrjClients.filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
   
   const allPrjClients = clients.filter((c: any) => c.projectId === project.id).filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
-  const prjDefs = instDefs.filter((d: any) => d.planId === activePlanId || (d.projectId === project.id && d.isGlobal));
+  const prjDefs = instDefs.filter((d: any) => d.planId === activePlanId);
   const prjExpenses = expenses.filter((e: any) => e.projectId === project.id);
   const prjLogs = [...logs].filter(l => l.projectId === project.id).sort((a, b) => b.ts.localeCompare(a.ts));
   
@@ -77,10 +77,17 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   
   const projectCollected = payments.filter((p: any) => {
     if (p.status !== "approved") return false;
-    const client = allPrjClients.find((c: any) => c.id === p.clientId);
+    const client = projectClientsForCalc.find((c: any) => c.id === p.clientId);
     if (!client) return false;
     const def = allPrjDefs.find(d => d.id === p.instDefId);
     if (!def) return false;
+    const assignments = client.planAssignments || [];
+    if (assignments.length > 0) {
+      if (!assignments.some((pa: any) => pa.planId === def.planId)) return false;
+    } else {
+      const firstPlan = prjPlans[0];
+      if (!firstPlan || firstPlan.id !== def.planId) return false;
+    }
     return true;
   }).reduce((s: number, p: any) => s + p.amount, 0);
 
@@ -103,13 +110,23 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
 
   const totalCollected = payments.filter((p: any) => {
     if (p.status !== "approved") return false;
-    const def = prjDefs.find(d => d.id === p.instDefId);
-    return !!def;
+    const client = prjClients.find((c: any) => c.id === p.clientId);
+    if (!client) return false;
+    const def = prjDefs.find((d: any) => d.id === p.instDefId);
+    if (!def) return false;
+    const assignments = client.planAssignments || [];
+    if (assignments.length > 0) {
+      if (!assignments.some((pa: any) => pa.planId === def.planId)) return false;
+    } else {
+      const firstPlan = prjPlans[0];
+      if (!firstPlan || firstPlan.id !== def.planId) return false;
+    }
+    return true;
   }).reduce((s: number, p: any) => s + p.amount, 0);
   const totalTarget = prjClients.reduce((s: number, c: any) => {
     const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
     const sc = assignment ? assignment.shareCount : (c.shareCount || 1);
-    return s + prjDefs.reduce((ss: number, d: any) => ss + (d.isGlobal ? 1 : sc) * d.targetAmount, 0);
+    return s + prjDefs.reduce((ss: number, d: any) => ss + (sc * d.targetAmount), 0);
   }, 0);
   const totalDue = Math.max(0, totalTarget - totalCollected);
   
@@ -354,7 +371,6 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                         >
                           <div className="text-[11px] mb-1 flex items-center justify-center gap-1">
                             {d.title}
-                            {d.isGlobal && <span className="text-[8px] bg-blue-500/20 text-blue-400 px-1 rounded border border-blue-500/30">BASIC</span>}
                           </div>
                           <div className="text-[9px] text-white/70 font-medium">{BDT(d.targetAmount)}</div>
                           {d.dueDate && <div className="text-[8px] text-white/50 mt-0.5">{d.dueDate}</div>}
@@ -377,7 +393,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                       const assignment = client.planAssignments?.find((pa: any) => pa.planId === activePlanId);
                       const shareCount = assignment ? assignment.shareCount : (client.shareCount || 1);
                       const rowTotal = prjDefs.reduce((s: number, d: any) => s + clientPaidForDef(client.id, d.id, payments), 0);
-                      const rowTarget = prjDefs.reduce((s: number, d: any) => s + (d.isGlobal ? 1 : shareCount) * d.targetAmount, 0);
+                      const rowTarget = prjDefs.reduce((s: number, d: any) => s + (shareCount * d.targetAmount), 0);
                       
                       return (
                         <tr key={client.id} className="group hover:bg-app-bg transition-colors">
@@ -391,7 +407,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                             </div>
                           </td>
                           {prjDefs.map((d: any, i: number) => {
-                            const sc = d.isGlobal ? 1 : shareCount;
+                            const sc = shareCount;
                             const cellTarget = d.targetAmount * sc;
                             const paid = clientPaidForDef(client.id, d.id, payments);
                             const pendingAmt = payments.filter((p: any) => p.clientId === client.id && p.instDefId === d.id && p.status === "pending").reduce((s: number, p: any) => s + p.amount, 0);
@@ -437,7 +453,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                       const ct = prjClients.reduce((s: number, c: any) => s + clientPaidForDef(c.id, d.id, payments), 0);
                       const cT = prjClients.reduce((s: number, c: any) => {
                         const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
-                        const sc = d.isGlobal ? 1 : (assignment ? assignment.shareCount : (c.shareCount || 1));
+                        const sc = assignment ? assignment.shareCount : (c.shareCount || 1);
                         return s + sc * d.targetAmount;
                       }, 0);
                       return (
@@ -448,7 +464,9 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                       );
                     })}
                     <td className="p-3 text-center align-middle">
-                      <div className="text-sm font-black text-emerald-400">{BDTshort(totalCollected)}</div>
+                      <div className="text-sm font-black text-emerald-400">
+                        {BDTshort(prjDefs.reduce((gs, d) => gs + prjClients.reduce((cs, c) => cs + clientPaidForDef(c.id, d.id, payments), 0), 0))}
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -478,7 +496,19 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
             const shareCount = assignment ? assignment.shareCount : (c.shareCount || 1);
             
             // Project-wide client stats
-            const cPaid = payments.filter((p: any) => p.clientId === c.id && p.status === "approved" && allPrjDefs.some(d => d.id === p.instDefId)).reduce((s: number, p: any) => s + p.amount, 0);
+            const cPaid = payments.filter((p: any) => {
+              if (p.clientId !== c.id || p.status !== "approved") return false;
+              const def = allPrjDefs.find(d => d.id === p.instDefId);
+              if (!def) return false;
+              const assignments = c.planAssignments || [];
+              if (assignments.length > 0) {
+                if (!assignments.some((pa: any) => pa.planId === def.planId)) return false;
+              } else {
+                const firstPlan = prjPlans[0];
+                if (!firstPlan || firstPlan.id !== def.planId) return false;
+              }
+              return true;
+            }).reduce((s: number, p: any) => s + p.amount, 0);
             
             const cTarget = allPrjClients.filter(cl => cl.id === c.id).reduce((s: number, cl: any) => {
               const assignments = cl.planAssignments || [];

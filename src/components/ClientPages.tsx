@@ -25,29 +25,18 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   const prjDefs = activePlanId === "all"
     ? (() => {
         const defs: any[] = [];
-        const globalSeen = new Set();
-        
-        // Add global installments once
-        instDefs.filter((d: any) => d.projectId === client.projectId && d.isGlobal).forEach((d: any) => {
-          if (!globalSeen.has(d.id)) {
-            defs.push({ ...d, _shareCount: 1 });
-            globalSeen.add(d.id);
-          }
-        });
-        
         // Add plan-specific installments
         (client.planAssignments || []).forEach((pa: any) => {
-          instDefs.filter((d: any) => d.planId === pa.planId && !d.isGlobal).forEach((d: any) => {
+          instDefs.filter((d: any) => d.planId === pa.planId).forEach((d: any) => {
             defs.push({ ...d, _shareCount: pa.shareCount || 1 });
           });
         });
-        
         return defs;
       })()
-    : instDefs.filter((d: any) => d.planId === activePlanId || (d.projectId === client.projectId && d.isGlobal))
+    : instDefs.filter((d: any) => d.planId === activePlanId)
         .map(d => {
           const pa = client.planAssignments?.find((p: any) => p.planId === activePlanId);
-          return { ...d, _shareCount: d.isGlobal ? 1 : (pa?.shareCount || 1) };
+          return { ...d, _shareCount: pa?.shareCount || 1 };
         });
 
   const totalPaid = payments.filter((p: any) => p.clientId === client.id && prjDefs.find((d: any) => d.id === p.instDefId) && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
@@ -94,7 +83,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
     
     const groups: Record<string, any[]> = {};
     prjDefs.forEach(d => {
-      const key = d.isGlobal ? 'global' : (d.planId || 'other');
+      const key = d.planId || 'other';
       if (!groups[key]) groups[key] = [];
       groups[key].push(d);
     });
@@ -103,11 +92,11 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
       const plan = plans.find((p: any) => p.id === id);
       return {
         id,
-        name: id === 'global' ? (t('common.basic_payments') || "Basic Payments") : (plan?.name || ""),
+        name: plan?.name || "",
         defs
       };
     });
-  }, [activePlanId, prjDefs, activePlan, plans, t]);
+  }, [activePlanId, prjDefs, activePlan, plans]);
 
   const isProcessingPayment = paymentResult && (!instDefs.find((d: any) => d.id === paymentResult.instDefId) || !projects.find((p: any) => p.id === activePlan?.projectId));
 
@@ -388,11 +377,6 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                               <div>
                                 <div className="text-base font-black text-app-text-primary">
                                   {d.title}
-                                  {d.isGlobal && hasMultiple && (
-                                    <span className="ml-2 text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-800">
-                                      {t('common.global_payment_note')}
-                                    </span>
-                                  )}
                                 </div>
                                 <div className="flex items-center gap-2 mt-1">
                                   <span className="text-xs text-app-text-secondary font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
@@ -480,12 +464,10 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                   <div className="text-xs font-black text-app-text-primary uppercase tracking-widest">{slot.label}</div>
                 </div>
                 <div className="space-y-2">
-                  {prjDefs.filter((d: any) => d.isGlobal || (d.planId === slot.planId && (d._shareCount || 1) >= slot.shareIndex + 1)).map((d: any) => {
+                  {prjDefs.filter((d: any) => d.planId === slot.planId && (d._shareCount || 1) >= slot.shareIndex + 1).map((d: any) => {
                     const totalPaidForDef = clientPaidForDef(client.id, d.id, payments);
                     const sCount = d._shareCount || 1;
-                    const sharePaid = d.isGlobal 
-                      ? Math.min(d.targetAmount, totalPaidForDef)
-                      : (distMode === "waterfall" 
+                    const sharePaid = (distMode === "waterfall" 
                           ? Math.min(d.targetAmount, Math.max(0, totalPaidForDef - slot.shareIndex * d.targetAmount))
                           : Math.min(d.targetAmount, totalPaidForDef / sCount));
                     const st = cellStatus(sharePaid, d.targetAmount);
@@ -499,11 +481,6 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
                           <div>
                             <div className="text-base font-black text-app-text-primary">
                               {d.title}
-                              {d.isGlobal && hasMultiple && (
-                                <span className="ml-2 text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-800">
-                                  {t('common.global_payment_note')}
-                                </span>
-                              )}
                             </div>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-xs text-app-text-secondary font-medium">{t('common.due')}: {d.dueDate || "—"}</span>
@@ -655,11 +632,6 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
                       <div className="text-[10px] text-app-text-muted font-mono font-bold tracking-widest uppercase mb-0.5">{p.id ? (p.id.split('-')[1] || p.id) : ""}</div>
                       <div className="text-base font-black text-app-text-primary leading-tight">
                         {def?.title || t('common.installment')}
-                        {def?.isGlobal && hasMultiple && (
-                          <div className="text-[9px] font-bold text-blue-500 uppercase tracking-tight mt-0.5">
-                            {t('common.global_payment_note')}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -835,23 +807,11 @@ export function ClientProfile({ client, instDefs, onUpdateClient }: any) {
             [t('client.email'), client.email || "—"], [t('client.nid'), client.nid || "—"], 
             [t('common.total_price_label'), BDT((() => {
               let total = 0;
-              const globalSeen = new Set();
-              
-              // Sum global installments once
-              instDefs.filter((d: any) => d.projectId === client.projectId && d.isGlobal).forEach((d: any) => {
-                if (!globalSeen.has(d.id)) {
-                  total += d.targetAmount;
-                  globalSeen.add(d.id);
-                }
-              });
-              
-              // Sum plan installments multiplied by their share counts
               (client.planAssignments || []).forEach((pa: any) => {
-                instDefs.filter((d: any) => d.planId === pa.planId && !d.isGlobal).forEach((d: any) => {
+                instDefs.filter((d: any) => d.planId === pa.planId).forEach((d: any) => {
                   total += d.targetAmount * (pa.shareCount || 1);
                 });
               });
-              
               return total;
             })(), lang === 'bn')]
           ].map(([l, v], i) => (

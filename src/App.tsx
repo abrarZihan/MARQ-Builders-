@@ -90,11 +90,23 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
     if (!def) return false;
     const plan = plans.find((pl: any) => pl.id === def.planId);
     if (!plan) return false;
+    const assignments = client.planAssignments || [];
+    if (assignments.length > 0) {
+      if (!assignments.some((pa: any) => pa.planId === def.planId)) return false;
+    } else {
+      const prjPlans = plans.filter((p: any) => p.projectId === client.projectId);
+      const firstPlan = prjPlans[0];
+      if (!firstPlan || firstPlan.id !== def.planId) return false;
+    }
     return true;
   });
   const pendingPays = payments.filter((p: any) => p.status === "pending");
   const totalExpected = clients.reduce((s: number, c: any) => {
+    const project = projects.find((prj: any) => prj.id === c.projectId);
+    if (!project) return s;
+
     const prjPlans = plans.filter((p: any) => p.projectId === c.projectId);
+    
     // If client has assignments, use them. Otherwise use the first plan found for the project.
     const assignments = c.planAssignments || [];
     if (assignments.length > 0) {
@@ -111,7 +123,8 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
     }
   }, 0);
   const totalCollected = approvedPays.reduce((s: number, p: any) => s + p.amount, 0);
-  const totalExpenses = expenses.reduce((s: number, e: any) => s + e.amount, 0);
+  const activeProjectIds = new Set(projects.map((p: any) => p.id));
+  const totalExpenses = expenses.filter((e: any) => activeProjectIds.has(e.projectId)).reduce((s: number, e: any) => s + e.amount, 0);
   const totalPending = pendingPays.reduce((s: number, p: any) => s + p.amount, 0);
   const totalDue = Math.max(0, totalExpected - totalCollected);
   const netProfit = totalCollected - totalExpenses;
@@ -208,7 +221,7 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
         const prjClients = clients.filter((c: any) => c.projectId === prj.id);
         const prjDefs = instDefs.filter((d: any) => d.projectId === prj.id);
         const prjExpenses = expenses.filter((e: any) => e.projectId === prj.id);
-        const prjPays = approvedPays.filter((p: any) => prjClients.find((c: any) => c.id === p.clientId));
+        const prjPays = approvedPays.filter((p: any) => prjClients.some((c: any) => c.id === p.clientId));
         
         const expected = prjClients.reduce((s: number, c: any) => {
           const assignments = c.planAssignments || [];
@@ -318,31 +331,17 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
     if (!def) return false;
     const plan = plans.find((pl: any) => pl.id === def.planId);
     if (!plan) return false;
+    const assignments = client.planAssignments || [];
+    if (assignments.length > 0) {
+      if (!assignments.some((pa: any) => pa.planId === def.planId)) return false;
+    } else {
+      const prjPlans = plans.filter((pl: any) => pl.projectId === client.projectId);
+      const firstPlan = prjPlans[0];
+      if (!firstPlan || firstPlan.id !== def.planId) return false;
+    }
     return true;
   }).reduce((s: number, p: any) => s + p.amount, 0);
   const pendingCount = payments.filter((p: any) => p.status === "pending").length;
-
-  // Debugging discrepancies
-  useEffect(() => {
-    const approved = payments.filter((p: any) => p.status === "approved");
-    const linkedToClient = approved.filter((p: any) => clients.find((c: any) => c.id === p.clientId));
-    
-    // Check for payments that are linked to clients but might be "extra"
-    const breakdown: Record<string, number> = {};
-    linkedToClient.forEach(p => {
-      const def = instDefs.find(d => d.id === p.instDefId);
-      const planId = def ? def.planId : "no-plan";
-      breakdown[planId] = (breakdown[planId] || 0) + p.amount;
-    });
-
-    console.log("--- Collection Breakdown by Plan ---");
-    Object.entries(breakdown).forEach(([planId, amount]) => {
-      const plan = plans.find(pl => pl.id === planId);
-      console.log(`Plan: ${plan ? plan.name : planId}, Amount: ${amount}`);
-    });
-    console.log("Total Linked Amount:", linkedToClient.reduce((s: number, p: any) => s + p.amount, 0));
-    console.log("-----------------------------------");
-  }, [payments, clients, instDefs, plans]);
   
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-24">
@@ -413,6 +412,14 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
                 if (!client) return false;
                 const def = instDefs.find((d: any) => d.id === p.instDefId);
                 if (!def) return false;
+                const assignments = client.planAssignments || [];
+                if (assignments.length > 0) {
+                  if (!assignments.some((pa: any) => pa.planId === def.planId)) return false;
+                } else {
+                  const prjPlans = plans.filter((pl: any) => pl.projectId === client.projectId);
+                  const firstPlan = prjPlans[0];
+                  if (!firstPlan || firstPlan.id !== def.planId) return false;
+                }
                 return true;
               }).reduce((s: number, p: any) => s + p.amount, 0);
               const color = ac(prj.id);
@@ -718,7 +725,7 @@ export default function App() {
   const CLIENT_FIELDS = ['id', 'projectId', 'name', 'fatherHusband', 'birthDate', 'phone', 'email', 'nid', 'plot', 'totalAmount', 'shareCount', 'password', 'photo', 'remarks', 'planAssignments', '_row'];
   const PROJECT_FIELDS = ['id', 'name', 'description'];
   const PLAN_FIELDS = ['id', 'projectId', 'name'];
-  const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount', 'isGlobal'];
+  const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount'];
   const PAYMENT_FIELDS = ['id', 'clientId', 'instDefId', 'amount', 'date', 'status', 'note', 'method', 'trxId', 'approvedBy'];
   const EXPENSE_FIELDS = ['id', 'projectId', 'category', 'amount', 'date', 'description'];
   const ADMIN_FIELDS = ['id', 'name', 'username', 'password', 'role', 'isTemp'];

@@ -9,7 +9,7 @@ import { useLanguage } from "../lib/i18n";
 export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin, onSave, onDelete, onClose }: any) {
   const { t, lang } = useLanguage();
   const assignment = client.planAssignments?.find((pa: any) => pa.planId === instDef.planId);
-  const shareCount = instDef.isGlobal ? 1 : (assignment ? assignment.shareCount : (client.shareCount || 1));
+  const shareCount = assignment ? assignment.shareCount : (client.shareCount || 1);
   const targetAmount = instDef.targetAmount * shareCount;
   const existPays = payments.filter((p: any) => p.clientId === client.id && p.instDefId === instDef.id);
   const approvedPays = existPays.filter((p: any) => p.status === "approved");
@@ -48,11 +48,6 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
         <div className="text-xs font-bold text-app-text-secondary mt-1 mb-6">
           {dotJoin(client.name, client.plot, instDef.title)} 
           {shareCount > 1 && <span className="text-blue-600 dark:text-blue-400 ml-1">({shareCount} {t("client_info.shares")})</span>}
-          {instDef.isGlobal && hasMultiple && (
-            <div className="mt-1 text-[10px] font-bold text-blue-500 uppercase tracking-tight">
-              {t('common.global_payment_note')}
-            </div>
-          )}
         </div>
         
         <div className="bg-app-bg border border-app-border rounded-2xl p-4 mb-6 transition-colors">
@@ -160,7 +155,7 @@ export function CellPaySheet({ client, instDef, payments, project, isSuperAdmin,
 
 export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
   const { t, lang } = useLanguage();
-  const [f, setF] = useState({ title: "", dueDate: "", targetAmount: "", isGlobal: false });
+  const [f, setF] = useState({ title: "", dueDate: "", targetAmount: "" });
   const s = (k: string, v: any) => setF(p => ({ ...p, [k]: v }));
   
   return (
@@ -181,26 +176,13 @@ export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
           <FG label={t("project_modals.target_bdt")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="number" value={f.targetAmount} onChange={e => s("targetAmount", e.target.value)} /></FG>
           <FG label={t("project_modals.due_date")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="date" value={f.dueDate} onChange={e => s("dueDate", e.target.value)} /></FG>
         </div>
-
-        <div className="flex items-center gap-3 mb-6 p-3 bg-app-bg border border-app-border rounded-xl">
-          <input 
-            type="checkbox" id="isGlobal" className="w-5 h-5 rounded-lg border-app-border text-app-tab-active focus:ring-app-tab-active" 
-            checked={f.isGlobal} onChange={e => s("isGlobal", e.target.checked)} 
-          />
-          <label htmlFor="isGlobal" className="text-sm font-bold text-app-text-primary cursor-pointer select-none">
-            {lang === 'bn' ? "সবার জন্য এক (সব প্ল্যান ও শেয়ারে সমান)" : "Same for all (across plans and shares)"}
-            <div className="text-[10px] text-app-text-muted font-medium mt-0.5">
-              {lang === 'bn' ? "এটি সব প্ল্যানে একই থাকবে এবং শেয়ার সংখ্যা দিয়ে গুণ হবে না।" : "Shows same amount in all plans and doesn't multiply by share count."}
-            </div>
-          </label>
-        </div>
         
         <div className="flex gap-3 mt-4">
           <button 
             className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors" 
             onClick={() => {
               if (!f.title || !f.targetAmount) { alert(t("project_modals.add_inst_err")); return; }
-              onSave({ id: uid("D-"), projectId, planId, title: f.title, dueDate: f.dueDate, targetAmount: parseFloat(f.targetAmount), isGlobal: f.isGlobal });
+              onSave({ id: uid("D-"), projectId, planId, title: f.title, dueDate: f.dueDate, targetAmount: parseFloat(f.targetAmount) });
               onClose();
             }}
           >
@@ -236,16 +218,6 @@ export function EditDefSheet({ def, onSave, onDelete, onClose }: any) {
         <div className="grid grid-cols-2 gap-4">
           <FG label={t("project_modals.target_bdt")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="number" value={f.targetAmount} onChange={e => s("targetAmount", e.target.value)} /></FG>
           <FG label={t("project_modals.due_date")}><input className="w-full px-4 py-3 bg-app-bg border border-app-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-app-text-muted transition-all font-bold text-app-text-primary" type="date" value={f.dueDate} onChange={e => s("dueDate", e.target.value)} /></FG>
-        </div>
-
-        <div className="flex items-center gap-3 mb-6 p-3 bg-app-bg border border-app-border rounded-xl">
-          <input 
-            type="checkbox" id="isGlobalEdit" className="w-5 h-5 rounded-lg border-app-border text-app-tab-active focus:ring-app-tab-active" 
-            checked={f.isGlobal} onChange={e => s("isGlobal", e.target.checked)} 
-          />
-          <label htmlFor="isGlobalEdit" className="text-sm font-bold text-app-text-primary cursor-pointer select-none">
-            {lang === 'bn' ? "সবার জন্য এক (সব প্ল্যান ও শেয়ারে সমান)" : "Same for all (across plans and shares)"}
-          </label>
         </div>
         
         <div className="flex flex-col gap-3 mt-4">
@@ -404,11 +376,6 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
             <span className="whitespace-nowrap font-bold">Instalment No.:</span>
             <span className="flex-1 receipt-border-bottom px-2 font-bold">
               {instDef?.title}
-              {instDef?.isGlobal && (
-                <span className="ml-2 text-[9px] font-bold text-blue-600 uppercase tracking-tight print:text-black">
-                  {t('common.global_payment_note')}
-                </span>
-              )}
             </span>
           </div>
         </div>
