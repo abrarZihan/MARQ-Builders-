@@ -30,15 +30,15 @@ export const BDTshort = (n: number | string, isBn: boolean = false) => {
   };
 
   if (v >= 10000000) {
-    const val = (v / 10000000).toFixed(1);
+    const val = Number((v / 10000000).toFixed(2)).toString();
     return "৳" + toBn(val) + (isBn ? " কোটি" : "Cr");
   }
   if (v >= 100000) {
-    const val = (v / 100000).toFixed(v % 100000 === 0 ? 0 : 1);
+    const val = Number((v / 100000).toFixed(2)).toString();
     return "৳" + toBn(val) + (isBn ? " লাখ" : "L");
   }
   if (v >= 1000) {
-    const val = (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1);
+    const val = Number((v / 1000).toFixed(2)).toString();
     return "৳" + toBn(val) + (isBn ? " কে" : "K");
   }
   return "৳" + toBn(String(v));
