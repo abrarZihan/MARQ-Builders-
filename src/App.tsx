@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, Component } from "react";
+import React, { useState, useRef, useEffect, useMemo, Component } from "react";
 import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -696,6 +696,45 @@ export default function App() {
 
   const [toast, setToast] = useState<{ m: string, t: 's' | 'e' } | null>(null);
 
+  const validPayments = useMemo(() => {
+    const validDefIds = new Set(instDefs.map(d => d.id));
+    const filtered = payments.filter((p: any) => {
+      const isDefValid = validDefIds.has(p.instDefId);
+      if (p.amount === 30000 && !isDefValid) console.log("Found 30k payment NOT in validDefIds");
+      return isDefValid;
+    });
+    return filtered;
+  }, [payments, instDefs]);
+
+  // Cleanup Orphaned Data (Garbage Collector)
+  useEffect(() => {
+    if ((auth?.role === "admin" || auth?.role === "superadmin") && instDefs.length > 0 && payments.length > 0 && dataLoaded.instDefs && dataLoaded.payments) {
+      const validDefIds = new Set(instDefs.map(d => d.id));
+      const orphaned = payments.filter(p => !validDefIds.has(p.instDefId));
+      
+      if (orphaned.length > 0) {
+        console.log(`Found ${orphaned.length} orphaned payments. Cleaning up...`);
+        const cleanup = async () => {
+          const chunks = [];
+          for (let i = 0; i < orphaned.length; i += 400) {
+            chunks.push(orphaned.slice(i, i + 400));
+          }
+          for (const chunk of chunks) {
+            const batch = writeBatch(db);
+            chunk.forEach(p => batch.delete(doc(db, "payments", p.id)));
+            try {
+              await batch.commit();
+              addLog(auth.user, "system_cleanup", `${chunk.length} Orpahned payments`, "সিস্টেম স্বয়ংক্রিয়ভাবে এতিম ডেটা মুছে ফেলেছে", "system");
+            } catch (e) {
+              console.error("Cleanup error:", e);
+            }
+          }
+        };
+        cleanup();
+      }
+    }
+  }, [payments, instDefs, auth, dataLoaded]);
+
   useEffect(() => {
     // Silent anonymous sign-in to provide request.auth for security rules
     const unsubAuth = onAuthStateChanged(fbAuth, (user) => {
@@ -1142,28 +1181,38 @@ export default function App() {
   };
 
   const deletePlan = async (id: string) => {
-    console.log("Deleting plan:", id);
     const p = plans.find(x => x.id === id);
     const defsToDelete = instDefs.filter((d: any) => d.planId === id);
+    const defIds = defsToDelete.map(d => d.id);
+    const relatedPayments = payments.filter((py: any) => defIds.includes(py.instDefId));
     const clientsToUpdate = clients.filter((c: any) => (c.planAssignments || []).some((pa: any) => pa.planId === id));
-    console.log("Defs to delete:", defsToDelete.length, "Clients to update:", clientsToUpdate.length);
     
     try {
       const batch = writeBatch(db);
       batch.delete(doc(db, "plans", id));
       defsToDelete.forEach((d: any) => batch.delete(doc(db, "instDefs", d.id)));
       
+      // Delete payments in chunks of 450 (Firestore batch limit)
+      const payChunks = [];
+      for (let i = 0; i < relatedPayments.length; i += 400) {
+        payChunks.push(relatedPayments.slice(i, i + 400));
+      }
+      
+      for (const chunk of payChunks) {
+        const pBatch = writeBatch(db);
+        chunk.forEach((py: any) => pBatch.delete(doc(db, "payments", py.id)));
+        await pBatch.commit();
+      }
+
       clientsToUpdate.forEach((c: any) => {
         const nextAssignments = (c.planAssignments || []).filter((pa: any) => pa.planId !== id);
         batch.update(doc(db, "clients", c.id), { planAssignments: nextAssignments });
       });
       
       await batch.commit();
-      console.log("Plan deleted successfully");
       if (p) addLog(adminUser, "plan_delete", p.name, "প্ল্যান মুছে ফেলা হয়েছে", p.projectId);
       showToast(t("common.success_deleted"));
     } catch (e) {
-      console.error("Error deleting plan:", e);
       handleFirestoreError(e, OperationType.DELETE, `plans/${id}`);
       showToast(t("common.error_occurred"), 'e');
     }
@@ -1438,7 +1487,7 @@ export default function App() {
     expenses: t("nav.expenses") 
   };
   const topTitle = curProject ? curProject.name : (PAGE_TITLES[page] || "");
-  const pendingCount = payments.filter((p: any) => p.status === "pending").length;
+  const pendingCount = validPayments.filter((p: any) => p.status === "pending").length;
 
   return (
     <div className="min-h-screen bg-app-bg">
@@ -1474,7 +1523,7 @@ export default function App() {
       <main className="pt-20 px-4 pb-24 max-w-4xl mx-auto">
         {(role === "admin" || role === "superadmin") && !selProject && page === "home" && (
           <AdminHome 
-            projects={projects} clients={clients} payments={payments} instDefs={instDefs} expenses={expenses} plans={plans}
+            projects={projects} clients={clients} payments={validPayments} instDefs={instDefs} expenses={expenses} plans={plans}
             onSelect={(id: string) => setSelProject(id)} onAddProject={addProject} onUpdateProject={updateProject} onDeleteProject={deleteProject} 
             isSuperAdmin={isSuperAdmin} onApprovePayment={approvePayment} onRejectPayment={rejectPayment} 
           />
@@ -1487,11 +1536,11 @@ export default function App() {
         )}
         
         {(role === "admin" || role === "superadmin") && !selProject && page === "profile" && <AdminProfile admin={adminUser} onUpdate={changeMyPw} />}
-        {(role === "admin" || role === "superadmin") && !selProject && page === "payments" && <AdminPaymentsPage payments={payments} clients={clients} instDefs={instDefs} projects={projects} isSuperAdmin={isSuperAdmin} onDeletePayment={deletePayment} />}
+        {(role === "admin" || role === "superadmin") && !selProject && page === "payments" && <AdminPaymentsPage payments={validPayments} clients={clients} instDefs={instDefs} projects={projects} isSuperAdmin={isSuperAdmin} onDeletePayment={deletePayment} />}
         {(role === "admin" || role === "superadmin") && !selProject && page === "admins" && isSuperAdmin && <AdminManagePage admins={admins} onAdd={addAdmin} onUpdate={addAdmin} onDelete={removeAdmin} onResetPw={resetAdminPw} currentAdminId={adminUser.id} />}
         {(role === "admin" || role === "superadmin") && selProject && curProject && (
           <ProjectDetail 
-            project={curProject} clients={clients} allClients={clients} instDefs={instDefs} plans={plans} payments={payments} expenses={expenses} logs={logs} isSuperAdmin={isSuperAdmin}
+            project={curProject} clients={clients} allClients={clients} instDefs={instDefs} plans={plans} payments={validPayments} expenses={expenses} logs={logs} isSuperAdmin={isSuperAdmin}
             onBack={() => setSelProject(null)}
             onAddPlan={addPlan}
             onUpdatePlan={updatePlan}
@@ -1508,8 +1557,8 @@ export default function App() {
           />
         )}
         
-        {role === "client" && page === "installments" && <ClientInstallments client={auth.user} instDefs={instDefs} payments={payments} projects={projects} plans={plans} />}
-        {role === "client" && page === "receipts" && <ClientReceipts client={auth.user} instDefs={instDefs} payments={payments} projects={projects} />}
+        {role === "client" && page === "installments" && <ClientInstallments client={auth.user} instDefs={instDefs} payments={validPayments} projects={projects} plans={plans} />}
+        {role === "client" && page === "receipts" && <ClientReceipts client={auth.user} instDefs={instDefs} payments={validPayments} projects={projects} />}
         {role === "client" && page === "expenses" && <ClientExpenses client={auth.user} expenses={expenses} />}
         {role === "client" && page === "profile" && <ClientProfile client={auth.user} instDefs={instDefs} onUpdateClient={(c: any) => { updateClient(c, c.id); setAuth({ ...auth, user: c }); }} />}
       </main>

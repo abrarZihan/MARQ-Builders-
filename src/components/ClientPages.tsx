@@ -586,8 +586,17 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
 export function ClientReceipts({ client, instDefs, payments, projects }: any) {
   const { t, lang } = useLanguage();
   const [viewR, setViewR] = useState<any>(null);
-  const myPays = [...payments.filter((p: any) => p.clientId === client.id && p.status === "approved")].sort((a, b) => b.date.localeCompare(a.date));
-  const pendingPays = payments.filter((p: any) => p.clientId === client.id && p.status === "pending");
+  const myPays = [...payments.filter((p: any) => {
+    const def = instDefs.find((d: any) => d.id === p.instDefId);
+    if (p.amount === 30000) {
+      console.log("Checking 30k payment", p.id, "defId:", p.instDefId, "defFound:", !!def);
+    }
+    return p.clientId === client.id && p.status === "approved" && !!def;
+  })].sort((a, b) => b.date.localeCompare(a.date));
+  const pendingPays = payments.filter((p: any) => {
+    const def = instDefs.find((d: any) => d.id === p.instDefId);
+    return p.clientId === client.id && p.status === "pending" && !!def;
+  });
   const project = projects.find((p: any) => p.id === client.projectId);
 
   const hasMultiple = (client.planAssignments || []).length > 1 || (client.planAssignments || []).some((pa: any) => (pa.shareCount || 1) > 1);

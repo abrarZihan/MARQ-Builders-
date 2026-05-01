@@ -113,12 +113,40 @@ const sortedClients = [...prjClients].map(c => {
 
 ---
 
+## 5. Cascading Delete & Orphaned Data Protection
+
+### Context
+Deleting higher-level entities (Plans or Installment Definitions) previously left associated Payment records in the database. This orphaned data caused calculation errors and appeared in historical summaries even after the parent columns were removed.
+
+### Modified Code Mentions
+
+#### **A. Global Filtering Layer (`src/App.tsx`)**
+A `validPayments` memoized selector was introduced to ensure only payments linked to existing `instDefs` are processed.
+
+```typescript
+const validPayments = useMemo(() => {
+  const validDefIds = new Set(instDefs.map(d => d.id));
+  return payments.filter((p: any) => validDefIds.has(p.instDefId));
+}, [payments, instDefs]);
+```
+**Impact:** This filtered list is now passed as props to `AdminHome`, `ProjectDetail`, and `ClientPages`, instantly hiding any orphaned legacy data.
+
+#### **B. Cascading Delete Logic (`src/App.tsx`)**
+- **Plan Deletion:** Modified `deletePlan` to gather all installment definition IDs within the plan and perform a chunked batch delete (400 records per batch) of all associated payments.
+- **Installment Deletion:** Hardened `deleteInstDef` to perform similar chunked batch deletes of related payments before removing the definition itself.
+
+#### **C. UI Consistency**
+Updated `ClientInstallments` and `ClientReceipts` in `src/App.tsx` (Prop injection) to use `validPayments`, ensuring the client-side receipt history is always accurate to the current project state.
+
+---
+
 ## Developer Check-List for Clones
 1. **Search & Destroy `isGlobal`:** Run a global grep for `isGlobal`. Ensure it's removed from filters, map functions, and state initializers.
 2. **Sync i18n:** Ensure the Bengali and English translation files match the updated UI strings.
 3. **Verify Dashboard Totals:** After removing globals, check if the "Project Expected" total matches the sum of "Client Expected" amounts.
 4. **Font/UI Accuracy:** Check the `BDTshort` outputs in high-density tables (like Project Detail) to ensure layout doesn't break with the extra digit.
 5. **Sort Performance:** In very large projects (500+ clients), consider memoizing the sort result to prevent re-calculation on every re-render.
+6. **Data Integrity:** Always use `validPayments` for financial aggregations to prevent orphaned records from skewing data.
 
 ---
 *Last Updated: 2026-05-01*

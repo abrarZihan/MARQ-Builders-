@@ -128,8 +128,9 @@ export function AdminPaymentsPage({ payments, clients, instDefs, projects, isSup
   const filtered = payments
     .filter((p: any) => p.status === "approved")
     .filter((p: any) => {
-      const c = clients.find((cl: any) => cl.id === p.clientId);
       const d = instDefs.find((di: any) => di.id === p.instDefId);
+      if (!d) return false;
+      const c = clients.find((cl: any) => cl.id === p.clientId);
       const prj = projects.find((pr: any) => pr.id === c?.projectId);
       const s = search.toLowerCase();
       return (

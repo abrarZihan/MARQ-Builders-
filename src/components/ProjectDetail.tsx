@@ -598,7 +598,9 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
 
           <div className="space-y-3">
             {payments && payments.filter((p: any) => {
-              return allPrjClients.some((c: any) => c.id === p.clientId);
+              const belongsToClient = allPrjClients.some((c: any) => c.id === p.clientId);
+              const definitionExists = allPrjDefs.some((d: any) => d.id === p.instDefId);
+              return belongsToClient && definitionExists;
             }).sort((a: any, b: any) => b.date.localeCompare(a.date)).map((p: any, i: number) => {
               const client = allPrjClients.find((c: any) => c.id === p.clientId);
               const def = allPrjDefs.find((d: any) => d.id === p.instDefId);
