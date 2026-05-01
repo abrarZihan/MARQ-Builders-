@@ -6,12 +6,12 @@ import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
 import { ClientInfoPage } from "./ClientInfo";
 import { CellPaySheet, AddDefSheet, EditDefSheet, AddExpSheet, ReceiptSheet } from "./ProjectModals";
-import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText, Edit2, Search, Filter, X } from "lucide-react";
+import { Trash2, Clock, CheckCircle2, Building2, Table, Users, CreditCard, ClipboardList, ArrowLeft, Plus, Printer, FileText, Edit2, Search, Filter, X, ArrowUpDown } from "lucide-react";
 
 import { useLanguage } from "../lib/i18n";
 
 export function ProjectDetail({ project, clients, allClients, instDefs, plans, payments, expenses, logs, isSuperAdmin, onBack, onAddPlan, onUpdatePlan, onDeletePlan, onAddDef, onUpdateInstDef, onDeleteInstDef, onAddPayment, onDeletePayment, onAddExpense, onUpdateExpense, onUpdateClient, onAddBulkClients, onAddClient, onDeleteClient, onDeleteExpense }: any) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [tab, setTab] = useState("sheet");
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [showAddPlan, setShowAddPlan] = useState(false);
@@ -32,6 +32,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   const [editDefModal, setEditDefModal] = useState<any>(null);
   const [longPressDefTimer, setLongPressDefTimer] = useState<any>(null);
   const [isDefLongPress, setIsDefLongPress] = useState(false);
+  const [dueSortOrder, setDueSortOrder] = useState<"asc" | "desc">("asc");
 
   const handleDefLongPressStart = (def: any) => {
     setIsDefLongPress(false);
@@ -486,76 +487,100 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
 
       {tab === "kistisum" && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-3">
-          {prjClients.length === 0 && (
-            <div className="text-center py-12 bg-app-surface rounded-3xl border border-app-border text-app-text-muted font-bold text-sm">
-              {t("project_detail.no_clients")}
+          <div className="flex items-center justify-between mb-4 px-2">
+            <div className="text-sm font-black text-app-text-primary tracking-tight">
+              {t("project_detail.tab_summary")}
             </div>
-          )}
-          {prjClients.map((c: any) => {
-            const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
-            const shareCount = assignment ? assignment.shareCount : (c.shareCount || 1);
-            
-            // Project-wide client stats
-            const cPaid = payments.filter((p: any) => {
-              if (p.clientId !== c.id || p.status !== "approved") return false;
-              const def = allPrjDefs.find(d => d.id === p.instDefId);
-              if (!def) return false;
-              const assignments = c.planAssignments || [];
-              if (assignments.length > 0) {
-                if (!assignments.some((pa: any) => pa.planId === def.planId)) return false;
-              } else {
-                const firstPlan = prjPlans[0];
-                if (!firstPlan || firstPlan.id !== def.planId) return false;
-              }
-              return true;
-            }).reduce((s: number, p: any) => s + p.amount, 0);
-            
-            const cTarget = allPrjClients.filter(cl => cl.id === c.id).reduce((s: number, cl: any) => {
-              const assignments = cl.planAssignments || [];
-              if (assignments.length > 0) {
-                return s + assignments.reduce((as: number, pa: any) => {
-                  const pDefs = instDefs.filter((d: any) => d.planId === pa.planId);
-                  return as + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * pa.shareCount);
-                }, 0);
-              } else {
-                const firstPlan = prjPlans[0];
-                if (!firstPlan) return s;
-                const pDefs = instDefs.filter((d: any) => d.planId === firstPlan.id);
-                return s + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (cl.shareCount || 1));
-              }
-            }, 0);
+            <button 
+              onClick={() => setDueSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+              className="flex items-center gap-2 px-3 py-2 bg-app-surface border border-app-border rounded-xl text-[10px] font-black text-app-text-secondary hover:bg-app-bg transition-all active:scale-95 shadow-sm uppercase tracking-wider"
+            >
+              <ArrowUpDown size={14} className={cn("transition-transform duration-300", dueSortOrder === "desc" ? "rotate-180" : "")} />
+              {dueSortOrder === "asc" ? (lang === 'bn' ? "কম বাকি আগে" : "Lowest Due First") : (lang === 'bn' ? "বেশি বাকি আগে" : "Highest Due First")}
+            </button>
+          </div>
 
-            return (
-              <div key={c.id} className="bg-app-surface rounded-2xl border border-app-border p-5 shadow-sm transition-colors">
-                <div className="flex items-center gap-4 mb-4">
-                  <ClientAvatar client={c} size={48} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-base font-black text-app-text-primary">{c.name}</div>
-                    <div className="text-xs text-app-text-secondary font-medium mt-1">
-                      {c.phone}
-                      {c.plot && (
-                        <>
-                          {" · "}
-                          <span className="bg-app-bg text-app-text-secondary px-2 py-0.5 rounded font-bold border border-app-border">
-                            {c.plot}
-                          </span>
-                        </>
-                      )}
-                      {shareCount > 1 && (
-                        <>
-                          {" · "}
-                          <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded font-bold border border-blue-500/20">
-                            {shareCount} {t("client_info.shares")}
-                          </span>
-                        </>
-                      )}
+          {(() => {
+            const sortedClients = [...prjClients].map(c => {
+              const cPaid = payments.filter((p: any) => {
+                if (p.clientId !== c.id || p.status !== "approved") return false;
+                const def = allPrjDefs.find(d => d.id === p.instDefId);
+                if (!def) return false;
+                const assignments = c.planAssignments || [];
+                if (assignments.length > 0) {
+                  if (!assignments.some((pa: any) => pa.planId === def.planId)) return false;
+                } else {
+                  const firstPlan = prjPlans[0];
+                  if (!firstPlan || firstPlan.id !== def.planId) return false;
+                }
+                return true;
+              }).reduce((s: number, p: any) => s + p.amount, 0);
+              
+              const cTarget = allPrjClients.filter(cl => cl.id === c.id).reduce((s: number, cl: any) => {
+                const assignments = cl.planAssignments || [];
+                if (assignments.length > 0) {
+                  return s + assignments.reduce((as: number, pa: any) => {
+                    const pDefs = instDefs.filter((d: any) => d.planId === pa.planId);
+                    return as + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * pa.shareCount);
+                  }, 0);
+                } else {
+                  const firstPlan = prjPlans[0];
+                  if (!firstPlan) return s;
+                  const pDefs = instDefs.filter((d: any) => d.planId === firstPlan.id);
+                  return s + (pDefs.reduce((ds: number, d: any) => ds + d.targetAmount, 0) * (cl.shareCount || 1));
+                }
+              }, 0);
+              const due = Math.max(0, cTarget - cPaid);
+              return { ...c, _calculatedDue: due, _calculatedPaid: cPaid, _calculatedTarget: cTarget };
+            }).sort((a, b) => {
+              if (dueSortOrder === "asc") return a._calculatedDue - b._calculatedDue;
+              return b._calculatedDue - a._calculatedDue;
+            });
+
+            if (sortedClients.length === 0) {
+              return (
+                <div className="text-center py-12 bg-app-surface rounded-3xl border border-app-border text-app-text-muted font-bold text-sm">
+                  {t("project_detail.no_clients")}
+                </div>
+              );
+            }
+
+            return sortedClients.map((c: any) => {
+              const assignment = c.planAssignments?.find((pa: any) => pa.planId === activePlanId);
+              const shareCount = assignment ? assignment.shareCount : (c.shareCount || 1);
+              
+              return (
+                <div key={c.id} className="bg-app-surface rounded-2xl border border-app-border p-5 shadow-sm transition-colors animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="flex items-center gap-4 mb-4">
+                    <ClientAvatar client={c} size={48} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-base font-black text-app-text-primary">{c.name}</div>
+                      <div className="text-xs text-app-text-secondary font-medium mt-1">
+                        {c.phone}
+                        {c.plot && (
+                          <>
+                            {" · "}
+                            <span className="bg-app-bg text-app-text-secondary px-2 py-0.5 rounded font-bold border border-app-border">
+                              {c.plot}
+                            </span>
+                          </>
+                        )}
+                        {shareCount > 1 && (
+                          <>
+                            {" · "}
+                            <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded font-bold border border-blue-500/20">
+                              {shareCount} {t("client_info.shares")}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <PBar paid={c._calculatedPaid} target={c._calculatedTarget} />
                 </div>
-                <PBar paid={cPaid} target={cTarget || (c.totalAmount * shareCount)} />
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       )}
 
