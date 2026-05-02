@@ -786,17 +786,17 @@ export default function App() {
     // Publicly readable (needed for basic app structure)
     const unsubProjects = onSnapshot(collection(db, "projects"), (s) => {
       setProjects(s.docs.map(d => ({ ...d.data(), id: d.id })));
-      setDataLoaded(prev => ({ ...prev, projects: true }));
+      setDataLoaded(prev => { console.log("Setting dataLoaded for: projects"); return { ...prev, projects: true }; });
     }, (e) => handleFirestoreError(e, OperationType.LIST, "projects"));
 
     const unsubPlans = onSnapshot(collection(db, "plans"), (s) => {
       setPlans(s.docs.map(d => ({ ...d.data(), id: d.id })));
-      setDataLoaded(prev => ({ ...prev, plans: true }));
+      setDataLoaded(prev => { console.log("Setting dataLoaded for: plans"); return { ...prev, plans: true }; });
     }, (e) => handleFirestoreError(e, OperationType.LIST, "plans"));
 
     const unsubInstDefs = onSnapshot(collection(db, "instDefs"), (s) => {
       setInstDefs(s.docs.map(d => ({ ...d.data(), id: d.id })));
-      setDataLoaded(prev => ({ ...prev, instDefs: true }));
+      setDataLoaded(prev => { console.log("Setting dataLoaded for: instDefs"); return { ...prev, instDefs: true }; });
     }, (e) => handleFirestoreError(e, OperationType.LIST, "instDefs"));
 
     let unsubClients = () => {};
@@ -808,29 +808,29 @@ export default function App() {
     if (auth?.role === "admin" || auth?.role === "superadmin") {
       unsubClients = onSnapshot(collection(db, "clients"), (s) => {
         setClients(s.docs.map(d => ({ ...d.data(), id: d.id })));
-        setDataLoaded(prev => ({ ...prev, clients: true }));
+        setDataLoaded(prev => { console.log("Setting dataLoaded for: clients (admin)"); return { ...prev, clients: true }; });
       }, (e) => handleFirestoreError(e, OperationType.LIST, "clients"));
 
       unsubPayments = onSnapshot(collection(db, "payments"), (s) => {
         console.log("Payments updated:", s.docs.length);
         setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
-        setDataLoaded(prev => ({ ...prev, payments: true }));
+        setDataLoaded(prev => { console.log("Setting dataLoaded for: payments (admin)"); return { ...prev, payments: true }; });
       }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
 
       unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => {
         console.log("Expenses updated:", s.docs.length);
         setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id })));
-        setDataLoaded(prev => ({ ...prev, expenses: true }));
+        setDataLoaded(prev => { console.log("Setting dataLoaded for: expenses (admin)"); return { ...prev, expenses: true }; });
       }, (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
 
       unsubAdmins = onSnapshot(collection(db, "admins"), (s) => {
         setAdmins(s.docs.map(d => ({ ...d.data(), id: d.id })));
-        setDataLoaded(prev => ({ ...prev, admins: true }));
+        setDataLoaded(prev => { console.log("Setting dataLoaded for: admins"); return { ...prev, admins: true }; });
       }, (e) => handleFirestoreError(e, OperationType.LIST, "admins"));
 
       unsubLogs = onSnapshot(query(collection(db, "logs"), orderBy("ts", "desc"), limit(100)), (s) => {
         setLogs(s.docs.map(d => ({ ...d.data(), id: d.id })));
-        setDataLoaded(prev => ({ ...prev, logs: true }));
+        setDataLoaded(prev => { console.log("Setting dataLoaded for: logs"); return { ...prev, logs: true }; });
       }, (e) => handleFirestoreError(e, OperationType.LIST, "logs"));
     } else if (auth?.role === "client" && auth?.user?.id) {
       // Client only sees their own doc and payments
@@ -838,21 +838,21 @@ export default function App() {
         if (d.exists()) {
           setClients([{ ...d.data(), id: d.id }]);
         }
-        setDataLoaded(prev => ({ ...prev, clients: true }));
+        setDataLoaded(prev => { console.log("Setting dataLoaded for: clients (client)"); return { ...prev, clients: true }; });
       }, (e) => handleFirestoreError(e, OperationType.GET, `clients/${auth.user.id}`));
 
       unsubPayments = onSnapshot(query(collection(db, "payments"), where("clientId", "==", auth.user.id)), (s) => {
         setPayments(s.docs.map(d => ({ ...d.data(), id: d.id })));
-        setDataLoaded(prev => ({ ...prev, payments: true }));
+        setDataLoaded(prev => { console.log("Setting dataLoaded for: payments (client)"); return { ...prev, payments: true }; });
       }, (e) => handleFirestoreError(e, OperationType.LIST, "payments"));
 
       unsubExpenses = onSnapshot(collection(db, "expenses"), (s) => {
         setExpenses(s.docs.map(d => ({ ...d.data(), id: d.id })));
-        setDataLoaded(prev => ({ ...prev, expenses: true }));
+        setDataLoaded(prev => { console.log("Setting dataLoaded for: expenses (client)"); return { ...prev, expenses: true }; });
       }, (e) => handleFirestoreError(e, OperationType.LIST, "expenses"));
       
       // Mark others as loaded to stop loading spinner
-      setDataLoaded(prev => ({ ...prev, admins: true, logs: true }));
+      setDataLoaded(prev => { console.log("Setting dataLoaded for: admins, logs"); return { ...prev, admins: true, logs: true }; });
     } else {
       // Not logged in yet - clear data or keep empty
       setClients([]);
@@ -870,6 +870,7 @@ export default function App() {
 
     // Set loading to false only when essential data is loaded
   useEffect(() => {
+    console.log("dataLoaded state:", dataLoaded);
     if (dataLoaded.projects && dataLoaded.plans && dataLoaded.clients && dataLoaded.instDefs && dataLoaded.payments) {
       setLoading(false);
     }
@@ -879,7 +880,7 @@ export default function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 5000);
+    }, 3000);
     return () => clearTimeout(timer);
   }, []);
 
