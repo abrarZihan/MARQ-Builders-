@@ -875,14 +875,6 @@ export default function App() {
     }
   }, [dataLoaded]);
 
-  // Fallback to stop loading after 10 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 10000);
-    return () => clearTimeout(timer);
-  }, []);
-
   // Keep client auth user in sync with clients collection
   useEffect(() => {
     if (auth?.role === "client" && auth?.user?.id && clients.length > 0) {
