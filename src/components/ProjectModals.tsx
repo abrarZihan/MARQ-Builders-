@@ -305,7 +305,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="receipt-paper relative p-8 font-sans border-b border-dashed last:border-0 print:border-b-0 flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
+    <div className="receipt-paper relative p-4 sm:p-8 print:p-6 font-sans border-b border-dashed last:border-0 print:border-b-0 flex flex-col min-w-[320px] sm:min-w-[850px] print:min-w-0 overflow-hidden">
       {/* Header */}
       {/* Logo in top-left corner */}
       <div className="absolute top-4 left-8">
@@ -507,22 +507,21 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
             display: none !important; 
           }
           /* Force colors for receipt elements */
-          .receipt-paper span.bg-[#5c5fc8], 
-          .receipt-paper div.bg-[#5c5fc8] {
+          .receipt-paper [class*="bg-[#5c5fc8]"] {
             background-color: #5c5fc8 !important;
+            box-shadow: inset 0 0 0 1000px #5c5fc8 !important;
             color: white !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
           .receipt-paper {
             page-break-inside: avoid !important;
-            flex: 1 !important;
-            max-height: 48vh !important;
-            padding-bottom: 1cm !important;
+            height: 47% !important;
+            max-height: 47% !important;
+            overflow: hidden !important;
           }
           .receipt-paper:first-child {
-            border-bottom: 1px dashed #cbd5e1 !important;
-            margin-bottom: 0.5cm !important;
+            border-bottom: 2px dashed #cbd5e1 !important;
           }
           .receipt-paper:last-child {
             border-bottom: none !important;
