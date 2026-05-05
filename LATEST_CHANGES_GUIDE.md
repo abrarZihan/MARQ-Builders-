@@ -140,6 +140,36 @@ Updated `ClientInstallments` and `ClientReceipts` in `src/App.tsx` (Prop injecti
 
 ---
 
+## 6. Enhanced Dual-Receipt Printing Logic
+
+### Context
+The application required a reliable way to print dual receipts (Customer Copy and Office Copy) on a single A4/Letter page. Issues included background colors (like the "Money Receipt" banner) disappearing during print, and the print dialog erroneously selecting multiple pages instead of just one.
+
+### Modified Code Mentions
+
+#### **A. Layout Architecture (`src/components/ProjectModals.tsx`)**
+- **Dual Copy Rendering:** The `ReceiptModal` was updated to render two `ReceiptContent` components separated by a dashed line.
+- **Responsive & Print Dimensions:** Added `min-w-[850px]` for desktop viewing while allowing `min-w-0` and `height: 47%` for printing to ensure they stack perfectly within one page's height.
+
+#### **B. Advanced Print Styling (`@media print`)**
+Implemented a "High-Fidelity ISO" print strategy:
+- **Global Reset:** Hid all elements by default (`body * { visibility: hidden }`) and selectively showed only the receipt container (`.receipt-print-container`).
+- **One-Page Enforcement:** Used `position: fixed` and fixed dimensions (`width: 100%`, `height: 100%`) for the container to lock the browser's print engine into a single-page context.
+- **Color Preservation:** Enforced background colors using `-webkit-print-color-adjust: exact` and `box-shadow` hacks for better browser compatibility.
+  ```css
+  .receipt-paper [class*="bg-[#5c5fc8]"] {
+    background-color: #5c5fc8 !important;
+    box-shadow: inset 0 0 0 1000px #5c5fc8 !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  ```
+- **Page Break Control:** Used `page-break-inside: avoid` to prevent mid-receipt splits.
+
+#### **C. UI Support (`src/lib/i18n.tsx`)**
+- Added missing translations for `common.save`, `common.success_saved`, `common.error_occurred`, and `admin_home.delete_warning` to ensure full localization coverage in modals.
+
+---
+
 ## Developer Check-List for Clones
 1. **Search & Destroy `isGlobal`:** Run a global grep for `isGlobal`. Ensure it's removed from filters, map functions, and state initializers.
 2. **Sync i18n:** Ensure the Bengali and English translation files match the updated UI strings.
@@ -147,6 +177,7 @@ Updated `ClientInstallments` and `ClientReceipts` in `src/App.tsx` (Prop injecti
 4. **Font/UI Accuracy:** Check the `BDTshort` outputs in high-density tables (like Project Detail) to ensure layout doesn't break with the extra digit.
 5. **Sort Performance:** In very large projects (500+ clients), consider memoizing the sort result to prevent re-calculation on every re-render.
 6. **Data Integrity:** Always use `validPayments` for financial aggregations to prevent orphaned records from skewing data.
+7. **Print Testing:** Test receipt printing in Chrome and Safari; ensure "Background Graphics" is enabled or enforced via CSS for the banner colors.
 
 ---
-*Last Updated: 2026-05-01*
+*Last Updated: 2026-05-05*
