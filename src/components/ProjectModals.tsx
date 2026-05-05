@@ -305,37 +305,37 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="receipt-paper relative p-10 font-sans border-b border-dashed last:border-0 print:border-b-0 flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
+    <div className="receipt-paper relative p-8 font-sans border-b border-dashed last:border-0 print:border-b-0 flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
       {/* Header */}
       {/* Logo in top-left corner */}
-      <div className="absolute top-6 left-10">
+      <div className="absolute top-4 left-8">
         <img 
           src={LOGO_URL} 
           alt="Logo" 
-          className="h-20 w-auto object-contain"
+          className="h-16 w-auto object-contain"
           referrerPolicy="no-referrer"
         />
       </div>
 
-      <div className="flex flex-col items-center mb-6 w-full">
-        <h1 className="text-3xl font-black text-[#0f172a] tracking-tight">MARQ BUILDERS</h1>
-        <p className="text-[11px] font-bold text-slate-800 mt-2 text-center w-full">
+      <div className="flex flex-col items-center mb-4 w-full">
+        <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">MARQ BUILDERS</h1>
+        <p className="text-[10px] font-bold text-slate-800 mt-1 text-center w-full">
           216/8, Baganbari, North Vasantek Dhaka Cantt, Dhaka- 1206
         </p>
       </div>
 
       {/* Copy Badge */}
-      <div className="absolute top-8 right-8">
-        <span className="bg-[#5c5fc8] text-white text-[10px] font-bold px-4 py-1 rounded-md shadow-sm">
+      <div className="absolute top-6 right-8">
+        <span className="bg-[#5c5fc8] text-white text-[9px] font-bold px-3 py-1 rounded-md shadow-sm print:[-webkit-print-color-adjust:exact] print:[print-color-adjust:exact]">
           {type} Copy
         </span>
       </div>
 
       {/* Sl No & Date */}
-      <div className="flex justify-between text-[13px] font-bold mb-6 px-2">
+      <div className="flex justify-between text-[12px] font-bold mb-4 px-2">
         <div className="flex items-baseline gap-1">
           <span>Sl. No.</span>
-          <span className="receipt-border-bottom min-w-[120px] px-2 text-center">
+          <span className="receipt-border-bottom min-w-[120px] px-2 text-center text-[#5c5fc8]">
             {payment?.id ? (payment.id.split('-')[1] || payment.id) : ""}
           </span>
         </div>
@@ -348,14 +348,14 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
       </div>
 
       {/* Title */}
-      <div className="text-center mb-8">
-        <span className="bg-[#5c5fc8] text-white px-12 py-2 rounded-lg font-bold text-sm uppercase tracking-wider shadow-sm">
+      <div className="text-center mb-6">
+        <span className="bg-[#5c5fc8] text-white px-10 py-1.5 rounded-lg font-bold text-xs uppercase tracking-wider shadow-sm print:[-webkit-print-color-adjust:exact] print:[print-color-adjust:exact]">
           Money Receipt
         </span>
       </div>
 
       {/* Fields */}
-      <div className="space-y-5 text-[13px] px-2">
+      <div className="space-y-4 text-[12px] px-2">
         <div className="flex gap-8">
           <div className="flex-1 flex items-baseline gap-2">
             <span className="whitespace-nowrap font-bold">Name:</span>
@@ -382,7 +382,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap font-bold">Amount =</span>
-          <span className="flex-1 receipt-border-bottom px-2 font-black text-base">{payment.amount.toLocaleString()}/-</span>
+          <span className="flex-1 receipt-border-bottom px-2 font-black text-sm">{payment.amount.toLocaleString()}/-</span>
         </div>
 
         <div className="flex items-baseline gap-2">
@@ -397,22 +397,22 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
       </div>
 
       {/* Footer Signatures */}
-      <div className="flex justify-between mt-24 px-4 text-[11px] font-bold text-center">
-        <div className="w-48 receipt-border-top pt-1.5">Prepared By</div>
-        <div className="w-48 receipt-border-top pt-1.5">Accounts Officer</div>
-        <div className="w-48 receipt-border-top pt-1.5">Authorised Signature</div>
+      <div className="flex justify-between mt-12 px-4 text-[10px] font-bold text-center">
+        <div className="w-40 receipt-border-top pt-1.5">Prepared By</div>
+        <div className="w-40 receipt-border-top pt-1.5">Accounts Officer</div>
+        <div className="w-40 receipt-border-top pt-1.5">Authorised Signature</div>
       </div>
 
-      {/* Watermark */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none -z-10">
-        <div className="flex flex-col items-center gap-4 rotate-[-15deg]">
+      {/* Watermark - Smaller for dual layout */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none -z-10">
+        <div className="flex flex-col items-center gap-2 rotate-[-15deg]">
           <img 
             src={LOGO_URL} 
             alt="" 
-            className="w-[350px] h-auto object-contain grayscale" 
+            className="w-[250px] h-auto object-contain grayscale" 
             referrerPolicy="no-referrer"
           />
-          <div className="text-[80px] font-black whitespace-nowrap">MARQ BUILDERS</div>
+          <div className="text-[50px] font-black whitespace-nowrap">MARQ BUILDERS</div>
         </div>
       </div>
     </div>
@@ -445,6 +445,12 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           )}
 
           <ReceiptContent type="Customer" />
+          {!hideOfficeCopy && (
+            <>
+              <div className="h-px border-t border-dashed border-slate-300 print:my-2" />
+              <ReceiptContent type="Office" />
+            </>
+          )}
         </div>
         
         <div className="receipt-footer-bar p-6 flex gap-3 no-print">
@@ -463,23 +469,25 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
 
       <style>{`
         @media print {
-          @page { margin: 0; size: auto; }
+          @page { margin: 0.5cm; size: auto; }
           body { 
             visibility: hidden !important; 
             margin: 0 !important; 
             padding: 0 !important; 
-            overflow: hidden !important;
-            height: 100vh !important;
-            position: fixed !important;
+            overflow: visible !important;
+            height: auto !important;
+            position: relative !important;
             width: 100% !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .print\\:max-h-none {
             visibility: visible !important;
-            position: fixed !important;
+            position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
-            height: 100vh !important;
+            height: auto !important;
             background: white !important;
             z-index: 9999999 !important;
             display: block !important;
@@ -487,8 +495,14 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           }
           .print\\:max-h-none * {
             visibility: visible !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .no-print { display: none !important; }
+          .receipt-paper {
+            page-break-inside: avoid !important;
+            max-height: 48vh !important;
+          }
         }
       `}</style>
     </div>
