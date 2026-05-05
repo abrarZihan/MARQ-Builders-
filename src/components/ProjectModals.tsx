@@ -305,7 +305,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="receipt-paper relative p-10 font-sans border-b border-dashed last:border-0 print:border-b-0 print:h-[50vh] flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
+    <div className="receipt-paper relative p-10 font-sans border-b border-dashed last:border-0 print:border-b-0 flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
       {/* Header */}
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-10">
@@ -445,12 +445,6 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           )}
 
           <ReceiptContent type="Customer" />
-          {!hideOfficeCopy && (
-            <>
-              <div className="h-px border-b border-dashed border-slate-300 print:my-4" />
-              <ReceiptContent type="Office" />
-            </>
-          )}
         </div>
         
         <div className="receipt-footer-bar p-6 flex gap-3 no-print">
@@ -469,13 +463,30 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
 
       <style>{`
         @media print {
-          body * { visibility: hidden; }
-          .print\\:max-h-none, .print\\:max-h-none * { visibility: visible; }
+          @page { margin: 0; size: auto; }
+          body { 
+            visibility: hidden !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            overflow: hidden !important;
+            height: 100vh !important;
+            position: fixed !important;
+            width: 100% !important;
+          }
           .print\\:max-h-none {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+            visibility: visible !important;
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100vh !important;
+            background: white !important;
+            z-index: 9999999 !important;
+            display: block !important;
+            overflow: visible !important;
+          }
+          .print\\:max-h-none * {
+            visibility: visible !important;
           }
           .no-print { display: none !important; }
         }
