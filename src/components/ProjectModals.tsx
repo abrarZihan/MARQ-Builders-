@@ -425,7 +425,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
         className="rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none bg-app-surface border border-app-border" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible relative">
+        <div className="max-h-[85vh] overflow-auto print:max-h-none print:overflow-visible relative receipt-print-container">
           {isSuperAdmin && onDelete && (
             <button 
               className="absolute top-4 right-4 z-50 w-10 h-10 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-rose-600 transition-colors no-print"
@@ -469,39 +469,57 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
 
       <style>{`
         @media print {
-          @page { margin: 0.5cm; size: auto; }
-          body { 
+          @page { 
+            margin: 0 !important;
+            size: auto;
+          }
+          html, body {
+            height: 100vh !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+          }
+          body * { 
             visibility: hidden !important; 
-            margin: 0 !important; 
-            padding: 0 !important; 
-            overflow: visible !important;
-            height: auto !important;
-            position: relative !important;
-            width: 100% !important;
+          }
+          .receipt-print-container, .receipt-print-container * { 
+            visibility: visible !important; 
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .print\\:max-h-none {
+          .receipt-print-container {
             visibility: visible !important;
-            position: absolute !important;
+            position: fixed !important;
             left: 0 !important;
             top: 0 !important;
-            width: 100% !important;
-            height: auto !important;
+            width: 100vw !important;
+            height: 100vh !important;
             background: white !important;
             z-index: 9999999 !important;
-            display: block !important;
-            overflow: visible !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0.5cm !important;
+            transform: none !important;
           }
-          .print\\:max-h-none * {
-            visibility: visible !important;
+          .no-print { 
+            display: none !important; 
+          }
+          .receipt-paper [class*="bg-"] {
+            background-color: #5c5fc8 !important;
+            color: white !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .no-print { display: none !important; }
           .receipt-paper {
             page-break-inside: avoid !important;
             max-height: 48vh !important;
+            border-bottom: 1px dashed #cbd5e1 !important;
+          }
+          .receipt-paper:last-child {
+            border-bottom: none !important;
           }
         }
       `}</style>
