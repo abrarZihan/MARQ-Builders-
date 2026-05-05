@@ -471,10 +471,10 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
         @media print {
           @page { 
             margin: 0 !important;
-            size: auto;
+            size: portrait;
           }
           html, body {
-            height: 100vh !important;
+            height: 100% !important;
             overflow: hidden !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -490,24 +490,25 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           }
           .receipt-print-container {
             visibility: visible !important;
-            position: fixed !important;
+            position: absolute !important;
             left: 0 !important;
             top: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
+            width: 100% !important;
+            height: 100% !important;
             background: white !important;
             z-index: 9999999 !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
             margin: 0 !important;
-            padding: 0.5cm !important;
-            transform: none !important;
+            padding: 0.8cm !important;
           }
           .no-print { 
             display: none !important; 
           }
-          .receipt-paper [class*="bg-"] {
+          /* Force colors for receipt elements */
+          .receipt-paper span.bg-[#5c5fc8], 
+          .receipt-paper div.bg-[#5c5fc8] {
             background-color: #5c5fc8 !important;
             color: white !important;
             -webkit-print-color-adjust: exact !important;
@@ -515,11 +516,17 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           }
           .receipt-paper {
             page-break-inside: avoid !important;
+            flex: 1 !important;
             max-height: 48vh !important;
+            padding-bottom: 1cm !important;
+          }
+          .receipt-paper:first-child {
             border-bottom: 1px dashed #cbd5e1 !important;
+            margin-bottom: 0.5cm !important;
           }
           .receipt-paper:last-child {
             border-bottom: none !important;
+            padding-top: 0.5cm !important;
           }
         }
       `}</style>
