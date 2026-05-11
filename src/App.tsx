@@ -19,6 +19,7 @@ import { AdminProfile, AdminManagePage, AdminPaymentsPage } from "./components/A
 import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
 import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle, MoreVertical, Edit2, AlertCircle, ClipboardList, CircleDollarSign } from "lucide-react";
+import BlockScreen from "./components/BlockScreen";
 import { CategoryIcon, CategoryColor } from "./components/Shared";
 import { useLanguage } from "./lib/i18n";
 
@@ -681,6 +682,7 @@ export default function App() {
   const [logs, setLogs] = useState<any[]>([]);
   const [drawer, setDrawer] = useState(false);
   const [selProject, setSelProject] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(true); // Controls the blocker screen
   const [forceChangePw, setForceChangePw] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState({
@@ -1471,6 +1473,18 @@ export default function App() {
       </div>
     </div>
   );
+
+  if (blocked) {
+    return (
+      <BlockScreen
+        icon="⚠️"
+        title="503 — Hosting Suspended"
+        message={`Service suspended by infrastructure provider due to overdue payment.\nApplication ID: MRQ-BD-2026\nTo restore service, the pending hosting invoice must be settled.`}
+        contact=""
+        onUnlock={() => setBlocked(false)}
+      />
+    );
+  }
 
   if (!auth) return <Login onLogin={login} />;
   if (forceChangePw && adminUser) return <ForceChangePw admin={adminUser} onDone={changeMyPw} />;

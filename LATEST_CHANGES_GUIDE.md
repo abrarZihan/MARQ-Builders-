@@ -170,6 +170,38 @@ Implemented a "High-Fidelity ISO" print strategy:
 
 ---
 
+## 7. AI Agent Operating Skill Document (v2 Enhanced)
+
+### Context
+A comprehensive "skill" document enables autonomous or semi-autonomous AI agents to operate the software. This document was recently expanded to include "Expert Level" operational knowledge discovered during deep code analysis.
+
+### New Documentation
+- **File:** `/AGENT_OPERATING_SKILL.md`
+- **Updated Contents:** 
+  - **Technical Schemas:** Full field lists for Firestore sanitization.
+  - **Bulk Import Logic:** Detailed explanation of the fuzzy-matching header logic for Excel.
+  - **Operational Pro-tips:** Deep-dives into long-press interactions, cascading deletes, and sorting mechanisms.
+  - **Hierarchy Matrix:** Clear distinction between Admin, Super Admin, and Client capabilities.
+  - **Search & Skip Logic (v3):** Added strict protocols for rapid client lookups using first-alphabet initials and mandatory "Stop & Ask" logic for ambiguous results.
+  - **BlockScreen Developer Skill (v4):** Documented secret gesture and operational status for system-wide access restriction.
+
+---
+
+## 8. Development Integrity Blocker (BlockScreen)
+
+### Context
+A high-level security component was added to cover the entire application when access needs to be paused (e.g. for maintenance or development settlement). It prevents all user interactions while providing a hidden bypass for developers.
+
+### Modified Code Mentions
+- **`src/components/BlockScreen.tsx`**: New component with a secret 5-tap gesture logic on the icon.
+- **`src/App.tsx`**: Integrated at the root level using a `blocked` state.
+
+### Secret Gesture
+- **Action**: Tap the warning icon **5 times** in **3 seconds**.
+- **Result**: Self-unlocks the application session.
+
+---
+
 ## Developer Check-List for Clones
 1. **Search & Destroy `isGlobal`:** Run a global grep for `isGlobal`. Ensure it's removed from filters, map functions, and state initializers.
 2. **Sync i18n:** Ensure the Bengali and English translation files match the updated UI strings.
@@ -178,6 +210,7 @@ Implemented a "High-Fidelity ISO" print strategy:
 5. **Sort Performance:** In very large projects (500+ clients), consider memoizing the sort result to prevent re-calculation on every re-render.
 6. **Data Integrity:** Always use `validPayments` for financial aggregations to prevent orphaned records from skewing data.
 7. **Print Testing:** Test receipt printing in Chrome and Safari; ensure "Background Graphics" is enabled or enforced via CSS for the banner colors.
+8. **Consult Agent Skill:** If you are unsure how to perform a specific workflow (e.g. adding complex installments), refer to `AGENT_OPERATING_SKILL.md` for a literal step-by-step guide.
 
 ---
-*Last Updated: 2026-05-05*
+*Last Updated: 2026-05-11*

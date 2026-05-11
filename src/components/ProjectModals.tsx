@@ -305,7 +305,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
   const [showConfirm, setShowConfirm] = useState(false);
   
   const ReceiptContent = ({ type }: { type: string }) => (
-    <div className="receipt-paper relative p-4 sm:p-8 print:p-6 font-sans border-b border-dashed last:border-0 print:border-b-0 flex flex-col min-w-[320px] sm:min-w-[850px] print:min-w-0 overflow-hidden">
+    <div className="receipt-paper relative p-8 print:p-6 font-sans border-b border-dashed last:border-0 print:border-b-0 flex flex-col min-w-[850px] print:min-w-0 overflow-hidden">
       {/* Header */}
       {/* Logo in top-left corner */}
       <div className="absolute top-4 left-8">
