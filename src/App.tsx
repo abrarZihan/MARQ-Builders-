@@ -682,7 +682,7 @@ export default function App() {
   const [logs, setLogs] = useState<any[]>([]);
   const [drawer, setDrawer] = useState(false);
   const [selProject, setSelProject] = useState<string | null>(null);
-  const [blocked, setBlocked] = useState(true); // Controls the blocker screen
+  const [blocked, setBlocked] = useState(false); // Controls the blocker screen
   const [forceChangePw, setForceChangePw] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState({
