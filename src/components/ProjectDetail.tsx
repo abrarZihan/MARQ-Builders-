@@ -227,6 +227,11 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                     onMouseLeave={handleLongPressEnd}
                     onTouchStart={() => handleLongPressStart(pl)}
                     onTouchEnd={handleLongPressEnd}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setEditPlanModal(pl);
+                      setEditPlanName(pl.name);
+                    }}
                     className={cn(
                       "px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border",
                       activePlanId === pl.id 
@@ -369,6 +374,10 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
                           onMouseLeave={handleDefLongPressEnd}
                           onTouchStart={() => handleDefLongPressStart(d)}
                           onTouchEnd={handleDefLongPressEnd}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            setEditDefModal(d);
+                          }}
                         >
                           <div className="text-[11px] mb-1 flex items-center justify-center gap-1">
                             {d.title}
