@@ -46,6 +46,8 @@ export default function ExpenseManagement({ projects, expenses, admin, preSelect
   const [scopeFilter, setScopeFilter] = useState("all");
   const [destFilter, setDestFilter] = useState("all");
   const [methodFilter, setMethodFilter] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e: any) => {
@@ -58,9 +60,13 @@ export default function ExpenseManagement({ projects, expenses, admin, preSelect
       const matchesDest = destFilter === "all" || e.destinationId === destFilter;
       const matchesMethod = methodFilter === "all" || e.paymentMethod === methodFilter;
       
-      return matchesSearch && matchesScope && matchesDest && matchesMethod;
+      const expenseDate = e.date; // YYYY-MM-DD
+      const matchesStartDate = !startDate || expenseDate >= startDate;
+      const matchesEndDate = !endDate || expenseDate <= endDate;
+      
+      return matchesSearch && matchesScope && matchesDest && matchesMethod && matchesStartDate && matchesEndDate;
     }).sort((a: any, b: any) => b.date.localeCompare(a.date));
-  }, [expenses, search, scopeFilter, destFilter, methodFilter]);
+  }, [expenses, search, scopeFilter, destFilter, methodFilter, startDate, endDate]);
 
   const totalFiltered = filteredExpenses.reduce((sum: number, e: any) => sum + e.amount, 0);
 
@@ -98,14 +104,14 @@ export default function ExpenseManagement({ projects, expenses, admin, preSelect
           onClick={() => setIsFilterOpen(true)}
           className={cn(
             "p-3 rounded-2xl border transition-all flex items-center gap-2 font-bold text-sm",
-            isFilterOpen || scopeFilter !== "all" || destFilter !== "all" || methodFilter !== "all"
+            isFilterOpen || scopeFilter !== "all" || destFilter !== "all" || methodFilter !== "all" || startDate || endDate
               ? "bg-app-tab-active/10 border-app-tab-active text-app-tab-active" 
               : "bg-app-surface border-app-border text-app-text-secondary"
           )}
         >
           <Filter size={18} />
           <span className="hidden sm:inline">{t("expense.filter")}</span>
-          {(scopeFilter !== "all" || destFilter !== "all" || methodFilter !== "all") && (
+          {(scopeFilter !== "all" || destFilter !== "all" || methodFilter !== "all" || startDate || endDate) && (
             <div className="w-2 h-2 rounded-full bg-app-tab-active animate-pulse" />
           )}
         </button>
@@ -138,6 +144,10 @@ export default function ExpenseManagement({ projects, expenses, admin, preSelect
         setDestFilter={setDestFilter}
         methodFilter={methodFilter}
         setMethodFilter={setMethodFilter}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
       />
 
       {/* Add/Edit Modal */}
@@ -297,7 +307,9 @@ function FilterDrawer({
   projects,
   scopeFilter, setScopeFilter,
   destFilter, setDestFilter,
-  methodFilter, setMethodFilter
+  methodFilter, setMethodFilter,
+  startDate, setStartDate,
+  endDate, setEndDate
 }: any) {
   const { t } = useLanguage();
 
@@ -326,6 +338,33 @@ function FilterDrawer({
             </div>
 
             <div className="flex-1 space-y-8 overflow-y-auto pr-2 custom-scrollbar">
+              {/* Date Range */}
+              <div>
+                <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest mb-3 block">
+                  {t("expense.date")}
+                </label>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[9px] font-bold text-app-text-muted mb-1 block uppercase">{t("expense.start_date")}</span>
+                    <input 
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full bg-app-bg border border-app-border rounded-xl px-4 py-2.5 text-sm font-bold text-app-text-primary focus:outline-none focus:ring-2 focus:ring-app-tab-active/20"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-app-text-muted mb-1 block uppercase">{t("expense.end_date")}</span>
+                    <input 
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full bg-app-bg border border-app-border rounded-xl px-4 py-2.5 text-sm font-bold text-app-text-primary focus:outline-none focus:ring-2 focus:ring-app-tab-active/20"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Scope */}
               <div>
                 <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest mb-3 block">
@@ -397,6 +436,8 @@ function FilterDrawer({
                   setScopeFilter("all");
                   setDestFilter("all");
                   setMethodFilter("all");
+                  setStartDate("");
+                  setEndDate("");
                 }}
                 className="py-3 rounded-2xl bg-app-bg border border-app-border text-app-text-secondary font-bold text-sm hover:bg-app-surface transition-all"
               >

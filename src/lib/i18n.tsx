@@ -426,6 +426,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "expense.description": "বিবরণ",
     "expense.amount": "পরিমাণ",
     "expense.date": "তারিখ",
+    "expense.start_date": "শুরুর তারিখ",
+    "expense.end_date": "শেষের তারিখ",
   },
   en: {
     "app.title": "MARQ Builders",
@@ -842,6 +844,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "expense.description": "Description",
     "expense.amount": "Amount",
     "expense.date": "Date",
+    "expense.start_date": "Start Date",
+    "expense.end_date": "End Date",
   }
 };
 
