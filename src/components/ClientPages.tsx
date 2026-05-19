@@ -198,7 +198,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
             <div className="text-xs font-bold text-app-text-muted uppercase tracking-widest mb-1">
               {t('common.welcome_back') || "Welcome Back"}
             </div>
-            <div className="text-2xl font-black text-app-text-primary truncate leading-tight">{client.name}</div>
+            <div className="text-2xl font-black text-app-text-primary leading-tight">{client.name}</div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
               <div className="flex flex-wrap gap-1.5">
                 {(client.planAssignments || []).map((pa: any, i: number) => {
@@ -677,7 +677,7 @@ export function ClientReceipts({ client, instDefs, payments, projects }: any) {
 export function ClientExpenses({ client, expenses }: any) {
   const { t, lang } = useLanguage();
   const [selExp, setSelExp] = useState<any>(null);
-  const prjExpenses = expenses.filter((e: any) => e.projectId === client.projectId);
+  const prjExpenses = expenses.filter((e: any) => e.projectId === client.projectId && (e.expenseScope === 'client_update' || !e.expenseScope));
   const total = prjExpenses.reduce((s: number, e: any) => s + e.amount, 0);
 
   return (

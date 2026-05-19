@@ -169,15 +169,25 @@ export function AdminPaymentsPage({ payments, clients, instDefs, projects, isSup
           return (
             <div key={p.id} className="bg-app-surface rounded-2xl border border-app-border p-4 shadow-sm flex items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-extrabold text-app-text-primary">{c?.name || p.clientId}</div>
-                <div className="text-xs font-bold text-app-text-muted">{p.date}</div>
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <div className="text-sm font-extrabold text-app-text-primary">{c?.name || p.clientId}</div>
+                  <span className="shrink-0 text-[9px] font-black font-mono px-1.5 py-0.5 bg-app-bg text-app-text-secondary rounded-md border border-app-border shadow-sm uppercase tracking-tighter">#{p.id}</span>
+                  {p.trxId && (
+                    <span className="shrink-0 text-[9px] font-black font-mono px-1.5 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md border border-blue-500/20 uppercase tracking-tighter">Ref: {p.trxId}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-xs font-bold text-app-text-muted">
+                  <span>{p.date}</span>
+                  <span>·</span>
+                  <span className="uppercase text-[10px]">{p.method || "Cash"}</span>
+                </div>
               </div>
               <div className="text-right shrink-0">
+                <div className="text-sm font-black text-app-text-primary mb-1">{BDT(p.amount)}</div>
                 <button 
-                  className="flex items-center gap-1.5 text-xs font-black text-blue-600 dark:text-blue-400 hover:opacity-80 underline uppercase tracking-wider"
+                  className="flex items-center gap-1.5 text-[10px] font-black text-blue-600 dark:text-blue-400 hover:opacity-80 underline uppercase tracking-widest"
                   onClick={() => setSelPay(p)}
                 >
-                  <span className="text-sm">🧾</span>
                   {t('modal.receipt') || 'রসিদ'}
                 </button>
               </div>

@@ -18,6 +18,7 @@ import { AuditLogPage, LogRow } from "./components/Admin";
 import { AdminProfile, AdminManagePage, AdminPaymentsPage } from "./components/AdminPages";
 import { ProjectDetail } from "./components/ProjectDetail";
 import { ClientInstallments, ClientReceipts, ClientExpenses, ClientProfile } from "./components/ClientPages";
+import ExpenseManagement from "./components/ExpenseManagement";
 import { Eye, EyeOff, ShieldPlus, KeyRound, Trash2, ShieldMinus, Building2, Wallet, ChevronRight, Clock, CheckCircle2, XCircle, MoreVertical, Edit2, AlertCircle, ClipboardList, CircleDollarSign } from "lucide-react";
 import BlockScreen from "./components/BlockScreen";
 import { CategoryIcon, CategoryColor } from "./components/Shared";
@@ -125,7 +126,9 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
   }, 0);
   const totalCollected = approvedPays.reduce((s: number, p: any) => s + p.amount, 0);
   const activeProjectIds = new Set(projects.map((p: any) => p.id));
-  const totalExpenses = expenses.filter((e: any) => activeProjectIds.has(e.projectId)).reduce((s: number, e: any) => s + e.amount, 0);
+  const totalExpenses = expenses
+    .filter((e: any) => activeProjectIds.has(e.projectId) && (e.expenseScope === 'client_update' || !e.expenseScope))
+    .reduce((s: number, e: any) => s + e.amount, 0);
   const totalPending = pendingPays.reduce((s: number, p: any) => s + p.amount, 0);
   const totalDue = Math.max(0, totalExpected - totalCollected);
   const netProfit = totalCollected - totalExpenses;
@@ -221,7 +224,7 @@ function FinancialSummary({ projects, clients, instDefs, payments, expenses, pla
       {projects.map((prj: any, idx: number) => {
         const prjClients = clients.filter((c: any) => c.projectId === prj.id);
         const prjDefs = instDefs.filter((d: any) => d.projectId === prj.id);
-        const prjExpenses = expenses.filter((e: any) => e.projectId === prj.id);
+        const prjExpenses = expenses.filter((e: any) => e.projectId === prj.id && (e.expenseScope === 'client_update' || !e.expenseScope));
         const prjPays = approvedPays.filter((p: any) => prjClients.some((c: any) => c.id === p.clientId));
         
         const expected = prjClients.reduce((s: number, c: any) => {
@@ -437,7 +440,7 @@ function AdminHome({ projects, clients, payments, instDefs, expenses, plans, onS
                       <Building2 size={24} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-lg font-black text-app-text-primary truncate">{prj.name}</div>
+                      <div className="text-lg font-black text-app-text-primary">{prj.name}</div>
                       <div className="text-xs text-app-text-muted font-medium mt-1 line-clamp-2">{prj.description}</div>
                     </div>
                     <div className="text-app-text-muted flex items-center justify-center w-6 h-6">
@@ -682,6 +685,7 @@ export default function App() {
   const [logs, setLogs] = useState<any[]>([]);
   const [drawer, setDrawer] = useState(false);
   const [selProject, setSelProject] = useState<string | null>(null);
+  const [expensePreSelect, setExpensePreSelect] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false); // Controls the blocker screen
   const [forceChangePw, setForceChangePw] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -768,7 +772,7 @@ export default function App() {
   const PLAN_FIELDS = ['id', 'projectId', 'name'];
   const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount'];
   const PAYMENT_FIELDS = ['id', 'clientId', 'instDefId', 'amount', 'date', 'status', 'note', 'method', 'trxId', 'approvedBy'];
-  const EXPENSE_FIELDS = ['id', 'projectId', 'category', 'amount', 'date', 'description'];
+  const EXPENSE_FIELDS = ['id', 'projectId', 'category', 'amount', 'date', 'description', 'voucherCode', 'paymentMethod', 'expenseScope', 'destinationId', 'destinationLabel'];
   const ADMIN_FIELDS = ['id', 'name', 'username', 'password', 'role', 'isTemp'];
 
   // Firestore Real-time Listeners
@@ -1510,7 +1514,7 @@ export default function App() {
         <div className="flex-1 min-w-0 flex items-center gap-3">
           <div>
             <div className="font-black text-lg text-app-nav-text tracking-tight">MARQ <span className="text-app-nav-text-muted font-bold">Builders</span></div>
-            <div className="text-[11px] text-app-nav-text-muted font-bold tracking-wider uppercase truncate">{topTitle}</div>
+            <div className="text-[11px] text-app-nav-text-muted font-bold tracking-wider uppercase">{topTitle}</div>
           </div>
         </div>
         {isSuperAdmin && pendingCount > 0 && (
@@ -1553,6 +1557,15 @@ export default function App() {
         {(role === "admin" || role === "superadmin") && !selProject && page === "profile" && <AdminProfile admin={adminUser} onUpdate={changeMyPw} />}
         {(role === "admin" || role === "superadmin") && !selProject && page === "payments" && <AdminPaymentsPage payments={validPayments} clients={clients} instDefs={instDefs} projects={projects} isSuperAdmin={isSuperAdmin} onDeletePayment={deletePayment} />}
         {(role === "admin" || role === "superadmin") && !selProject && page === "admins" && isSuperAdmin && <AdminManagePage admins={admins} onAdd={addAdmin} onUpdate={addAdmin} onDelete={removeAdmin} onResetPw={resetAdminPw} currentAdminId={adminUser.id} />}
+        {(role === "admin" || role === "superadmin") && !selProject && page === "expense_mgnt" && (
+          <ExpenseManagement 
+            projects={projects} 
+            expenses={expenses} 
+            admin={adminUser} 
+            preSelectProjectId={expensePreSelect}
+            onClearPreSelect={() => setExpensePreSelect(null)}
+          />
+        )}
         {(role === "admin" || role === "superadmin") && selProject && curProject && (
           <ProjectDetail 
             project={curProject} clients={clients} allClients={clients} instDefs={instDefs} plans={plans} payments={validPayments} expenses={expenses} logs={logs} isSuperAdmin={isSuperAdmin}
@@ -1565,7 +1578,11 @@ export default function App() {
             onDeleteInstDef={deleteInstDef}
             onAddPayment={addPayment}
             onDeletePayment={deletePayment}
-            onAddExpense={addExpense}
+            onAddExpense={() => {
+              setExpensePreSelect(selProject);
+              setPage("expense_mgnt");
+              setSelProject(null);
+            }}
             onUpdateExpense={updateExpense}
             onDeleteExpense={deleteExpense}
             onUpdateClient={updateClient} onAddBulkClients={addBulkClients} onAddClient={addClient} onDeleteClient={deleteClient}

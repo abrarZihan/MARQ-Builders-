@@ -70,7 +70,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   
   const allPrjClients = clients.filter((c: any) => c.projectId === project.id).filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
   const prjDefs = instDefs.filter((d: any) => d.planId === activePlanId);
-  const prjExpenses = expenses.filter((e: any) => e.projectId === project.id);
+  const prjExpenses = expenses.filter((e: any) => e.projectId === project.id && e.expenseScope === 'client_update');
   const prjLogs = [...logs].filter(l => l.projectId === project.id).sort((a, b) => b.ts.localeCompare(a.ts));
   
   const projectClientsForCalc = clients.filter((c: any) => c.projectId === project.id);
@@ -175,7 +175,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <div className="text-xl font-black text-app-text-primary truncate">{project.name}</div>
+          <div className="text-xl font-black text-app-text-primary">{project.name}</div>
           <div className="text-xs font-bold text-app-text-secondary">{t("project_detail.stats", { clients: prjClients.length, insts: prjDefs.length })}</div>
         </div>
       </div>
@@ -656,7 +656,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
             </div>
             <button 
               className="w-full sm:w-auto bg-app-tab-active text-app-bg px-5 py-3.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2 shrink-0" 
-              onClick={() => setAddExpModal(true)}
+              onClick={onAddExpense}
             >
               <Plus size={18} /> {t("project_detail.new_expense")}
             </button>

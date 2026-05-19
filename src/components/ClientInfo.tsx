@@ -482,7 +482,7 @@ function ClientEditSheet({ client, allClients, plans, onSave, onClose }: any) {
           </div>
           <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold text-app-text-primary truncate">{f.name || t("client_info.no_name")}</div>
+            <div className="text-sm font-bold text-app-text-primary">{f.name || t("client_info.no_name")}</div>
             <div className="text-xs text-app-text-secondary font-medium">{f.id}</div>
           </div>
         </div>
@@ -587,7 +587,7 @@ function ImportPreviewSheet({ data, onConfirm, onClose }: any) {
                   <td className="p-2 font-bold text-app-text-primary">{r.name || <span className="text-app-error-text">{t("client_info.empty")}</span>}</td>
                   <td className="p-2 text-app-text-secondary font-bold">{r.shareCount || 1}</td>
                   <td className="p-2 text-app-text-secondary font-medium">{r.phone || "—"}</td>
-                  <td className="p-2 text-[10px] text-app-text-muted italic truncate max-w-[100px]">{r.remarks || "—"}</td>
+                  <td className="p-2 text-[10px] text-app-text-muted italic max-w-[100px]">{r.remarks || "—"}</td>
                 </tr>
               ))}
             </tbody>

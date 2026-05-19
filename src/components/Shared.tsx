@@ -174,6 +174,7 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
   const adminNav = [
     { id: "home", label: t("nav.projects"), icon: Home },
     { id: "payments", label: t("nav.payments"), icon: Receipt },
+    { id: "expense_mgnt", label: t("nav.expense_mgnt"), icon: Building2 },
     { id: "log", label: t("nav.log"), icon: ClipboardList },
     { id: "profile", label: t("nav.profile"), icon: User },
     ...(isSuperAdmin ? [{ id: "admins", label: t("nav.admin_manage"), icon: Shield }] : []),

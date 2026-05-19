@@ -99,17 +99,22 @@
     },
     "Expense": {
       "title": "Expense",
-      "description": "Project expense record",
+      "description": "Project or internal expense record",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "projectId": { "type": "string" },
+        "projectId": { "type": "string", "description": "Legacy field for project-specific expenses" },
         "date": { "type": "string" },
         "category": { "type": "string" },
         "description": { "type": "string" },
-        "amount": { "type": "number" }
+        "amount": { "type": "number" },
+        "voucherCode": { "type": "string" },
+        "paymentMethod": { "type": "string", "enum": ["bank", "check", "cash"] },
+        "expenseScope": { "type": "string", "enum": ["internal", "client_update"] },
+        "destinationId": { "type": "string", "description": "projectId or office category key" },
+        "destinationLabel": { "type": "string", "description": "denormalized display name" }
       },
-      "required": ["id", "projectId", "date", "category", "amount"]
+      "required": ["id", "date", "category", "amount", "expenseScope", "paymentMethod", "destinationId"]
     },
     "Log": {
       "title": "Audit Log",
