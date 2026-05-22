@@ -85,7 +85,7 @@ export function ClientAvatar({ client, size = 34 }: { client: any; size?: number
         src={client.photo} 
         alt="" 
         style={{ width: size, height: size }} 
-        className="rounded-full object-cover block shrink-0" 
+        className="rounded-full object-cover block shrink-0 bg-white force-white" 
         referrerPolicy="no-referrer"
         onError={() => setErr(true)}
       />
@@ -202,10 +202,10 @@ export function Drawer({ role, page, setPage, user, onLogout, open, onClose, isS
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="fixed top-0 left-0 bottom-0 w-72 bg-app-nav-bg z-[160] flex flex-col shadow-2xl transition-colors"
           >
-            <div className="p-6 border-b border-app-nav-text/10">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-white force-white rounded-xl flex items-center justify-center overflow-hidden shrink-0 shadow-sm border border-app-nav-text/10">
-                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer" />
+            <div className="pt-3 px-6 pb-5 border-b border-app-nav-text/10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 flex items-center justify-center overflow-hidden shrink-0">
+                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain scale-[1.7]" referrerPolicy="no-referrer" />
                 </div>
                 <div>
                   <div className="text-app-nav-text font-black text-lg leading-tight">MARQ</div>
@@ -325,22 +325,24 @@ export function Login({ onLogin }: any) {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-app-nav-bg p-4 relative transition-colors">
-      <button 
-        onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-        className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white rounded-full text-xs font-bold transition-colors border border-white/20 hover:bg-white/20"
-      >
-        <Globe size={14} />
-        {lang === 'bn' ? 'English' : 'বাংলা'}
-      </button>
+      <div className="w-full max-w-md flex justify-end mb-4 px-2">
+        <button 
+          onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
+          className="flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white rounded-full text-xs font-bold transition-colors border border-white/20 hover:bg-white/20"
+        >
+          <Globe size={14} />
+          {lang === 'bn' ? 'English' : 'বাংলা'}
+        </button>
+      </div>
       <div className="text-center mb-8">
-        <div className="text-3xl font-black text-white tracking-tighter">MARQ BUILDERS</div>
+        <div className="text-3xl font-black text-white tracking-tighter px-4">MARQ BUILDERS</div>
       </div>
       <motion.div 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="bg-app-surface rounded-3xl p-8 w-full max-w-md shadow-2xl border border-app-border"
       >
-        <div className="w-32 h-32 bg-white force-white rounded-3xl flex items-center justify-center overflow-hidden mx-auto mb-4 shadow-sm border border-app-border">
-          <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+        <div className="w-36 h-36 flex items-center justify-center overflow-visible mx-auto mb-2">
+          <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain scale-[1.9]" referrerPolicy="no-referrer" />
         </div>
         <div className="text-center mb-6">
           <div className="text-2xl font-extrabold text-app-text-primary">{t("login.welcome")}</div>

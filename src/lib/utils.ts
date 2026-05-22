@@ -87,3 +87,77 @@ export const numberToWords = (num: number): string => {
   str += (Number(n[5]) !== 0) ? ((str !== '') ? 'and ' : '') + (a[Number(n[5])] || b[parseInt(n[5][0])] + ' ' + a[parseInt(n[5][1])]) : '';
   return str.trim();
 };
+
+export function sortInstallmentDefs(defs: any[]): any[] {
+  return [...defs].sort((a: any, b: any) => {
+    const cA = a.createdAt || "";
+    const cB = b.createdAt || "";
+
+    // If both have createdAt, sort by it chronologically
+    if (cA && cB) {
+      if (cA !== cB) {
+        return cA.localeCompare(cB);
+      }
+    }
+
+    // Older items (without createdAt) must come first before newer items (with createdAt)
+    if (!cA && cB) return -1;
+    if (cA && !cB) return 1;
+
+    // Fallback: If neither has createdAt, or both have identical createdAt,
+    // use the tried-and-tested weight and title-based sorting to maintain correct order.
+    const getWeight = (item: any) => {
+      const title = (item.title || "").toLowerCase().trim();
+      
+      // Check if it is an upfront / plan / booking / down payment
+      const isUpfront = /plan|booking|down|upfront|প্ল্যান|বুকিং|ডাউন|এককালীন/.test(title);
+      if (isUpfront) {
+        return -1000;
+      }
+
+      // Convert Bengali digits to English
+      const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+      let cleaned = title;
+      bnDigits.forEach((bn, idx) => {
+        cleaned = cleaned.replace(new RegExp(bn, 'g'), String(idx));
+      });
+
+      const match = cleaned.match(/\d+/);
+      if (match) {
+        return parseInt(match[0], 10);
+      }
+
+      // Fallback if no digit is found
+      return 99999;
+    };
+
+    const wA = getWeight(a);
+    const wB = getWeight(b);
+    if (wA !== wB) {
+      return wA - wB;
+    }
+    
+    // Tie-breaker 1: dueDate
+    const dA = a.dueDate || "";
+    const dB = b.dueDate || "";
+    if (dA && dB) {
+      return dA.localeCompare(dB);
+    } else if (dA) {
+      return -1; // item with due date comes first
+    } else if (dB) {
+      return 1;
+    }
+
+    // Tie-breaker 2: title
+    const tA = a.title || "";
+    const tB = b.title || "";
+    const titleCompare = tA.localeCompare(tB);
+    if (titleCompare !== 0) return titleCompare;
+
+    // Tie-breaker 3: ID alphabetical comparison
+    const idA = a.id || "";
+    const idB = b.id || "";
+    return idA.localeCompare(idB);
+  });
+}
+

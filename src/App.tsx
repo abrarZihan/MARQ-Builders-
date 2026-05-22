@@ -770,7 +770,7 @@ export default function App() {
   const CLIENT_FIELDS = ['id', 'projectId', 'name', 'fatherHusband', 'birthDate', 'phone', 'email', 'nid', 'plot', 'totalAmount', 'shareCount', 'password', 'photo', 'remarks', 'planAssignments', '_row'];
   const PROJECT_FIELDS = ['id', 'name', 'description'];
   const PLAN_FIELDS = ['id', 'projectId', 'name'];
-  const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount'];
+  const INST_DEF_FIELDS = ['id', 'projectId', 'planId', 'title', 'dueDate', 'targetAmount', 'createdAt'];
   const PAYMENT_FIELDS = ['id', 'clientId', 'instDefId', 'amount', 'date', 'status', 'note', 'method', 'trxId', 'approvedBy'];
   const EXPENSE_FIELDS = ['id', 'projectId', 'category', 'amount', 'date', 'description', 'voucherCode', 'paymentMethod', 'expenseScope', 'destinationId', 'destinationLabel'];
   const ADMIN_FIELDS = ['id', 'name', 'username', 'password', 'role', 'isTemp'];
@@ -1513,8 +1513,8 @@ export default function App() {
       <div className="fixed top-0 left-0 right-0 h-16 bg-app-nav-bg border-b border-app-nav-text/10 flex items-center px-4 gap-3 z-[100] shadow-sm no-print transition-colors">
         <div className="flex-1 min-w-0 flex items-center gap-3">
           <div>
-            <div className="font-black text-lg text-app-nav-text tracking-tight">MARQ <span className="text-app-nav-text-muted font-bold">Builders</span></div>
-            <div className="text-[11px] text-app-nav-text-muted font-bold tracking-wider uppercase">{topTitle}</div>
+            <div className="font-black text-lg text-app-nav-text tracking-tight leading-none">MARQ <span className="text-app-nav-text-muted font-bold">Builders</span></div>
+            <div className="text-[10px] text-app-nav-text-muted font-bold tracking-wider uppercase mt-1 leading-none">{topTitle}</div>
           </div>
         </div>
         {isSuperAdmin && pendingCount > 0 && (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { BDT, BDTshort, dotJoin, ac, initials, uid, todayStr, cn, clientPaidForDef, cellStatus } from "../lib/utils";
+import { BDT, BDTshort, dotJoin, ac, initials, uid, todayStr, cn, clientPaidForDef, cellStatus, sortInstallmentDefs } from "../lib/utils";
 import { FG, ConfirmDelete, ClientAvatar, PassCell, PBar, CategoryIcon, CategoryColor, ConfirmDeletePlan } from "./Shared";
 import { STATUS, EXP_CATS } from "../lib/data";
 import { LogRow } from "./Admin";
@@ -69,7 +69,7 @@ export function ProjectDetail({ project, clients, allClients, instDefs, plans, p
   const prjClients = basePrjClients.filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
   
   const allPrjClients = clients.filter((c: any) => c.projectId === project.id).filter((c: any) => c.name?.toLowerCase()?.includes(search.toLowerCase()));
-  const prjDefs = instDefs.filter((d: any) => d.planId === activePlanId);
+  const prjDefs = sortInstallmentDefs(instDefs.filter((d: any) => d.planId === activePlanId));
   const prjExpenses = expenses.filter((e: any) => e.projectId === project.id && e.expenseScope === 'client_update');
   const prjLogs = [...logs].filter(l => l.projectId === project.id).sort((a, b) => b.ts.localeCompare(a.ts));
   

@@ -182,7 +182,7 @@ export function AddDefSheet({ projectId, planId, onSave, onClose }: any) {
             className="flex-1 bg-app-tab-active text-app-bg font-bold py-3.5 rounded-xl hover:opacity-90 transition-colors" 
             onClick={() => {
               if (!f.title || !f.targetAmount) { alert(t("project_modals.add_inst_err")); return; }
-              onSave({ id: uid("D-"), projectId, planId, title: f.title, dueDate: f.dueDate, targetAmount: parseFloat(f.targetAmount) });
+              onSave({ id: uid("D-"), projectId, planId, title: f.title, dueDate: f.dueDate, targetAmount: parseFloat(f.targetAmount), createdAt: new Date().toISOString() });
               onClose();
             }}
           >
@@ -309,12 +309,14 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
       {/* Header */}
       {/* Logo in top-left corner */}
       <div className="absolute top-4 left-8">
-        <img 
-          src={LOGO_URL} 
-          alt="Logo" 
-          className="h-16 w-auto object-contain"
-          referrerPolicy="no-referrer"
-        />
+        <div className="w-20 h-20 flex items-center justify-center overflow-hidden">
+          <img 
+            src={LOGO_URL} 
+            alt="Logo" 
+            className="w-full h-full object-contain scale-[1.7]"
+            referrerPolicy="no-referrer"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col items-center mb-4 w-full">
@@ -409,7 +411,7 @@ export function ReceiptSheet({ payment, instDef, client, project, hideOfficeCopy
           <img 
             src={LOGO_URL} 
             alt="" 
-            className="w-[250px] h-auto object-contain grayscale" 
+            className="w-[250px] h-[250px] object-contain scale-[1.7] grayscale" 
             referrerPolicy="no-referrer"
           />
           <div className="text-[50px] font-black whitespace-nowrap">MARQ BUILDERS</div>

@@ -85,7 +85,7 @@ When performing raw Firestore operations, use these field names exactly:
 | **Client** | `id`, `projectId`, `name`, `fatherHusband`, `birthDate`, `phone`, `email`, `nid`, `plot`, `totalAmount`, `shareCount`, `password`, `photo`, `remarks`, `planAssignments` |
 | **Project** | `id`, `name`, `description` |
 | **Plan** | `id`, `projectId`, `name` |
-| **InstDef** | `id`, `projectId`, `planId`, `title`, `dueDate`, `targetAmount` |
+| **InstDef** | `id`, `projectId`, `planId`, `title`, `dueDate`, `targetAmount`, `createdAt` |
 | **Payment** | `id`, `clientId`, `instDefId`, `amount`, `date`, `status`, `note`, `method`, `trxId`, `approvedBy` |
 | **Expense** | `id`, `projectId`, `category`, `amount`, `date`, `description` |
 | **Admin** | `id`, `name`, `username`, `password`, `role`, `isTemp` |
@@ -94,6 +94,7 @@ When performing raw Firestore operations, use these field names exactly:
 
 ## 6. Pro-Tips for Efficient Operation
 
+- **Chronological Installment Order**: Installments on the spreadsheet/sheet are rendered strictly in the exact sequential order they were added (oldest first, newest last based on `createdAt`). No smart parsing/matching of title words (like "Booking" vs "Installment 1") is performed.
 - **Long Press Headers**: Long pressing an installment column header in the Sheet opens the edit/delete menu for that column.
 - **Long Press Plans**: Long pressing a Plan tab allows renaming or deleting the entire plan structure.
 - **Sort by Due**: In the **Summary** tab, use the Sort icon to toggle between "Highest Due" and "Lowest Due" to prioritize collections.

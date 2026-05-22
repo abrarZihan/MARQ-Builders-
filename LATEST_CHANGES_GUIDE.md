@@ -170,22 +170,6 @@ Implemented a "High-Fidelity ISO" print strategy:
 
 ---
 
-## 7. AI Agent Operating Skill Document (v2 Enhanced)
-
-### Context
-A comprehensive "skill" document enables autonomous or semi-autonomous AI agents to operate the software. This document was recently expanded to include "Expert Level" operational knowledge discovered during deep code analysis.
-
-### New Documentation
-- **File:** `/AGENT_OPERATING_SKILL.md`
-- **Updated Contents:** 
-  - **Technical Schemas:** Full field lists for Firestore sanitization.
-  - **Bulk Import Logic:** Detailed explanation of the fuzzy-matching header logic for Excel.
-  - **Operational Pro-tips:** Deep-dives into long-press interactions, cascading deletes, and sorting mechanisms.
-  - **Hierarchy Matrix:** Clear distinction between Admin, Super Admin, and Client capabilities.
-  - **Search & Skip Logic (v3):** Added strict protocols for rapid client lookups using first-alphabet initials and mandatory "Stop & Ask" logic for ambiguous results.
-  - **BlockScreen Developer Skill (v4):** Documented secret gesture and operational status for system-wide access restriction.
-
----
 
 ## 8. Development Integrity Blocker (BlockScreen)
 
@@ -202,6 +186,156 @@ A high-level security component was added to cover the entire application when a
 
 ---
 
+## 9. Recent Logic of Adding Columns & Sequential Installment Sorting
+
+### Context
+To support highly structured and chronological tables within active projects, we revised the entire pipeline of adding columns (installment definitions). It provides a bulletproof sequential schema where newly added columns are seamlessly persisted and correctly position themselves chronologically in database views, rather than introducing complex auto-detected pattern shifts or random order changes.
+
+### Complete Lifecycle/Logic of Adding Columns
+
+#### **A. Sheet Dialog Collection (`src/components/ProjectModals.tsx` - `AddDefSheet`)**
+When a manager adds a new column, the `AddDefSheet` modal coordinates user inputs for the name, target amount, and due date. On save, it:
+1. Auto-generates a unique alphanumeric ID utilizing `uid("D-")`.
+2. Collects the physical target project ID and plan ID.
+3. Automatically attaches a high-resolution absolute creation timestamp: `createdAt: new Date().toISOString()`.
+
+#### **B. Schema Injection & Sanitization Filter (`src/App.tsx`)**
+- Declared `createdAt` in the central field schema `INST_DEF_FIELDS`:
+  ```typescript
+  export const INST_DEF_FIELDS = ["id", "projectId", "planId", "title", "dueDate", "targetAmount", "createdAt"];
+  ```
+- Uses the `sanitize(d, INST_DEF_FIELDS)` utility before write transactions. This acts as a database filter, discarding unauthorized fields and preventing un-structured attributes from polluting Firestore.
+
+#### **C. Firestore Persistence Layer (`src/App.tsx` - `addInstDef`)**
+- Writes the clean object to Firestore using standard document keys (`setDoc` targeting database node `"instDefs"`):
+  ```typescript
+  await setDoc(doc(db, "instDefs", clean.id), clean);
+  ```
+- Submits audit logs synchronously to log chronological events (`addLog`), making audits fully searchable.
+
+#### **D. Hybrid Sorting Utility (`src/lib/utils.ts`)**
+- Integrates a robust hybrid sorting algorithm to arrange installment columns:
+  - If both items have a `createdAt` timestamp, they sort strictly chronologically by creation timestamp, ensuring newly added columns sequence beautifully.
+  - If one item has a timestamp and the other doesn't, the item without a timestamp comes first (placing pre-existing, legacy columns before any newly added ones).
+  - If neither has a `createdAt` timestamp, the sorting falls back to the robust title/regex/digit weights and due dates, fully restoring the legacy items to their perfect, expected serial sequence.
+  ```typescript
+  export function sortInstallmentDefs(defs: any[]): any[] {
+    return [...defs].sort((a: any, b: any) => {
+      const cA = a.createdAt || "";
+      const cB = b.createdAt || "";
+
+      if (cA && cB) {
+        if (cA !== cB) return cA.localeCompare(cB);
+      }
+
+      if (!cA && cB) return -1;
+      if (cA && !cB) return 1;
+
+      // Fallback: use legacy weight-and-title sorting if neither has createdAt
+      // ...
+    });
+  }
+  ```
+
+---
+
+## 10. Easy 4-Digit Voucher Handing & Display
+
+### Context
+To replace the default appearance of randomized Firestore document IDs in the Expense list view header (Selector 1), we updated the UI showing voucher numbers. If a custom voucher number is supplied when submitting the Expense Form, it is used immediately. If left empty, a clean, 4-digit easy random number is auto-generated on submission and saved. Any legacy records without a voucher number are instantly resolved at render time with a stable 4-digit fallback derived from their identifier.
+
+### Modified Code Mentions
+
+#### **A. Auto-generation on Submission (`src/components/ExpenseManagement.tsx`)**
+- Added check during state payload assembly:
+  ```typescript
+  const promoVoucher = (formData.voucherCode || "").trim()
+    ? (formData.voucherCode || "").trim()
+    : Math.floor(1000 + Math.random() * 9000).toString();
+  ```
+- Persists `voucherCode: promoVoucher` to Firestore.
+
+#### **B. Aesthetic Unified Card Header / Tag Rendering (`src/components/ExpenseManagement.tsx`)**
+- Both the upper badge inside the card header (Selector 1) and the bottom details tag (Selector 2) now render either the user's explicit voucher or a stable numeric fallback:
+  ```typescript
+  const getEasyVoucherFallback = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    return (Math.abs(hash) % 9000 + 1000).toString();
+  };
+
+  const displayVoucher = expense.voucherCode && expense.voucherCode.trim()
+    ? expense.voucherCode
+    : getEasyVoucherFallback(expense.id);
+  ```
+
+---
+
+## 11. Single-Line Description Truncation & Ellipsis
+
+### Context
+To keep the Expense card layout pristine and highly scalable when dealing with abnormally long descriptions, we configured the summary view explanation to truncate gracefully into a single clean line using standard ellipsis termination, preserving layout rhythm. The full description is fully visible inside the interactive modal when selected.
+
+---
+
+## 12. Standard Popup Expense Details & Integrated Edit/Delete Controller
+
+### Context
+Rather than expanding complex card components in-line (which leads to layout shift and poor desktop scaling), we implemented a highly polished overlay modal. Deep details (Scope, Voucher Code, Destination, Payment Option, and large Amount visuals) are organized into structured blocks. Inside this popup, the manager has quick action access to delete directly (with inline confirmations) or edit, which smoothly re-populates the standard form modal.
+
+### Modified Code Mentions
+
+#### **A. Clickable Container Integration (`src/components/ExpenseManagement.tsx`)**
+- Summary card is simplified and forwards `onClick` listeners with delicate scale transition feedback:
+  ```typescript
+  <ExpenseCard key={expense.id} expense={expense} lang={lang} onClick={() => setSelectedExpenseForDetails(expense)} />
+  ```
+
+#### **B. Elegant details popup (`src/components/ExpenseManagement.tsx` — `ExpenseDetailsModal`)**
+- Renders Category-styled header colors matching their respective categories.
+- Shows prominent amount figures and a structured grid representation for all parameters (Destination, Date, Mode, etc.) using crisp layout boxes.
+- Allows direct updates by setting states for `expenseToEdit` and passing them back to the creator modal.
+
+#### **C. DRY Update Support (`src/components/ExpenseManagement.tsx` — `AddExpenseModal`)**
+- Standardized the core creation hook to switch to an "Edit and Update" mode if an `expenseToEdit` object is provided, pre-filling input controllers and submitting via firestore's `updateDoc` safely.
+
+---
+
+## 13. High-Quality Brand Logo Integration Across Views (Login, Sidebar, and printed Dual Receipts)
+
+### Context
+To elevate the visual authority and corporate identity of MARQ Builders, we implemented the high-quality circular brand icon (`/logo.png`) systematically across multiple interface boundaries. This ensures absolute consistency while preserving visual density, crisp typography, and optimal element scaling across both digital screens and printed invoices.
+
+### Unified Logo Implementations
+
+#### **A. Global Decoupled URL Utility (`src/lib/data.ts`)**
+A static path constant is exposed to prevent route breakage and duplicate code:
+```typescript
+export const LOGO_URL = "/logo.png";
+```
+
+#### **B. Login Landing Page Portal (`src/components/Shared.tsx` - `LoginScreen`)**
+- Displays the brand logo inside a centrally aligned visual anchor above the interactive forms.
+- Formatted within a robust layout box (`w-36 h-36`) with overflow safety to allow comfortable negative spacing:
+  ```jsx
+  <div className="w-36 h-36 flex items-center justify-center overflow-visible mx-auto mb-2">
+    <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain scale-[1.9]" referrerPolicy="no-referrer" />
+  </div>
+  ```
+- Sized precisely to `scale-[1.9]` to make the graphic readable on mobile and desktop while maintaining crisp pixel boundaries.
+
+#### **C. Responsive Navigation Side-Drawer (`src/components/Shared.tsx` - `Drawer`)**
+- Present at the top of the expandable side menu.
+- Resized to a space-saving `w-12 h-12 flex items-center justify-center` container to keep navigation elements clean.
+- Uses `scale-[1.7]` to scale the logo graphic so it aligns perfectly next to the primary text brand label "MARQ BUILDERS".
+
+#### **D. High-Fidelity Printable Dual Invoices (`src/components/ProjectModals.tsx` - `ReceiptSheet`)**
+- Integrated into printable invoices for both Customer Copy and Office Copy sections (separated by a dashed line).
+- Ensures professional alignment matching commercial billing receipts.
+- Renders at scale within standard print grids, respecting page boundaries when executing native client printing (`@media print`).
+
+---
+
 ## Developer Check-List for Clones
 1. **Search & Destroy `isGlobal`:** Run a global grep for `isGlobal`. Ensure it's removed from filters, map functions, and state initializers.
 2. **Sync i18n:** Ensure the Bengali and English translation files match the updated UI strings.
@@ -211,6 +345,7 @@ A high-level security component was added to cover the entire application when a
 6. **Data Integrity:** Always use `validPayments` for financial aggregations to prevent orphaned records from skewing data.
 7. **Print Testing:** Test receipt printing in Chrome and Safari; ensure "Background Graphics" is enabled or enforced via CSS for the banner colors.
 8. **Consult Agent Skill:** If you are unsure how to perform a specific workflow (e.g. adding complex installments), refer to `AGENT_OPERATING_SKILL.md` for a literal step-by-step guide.
+9. **Creation Timestamp Check:** Ensure any manually added or bulk imported installment definitions support a `createdAt` string/timestamp for proper display order.
 
 ---
-*Last Updated: 2026-05-11*
+*Last Updated: 2026-05-22*

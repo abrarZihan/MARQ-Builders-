@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { BDT, ac, initials, todayStr, clientPaidForDef, cellStatus, cn, tsNow } from "../lib/utils";
+import { BDT, ac, initials, todayStr, clientPaidForDef, cellStatus, cn, tsNow, sortInstallmentDefs } from "../lib/utils";
 import { FG, ClientAvatar, PBar, CategoryIcon, CategoryColor } from "./Shared";
 import { STATUS } from "../lib/data";
 import { ReceiptSheet } from "./ProjectModals";
@@ -22,7 +22,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
   const hasMultiple = clientPlans.length > 1 || (client.planAssignments || []).some((pa: any) => (pa.shareCount || 1) > 1);
   
   const activePlan = activePlanId === "all" ? null : plans.find((p: any) => p.id === activePlanId);
-  const prjDefs = activePlanId === "all"
+  const prjDefs = sortInstallmentDefs(activePlanId === "all"
     ? (() => {
         const defs: any[] = [];
         // Add plan-specific installments
@@ -37,7 +37,7 @@ export function ClientInstallments({ client, instDefs, payments, projects, plans
         .map(d => {
           const pa = client.planAssignments?.find((p: any) => p.planId === activePlanId);
           return { ...d, _shareCount: pa?.shareCount || 1 };
-        });
+        }));
 
   const totalPaid = payments.filter((p: any) => p.clientId === client.id && prjDefs.find((d: any) => d.id === p.instDefId) && p.status === "approved").reduce((s: number, p: any) => s + p.amount, 0);
   const totalTarget = prjDefs.reduce((s: number, d: any) => s + d.targetAmount * (d._shareCount || 1), 0);
