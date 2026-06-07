@@ -8,16 +8,8 @@ import initiatePayment from "./api/initiate-payment.js";
 import paymentSuccess from "./api/payment-success.js";
 import paymentFail from "./api/payment-fail.js";
 
-let resolvedFilename = "";
-try {
-  if (typeof import.meta !== "undefined" && import.meta.url) {
-    resolvedFilename = fileURLToPath(import.meta.url);
-  }
-} catch {
-  // Ignore error and fallback
-}
-const finalFilename = resolvedFilename || (typeof __filename !== "undefined" ? __filename : "");
-const finalDirname = finalFilename ? path.dirname(finalFilename) : (typeof __dirname !== "undefined" ? __dirname : process.cwd());
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
